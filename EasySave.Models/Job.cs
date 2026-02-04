@@ -14,4 +14,9 @@ public class Job
     SourcePath = sourcePath;
     DestinationPath = destinationPath;
   }
+
+  public override string ToString()
+  {
+    return $"{Name} ({Type}) : {SourcePath} --> {DestinationPath}";
+  }
 }
