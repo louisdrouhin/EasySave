@@ -9,6 +9,11 @@ namespace EasySave.Cli
         {
         }
 
+        public void WriteLine(string message)
+        {
+            Console.WriteLine(message);
+        }
+
         public void Demarrer()
         {
             int indexSelectionne = 0;
@@ -105,8 +110,8 @@ namespace EasySave.Cli
 
             Console.Write(LocalizationManager.Get("CreateJob_BackupType"));
             string typeInput = Console.ReadLine() ?? "1";
-            string type = typeInput == "2" 
-                ? LocalizationManager.Get("BackupType_Differential") 
+            string type = typeInput == "2"
+                ? LocalizationManager.Get("BackupType_Differential")
                 : LocalizationManager.Get("BackupType_Full");
 
             Console.WriteLine();
