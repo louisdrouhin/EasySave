@@ -64,22 +64,22 @@ namespace EasySave.Cli
                     Console.Clear();
                     switch (indexSelectionne)
                     {
-                        case 0: // Créer un travail
+                        case 0:
                             CreateJob();
                             break;
-                        case 1: // Exécuter
+                        case 1:
                             ExecuteJob();
                             break;
-                        case 2: // Supprimer
+                        case 2:
                             DeleteJob();
                             break;
-                        case 3: // Afficher
+                        case 3:
                             ShowJobs();
                             break;
-                        case 4: // Changer langue
+                        case 4:
                             ChangeLanguage();
                             break;
-                        case 5: // Quitter
+                        case 5:
                             continuer = false;
                             Console.WriteLine(LocalizationManager.Get("Common_Closing"));
                             continue;
