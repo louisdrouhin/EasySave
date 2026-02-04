@@ -1,11 +1,30 @@
 {
   "version": 3,
   "targets": {
-    "net10.0": {}
+    "net10.0": {
+      "EasySave.Models/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/EasySave.Models.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/EasySave.Models.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "EasySave.Models/1.0.0": {
+      "type": "project",
+      "path": "../EasySave.Models/EasySave.Models.csproj",
+      "msbuildProject": "../EasySave.Models/EasySave.Models.csproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net10.0": []
+    "net10.0": [
+      "EasySave.Models >= 1.0.0"
+    ]
   },
   "packageFolders": {
     "C:\\Users\\sownf\\.nuget\\packages\\": {},
@@ -39,7 +58,11 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "D:\\Documents\\04. CESI\\02. CI - CESI\\4. A3 - CESI\\4. Genie Logiciel\\99. Projet\\EasySave\\EasySave.Models\\EasySave.Models.csproj": {
+              "projectPath": "D:\\Documents\\04. CESI\\02. CI - CESI\\4. A3 - CESI\\4. Genie Logiciel\\99. Projet\\EasySave\\EasySave.Models\\EasySave.Models.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

@@ -161,6 +161,9 @@
   <data name="ShowJobs_Example" xml:space="preserve">
     <value>Expected output example:</value>
   </data>
+  <data name="ShowJobs_Instructions" xml:space="preserve">
+    <value>Use 'Create a backup job' option to get started.</value>
+  </data>
   
   <!-- State -->
   <data name="ShowState_Title" xml:space="preserve">
@@ -171,6 +174,12 @@
   </data>
   
   <!-- General -->
+  <data name="Common_PressKey" xml:space="preserve">
+    <value>Press any key to return to menu...</value>
+  </data>
+  <data name="Common_Closing" xml:space="preserve">
+    <value>Closing EasySave...</value>
+  </data>
   <data name="General_PressKeyToContinue" xml:space="preserve">
     <value>Press any key to return to menu...</value>
   </data>
@@ -179,6 +188,12 @@
   </data>
   
   <!-- Language Change -->
+  <data name="Language_Title" xml:space="preserve">
+    <value>=== LANGUAGE CHANGE ===</value>
+  </data>
+  <data name="Language_Selection" xml:space="preserve">
+    <value>Your choice: </value>
+  </data>
   <data name="Language_SelectLanguage" xml:space="preserve">
     <value>Select a language / Sélectionnez une langue:</value>
   </data>
@@ -189,6 +204,6 @@
     <value>English</value>
   </data>
   <data name="Language_Changed" xml:space="preserve">
-    <value>Language changed successfully!</value>
+    <value>✓ Language changed to '{0}' successfully!</value>
   </data>
 </root>

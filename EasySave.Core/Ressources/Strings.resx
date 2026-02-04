@@ -161,6 +161,9 @@
   <data name="ShowJobs_Example" xml:space="preserve">
     <value>Exemple de sortie attendue:</value>
   </data>
+  <data name="ShowJobs_Instructions" xml:space="preserve">
+    <value>Utilisez l'option 'Créer un travail' pour commencer.</value>
+  </data>
   
   <!-- État -->
   <data name="ShowState_Title" xml:space="preserve">
@@ -171,6 +174,12 @@
   </data>
   
   <!-- Général -->
+  <data name="Common_PressKey" xml:space="preserve">
+    <value>Appuyez sur une touche pour revenir au menu...</value>
+  </data>
+  <data name="Common_Closing" xml:space="preserve">
+    <value>Fermeture d'EasySave...</value>
+  </data>
   <data name="General_PressKeyToContinue" xml:space="preserve">
     <value>Appuyez sur une touche pour revenir au menu...</value>
   </data>
@@ -179,6 +188,12 @@
   </data>
   
   <!-- Changement de langue -->
+  <data name="Language_Title" xml:space="preserve">
+    <value>=== CHANGEMENT DE LANGUE ===</value>
+  </data>
+  <data name="Language_Selection" xml:space="preserve">
+    <value>Votre choix : </value>
+  </data>
   <data name="Language_SelectLanguage" xml:space="preserve">
     <value>Sélectionnez une langue / Select a language:</value>
   </data>
@@ -189,6 +204,6 @@
     <value>English</value>
   </data>
   <data name="Language_Changed" xml:space="preserve">
-    <value>Langue changée avec succès!</value>
+    <value>✓ Langue changée en '{0}' avec succès!</value>
   </data>
 </root>
