@@ -9,7 +9,12 @@ namespace EasySave.Cli
         {
         }
 
-        public void Demarrer()
+        public void WriteLine(string message)
+        {
+            Console.WriteLine(message);
+        }
+
+        public void start()
         {
             int indexSelectionne = 0;
             bool continuer = true;
@@ -60,19 +65,19 @@ namespace EasySave.Cli
                     switch (indexSelectionne)
                     {
                         case 0: // Créer un travail
-                            CreerTravail();
+                            CreateJob();
                             break;
                         case 1: // Exécuter
-                            ExecuterTravail();
+                            ExecuteJob();
                             break;
                         case 2: // Supprimer
-                            SupprimerTravail();
+                            DeleteJob();
                             break;
                         case 3: // Afficher
-                            AfficherTravaux();
+                            ShowJobs();
                             break;
                         case 4: // Changer langue
-                            ChangerLangue();
+                            ChangeLanguage();
                             break;
                         case 5: // Quitter
                             continuer = false;
@@ -89,7 +94,7 @@ namespace EasySave.Cli
             }
         }
 
-        private void CreerTravail()
+        private void CreateJob()
         {
             Console.WriteLine(LocalizationManager.Get("CreateJob_Title"));
             Console.WriteLine();
@@ -105,8 +110,8 @@ namespace EasySave.Cli
 
             Console.Write(LocalizationManager.Get("CreateJob_BackupType"));
             string typeInput = Console.ReadLine() ?? "1";
-            string type = typeInput == "2" 
-                ? LocalizationManager.Get("BackupType_Differential") 
+            string type = typeInput == "2"
+                ? LocalizationManager.Get("BackupType_Differential")
                 : LocalizationManager.Get("BackupType_Full");
 
             Console.WriteLine();
@@ -116,7 +121,7 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("CreateJob_Type", type));
         }
 
-        private void ExecuterTravail()
+        private void ExecuteJob()
         {
             Console.WriteLine(LocalizationManager.Get("ExecuteJob_Title"));
             Console.WriteLine();
@@ -130,7 +135,7 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.Get("ExecuteJob_Success"));
         }
 
-        private void SupprimerTravail()
+        private void DeleteJob()
         {
             Console.WriteLine(LocalizationManager.Get("DeleteJob_Title"));
             Console.WriteLine();
@@ -142,7 +147,7 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", nom));
         }
 
-        private void AfficherTravaux()
+        private void ShowJobs()
         {
             Console.WriteLine(LocalizationManager.Get("ShowJobs_Title"));
             Console.WriteLine();
@@ -152,7 +157,7 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.Get("ShowJobs_Instructions"));
         }
 
-        private void ChangerLangue()
+        private void ChangeLanguage()
         {
             Console.WriteLine(LocalizationManager.Get("Language_Title"));
             Console.WriteLine();
