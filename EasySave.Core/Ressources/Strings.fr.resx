@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Menu Principal -->
+  <data name="Menu_Title" xml:space="preserve">
+    <value>EASYSAVE - GESTION DES SAUVEGARDES</value>
+  </data>
+  <data name="Menu_CreateJob" xml:space="preserve">
+    <value>Créer un travail de sauvegarde</value>
+  </data>
+  <data name="Menu_ExecuteJobs" xml:space="preserve">
+    <value>Exécuter une/des sauvegarde</value>
+  </data>
+  <data name="Menu_DeleteJob" xml:space="preserve">
+    <value>Supprimer un travail</value>
+  </data>
+  <data name="Menu_ShowJobs" xml:space="preserve">
+    <value>Afficher tous les travaux</value>
+  </data>
+  <data name="Menu_ChangeLanguage" xml:space="preserve">
+    <value>Changer de langue</value>
+  </data>
+  <data name="Menu_Quit" xml:space="preserve">
+    <value>Quitter l'application</value>
+  </data>
+  
+  <!-- Création de travail -->
+  <data name="CreateJob_Title" xml:space="preserve">
+    <value>=== CRÉER UN TRAVAIL DE SAUVEGARDE ===</value>
+  </data>
+  <data name="CreateJob_JobName" xml:space="preserve">
+    <value>Nom du travail : </value>
+  </data>
+  <data name="CreateJob_SourcePath" xml:space="preserve">
+    <value>Chemin source : </value>
+  </data>
+  <data name="CreateJob_DestinationPath" xml:space="preserve">
+    <value>Chemin de destination : </value>
+  </data>
+  <data name="CreateJob_BackupType" xml:space="preserve">
+    <value>Type de sauvegarde (1=Complète, 2=Différentielle) : </value>
+  </data>
+  <data name="CreateJob_Success" xml:space="preserve">
+    <value>✓ Travail '{0}' créé avec succès!</value>
+  </data>
+  <data name="CreateJob_Source" xml:space="preserve">
+    <value>  Source: {0}</value>
+  </data>
+  <data name="CreateJob_Destination" xml:space="preserve">
+    <value>  Destination: {0}</value>
+  </data>
+  <data name="CreateJob_Type" xml:space="preserve">
+    <value>  Type: {0}</value>
+  </data>
+  <data name="BackupType_Full" xml:space="preserve">
+    <value>Complète</value>
+  </data>
+  <data name="BackupType_Differential" xml:space="preserve">
+    <value>Différentielle</value>
+  </data>
+  
+  <!-- Exécution -->
+  <data name="ExecuteJob_Title" xml:space="preserve">
+    <value>=== EXÉCUTER UN TRAVAIL ===</value>
+  </data>
+  <data name="ExecuteJob_Identifier" xml:space="preserve">
+    <value>Nom ou numéro du travail : </value>
+  </data>
+  <data name="ExecuteJob_InProgress" xml:space="preserve">
+    <value>⏳ Exécution du travail '{0}' en cours...</value>
+  </data>
+  <data name="ExecuteJob_Success" xml:space="preserve">
+    <value>✓ Sauvegarde terminée avec succès!</value>
+  </data>
+  <data name="ExecuteAllJobs_Title" xml:space="preserve">
+    <value>=== EXÉCUTER TOUS LES TRAVAUX ===</value>
+  </data>
+  <data name="ExecuteAllJobs_InProgress" xml:space="preserve">
+    <value>⏳ Exécution de tous les travaux en cours...</value>
+  </data>
+  <data name="ExecuteAllJobs_Success" xml:space="preserve">
+    <value>✓ Toutes les sauvegardes sont terminées!</value>
+  </data>
+  
+  <!-- Suppression -->
+  <data name="DeleteJob_Title" xml:space="preserve">
+    <value>=== SUPPRIMER UN TRAVAIL ===</value>
+  </data>
+  <data name="DeleteJob_JobName" xml:space="preserve">
+    <value>Nom du travail à supprimer : </value>
+  </data>
+  <data name="DeleteJob_Success" xml:space="preserve">
+    <value>✓ Travail '{0}' supprimé avec succès!</value>
+  </data>
+  
+  <!-- Liste des travaux -->
+  <data name="ShowJobs_Title" xml:space="preserve">
+    <value>=== LISTE DES TRAVAUX DE SAUVEGARDE ===</value>
+  </data>
+  <data name="ShowJobs_NoJobs" xml:space="preserve">
+    <value>Aucun travail configuré pour le moment.</value>
+  </data>
+  <data name="ShowJobs_Example" xml:space="preserve">
+    <value>Exemple de sortie attendue:</value>
+  </data>
+  
+  <!-- État -->
+  <data name="ShowState_Title" xml:space="preserve">
+    <value>=== ÉTAT DES SAUVEGARDES ===</value>
+  </data>
+  <data name="ShowState_NoBackup" xml:space="preserve">
+    <value>Aucune sauvegarde en cours.</value>
+  </data>
+  
+  <!-- Général -->
+  <data name="General_PressKeyToContinue" xml:space="preserve">
+    <value>Appuyez sur une touche pour revenir au menu...</value>
+  </data>
+  <data name="General_Closing" xml:space="preserve">
+    <value>Fermeture d'EasySave...</value>
+  </data>
+  
+  <!-- Changement de langue -->
+  <data name="Language_SelectLanguage" xml:space="preserve">
+    <value>Sélectionnez une langue / Select a language:</value>
+  </data>
+  <data name="Language_French" xml:space="preserve">
+    <value>Français</value>
+  </data>
+  <data name="Language_English" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Language_Changed" xml:space="preserve">
+    <value>Langue changée avec succès!</value>
+  </data>
+</root>
