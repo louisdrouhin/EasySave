@@ -6,7 +6,7 @@ public class StateEntry
     public DateTime LastActionTime { get; set; }
     public JobState State { get; set; }
 
-    // Fields if state == active)
+    // Fields if state == Active
     public int? TotalFiles { get; set; }
     public long? TotalSizeToTransfer { get; set; }
     public double? Progress { get; set; }
