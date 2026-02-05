@@ -143,6 +143,8 @@ namespace EasySave.Cli
             Console.Write(LocalizationManager.Get("DeleteJob_JobName"));
             string nom = Console.ReadLine() ?? "";
 
+            _jobManager.removeJob(nom);
+
             Console.WriteLine();
             Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", nom));
         }
