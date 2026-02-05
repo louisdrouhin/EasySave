@@ -1,0 +1,14 @@
+{
+    "config": {
+        "logFilePath": "",
+        "stateFilePath": ""
+    },
+    "jobs": [
+        {
+            "name": "job1",
+            "type": "",
+            "sourceDir": "",
+            "targetDir": ""
+        }
+    ]
+}

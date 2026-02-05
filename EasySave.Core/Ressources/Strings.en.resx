@@ -206,4 +206,9 @@
   <data name="Language_Changed" xml:space="preserve">
     <value>✓ Language changed to '{0}' successfully!</value>
   </data>
+  
+  <!-- Errors -->
+  <data name="Error_ConfigFileNotFound" xml:space="preserve">
+    <value>Unable to start: the base configuration file cannot be found.</value>
+  </data>
 </root>

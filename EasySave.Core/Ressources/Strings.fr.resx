@@ -191,4 +191,9 @@
   <data name="Language_Changed" xml:space="preserve">
     <value>Langue changée avec succès!</value>
   </data>
+  
+  <!-- Erreurs -->
+  <data name="Error_ConfigFileNotFound" xml:space="preserve">
+    <value>Impossible de démarrer : le fichier de configuration de base est introuvable.</value>
+  </data>
 </root>
