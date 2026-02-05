@@ -154,9 +154,21 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.Get("ShowJobs_Title"));
             Console.WriteLine();
 
-            Console.WriteLine(LocalizationManager.Get("ShowJobs_NoJobs"));
-            Console.WriteLine();
-            Console.WriteLine(LocalizationManager.Get("ShowJobs_Instructions"));
+            var jobs = _jobManager.GetJobs();
+
+            if (jobs.Count == 0)
+            {
+                Console.WriteLine(LocalizationManager.Get("ShowJobs_NoJobs"));
+                Console.WriteLine();
+                Console.WriteLine(LocalizationManager.Get("ShowJobs_Instructions"));
+            }
+            else
+            {
+                for (int i = 0; i < jobs.Count; i++)
+                {
+                    Console.WriteLine($"{i + 1}. {jobs[i]}");
+                }
+            }
         }
 
         private void ChangeLanguage()

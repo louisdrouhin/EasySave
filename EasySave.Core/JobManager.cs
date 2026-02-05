@@ -61,6 +61,11 @@ public class JobManager
         );
     }
 
+    public List<Job> GetJobs()
+    {
+        return _jobs;
+    }
+
     private void LoadJobsFromConfig()
     {
         var jobsArray = _configParser.Config?["jobs"]?.AsArray();
