@@ -68,7 +68,7 @@ namespace EasySave.Cli
                             CreateJob();
                             break;
                         case 1:
-                            ExecuteJob();
+                            //ExecuteJob();
                             break;
                         case 2:
                             DeleteJob();

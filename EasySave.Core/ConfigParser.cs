@@ -17,7 +17,7 @@ public class ConfigParser
 
     public void LoadConfig()
     {
-        string pathTemplate = "config.example.json";
+        string pathTemplate = "..\\config.example.json";
 
         if (!File.Exists(_configPath))
         {

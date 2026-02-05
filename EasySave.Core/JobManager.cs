@@ -10,6 +10,13 @@ public class JobManager
 
     public JobManager()
     {
+        _configParser = new ConfigParser("../config.json");
+        _logFormatter = new JsonLogFormatter();
+        _logger = new EasyLog(_logFormatter, _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json");
+        /// TODO : logger le lancement du configparser 
+        /// TODO : logger le lancement du logger et fromatter 
+        /// TODO : initialiser le stateTracker et logger son lancement
+
         _jobs = new List<Job>();
 
         var logFormatter = new JsonLogFormatter();
@@ -84,7 +91,6 @@ public class JobManager
             var sourcePath = jobNode["sourceDir"]?.GetValue<string>() ?? string.Empty;
             var destinationPath = jobNode["targetDir"]?.GetValue<string>() ?? string.Empty;
 
-            // Conversion du type de sauvegarde
             JobType jobType = typeString.ToLower() switch
             {
                 "differential" => JobType.Differential,
@@ -111,7 +117,6 @@ public class JobManager
             return;
         }
 
-        // Trouver l'index du job à supprimer
         JsonNode? jobToRemove = null;
         foreach (var jobNode in jobsArray)
         {
@@ -122,12 +127,10 @@ public class JobManager
             }
         }
 
-        // Supprimer le job du tableau
         if (jobToRemove != null)
         {
             jobsArray.Remove(jobToRemove);
 
-            // Sauvegarder dans le fichier
             _configParser.EditAndSaveConfig(_configParser.Config!);
         }
     }
