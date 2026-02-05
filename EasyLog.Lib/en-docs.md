@@ -19,7 +19,8 @@
 
 - Flexible formatting: Implement your own log format (JSON, CSV, plain text, etc.)
 - Directory management: Automatic directory creation if necessary
-- Dynamic path: Change the log destination file at any time
+- Daily rotation: Automatic log file rotation (one file per day)
+- Dynamic directory: Change the log destination directory at any time
 
 ---
 
@@ -51,8 +52,9 @@ Default formatter that serializes logs to JSON format.
 // Create a formatter (JSON in this example)
 ILogFormatter formatter = new JsonLogFormatter();
 
-// Initialize EasyLog with the formatter and log file path
-EasyLog logger = new EasyLog(formatter, "logs/application.log");
+// Initialize EasyLog with the formatter and log directory
+// Logs will be automatically rotated daily with files named: yyyy-MM-dd_logs.json
+EasyLog logger = new EasyLog(formatter, "logs");
 
 // Write a log
 var content = new Dictionary<string, object>
@@ -74,7 +76,7 @@ logger.Write(DateTime.Now, "user_event", content);
 
 ```csharp
 ILogFormatter formatter = new JsonLogFormatter();
-EasyLog logger = new EasyLog(formatter, "logs/user_events.log");
+EasyLog logger = new EasyLog(formatter, "logs/user_events");
 
 // Login event
 var loginEvent = new Dictionary<string, object>
@@ -88,10 +90,12 @@ var loginEvent = new Dictionary<string, object>
 logger.Write(DateTime.Now, "auth", loginEvent);
 ```
 
-**Output in file**:
+**Output in file** (e.g., `logs/user_events/2025-02-05_logs.json`):
 ```json
-{"timestamp":"2025-02-05 14:30:45","name":"auth","content":{"event_type":"login","user_id":42,"ip_address":"192.168.1.100","success":true}}
+{"logs":[{"timestamp":"2025-02-05 14:30:45","name":"auth","content":{"event_type":"login","user_id":42,"ip_address":"192.168.1.100","success":true}}]}
 ```
+
+**Daily rotation**: Each day, a new file is created automatically (e.g., `2025-02-06_logs.json` the next day).
 
 ---
 
@@ -101,12 +105,12 @@ logger.Write(DateTime.Now, "auth", loginEvent);
 
 #### Constructor
 ```csharp
-public EasyLog(ILogFormatter formatter, string logPath)
+public EasyLog(ILogFormatter formatter, string logDirectory)
 ```
 
 **Parameters:**
 - `formatter` (ILogFormatter): Formatter implementation to format the logs
-- `logPath` (string): Path to the log file (created if it doesn't exist)
+- `logDirectory` (string): Path to the log directory. Logs are stored as daily files with format `yyyy-MM-dd_logs.json`
 
 #### Write Method
 ```csharp
@@ -122,22 +126,38 @@ public void Write(DateTime timestamp, string name, Dictionary<string, object> co
 
 #### SetLogPath Method
 ```csharp
-public void SetLogPath(string newLogPath)
+public void SetLogPath(string newLogDirectory)
 ```
 
-**Description:** Changes the log destination file.
+**Description:** Changes the log destination directory. The current log file is closed before switching directories.
 
 **Parameters:**
-- `newLogPath` (string): New log file path
+- `newLogDirectory` (string): New log directory path
 
 #### GetCurrentLogPath Method
 ```csharp
 public string GetCurrentLogPath()
 ```
 
-**Description:** Returns the currently used log file path.
+**Description:** Returns the currently used log file path (includes the date-specific filename).
 
-**Return:** The log file path (string)
+**Return:** The full path to the current log file (string)
+
+#### GetLogDirectory Method
+```csharp
+public string GetLogDirectory()
+```
+
+**Description:** Returns the log directory path currently in use.
+
+**Return:** The log directory path (string)
+
+#### CloseJsonStructure Method
+```csharp
+public void CloseJsonStructure()
+```
+
+**Description:** Closes the JSON structure of the current log file by appending `]}`. This is useful when you want to finalize the log file before switching directories or ending the application.
 
 ---
 
@@ -175,7 +195,3 @@ public class JsonLogFormatter : ILogFormatter
 ```
 
 ---
-
-## Version
-- v1.0.0 - Initial version with JSON format
-- Target Framework: .NET 10.0
