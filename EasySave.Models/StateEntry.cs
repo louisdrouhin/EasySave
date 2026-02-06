@@ -26,13 +26,13 @@ public class StateEntry
         string jobName,
         DateTime lastActionTime,
         JobState state,
-        int totalFiles,
-        long totalSizeToTransfer,
-        double progress,
-        int remainingFiles,
-        long remainingSizeToTransfer,
-        string currentSourcePath,
-        string currentDestinationPath)
+        int totalFiles = 0,
+        long totalSizeToTransfer = 0,
+        double progress = 0,
+        int remainingFiles = 0,
+        long remainingSizeToTransfer = 0,
+        string currentSourcePath = "",
+        string currentDestinationPath = "")
     {
         JobName = jobName;
         LastActionTime = lastActionTime;
