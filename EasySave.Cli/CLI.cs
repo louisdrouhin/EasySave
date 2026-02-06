@@ -68,7 +68,7 @@ namespace EasySave.Cli
                             CreateJob();
                             break;
                         case 1:
-                            //ExecuteJob();
+                            ExecuteJobs();
                             break;
                         case 2:
                             DeleteJob();
@@ -190,6 +190,89 @@ namespace EasySave.Cli
 
             Console.WriteLine();
             Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", nouvelleLangue));
+        }
+
+        private void ExecuteJobs()
+        {
+            Console.WriteLine(LocalizationManager.Get("ExecuteJobs_Title"));
+            Console.WriteLine();
+
+            var jobs = _jobManager.GetJobs();
+
+            if (jobs.Count == 0)
+            {
+                Console.WriteLine(LocalizationManager.Get("ExecuteJobs_NoJobs"));
+                Console.WriteLine();
+                Console.WriteLine(LocalizationManager.Get("ExecuteJobs_Instructions"));
+            }
+            else
+            {
+                // Afficher la liste des jobs disponibles
+                Console.WriteLine(LocalizationManager.Get("ExecuteJobs_AvailableJobs"));
+                for (int i = 0; i < jobs.Count; i++)
+                {
+                    Console.WriteLine($"{i + 1}. {jobs[i]}");
+                }
+                Console.WriteLine();
+
+                // Demander quels jobs exécuter
+                Console.Write(LocalizationManager.Get("ExecuteJobs_SelectPrompt"));
+                string input = Console.ReadLine() ?? "";
+
+                List<Job> jobsToExecute = new List<Job>();
+
+                if (input.ToLower().Trim() == "all")
+                {
+                    jobsToExecute = jobs;
+                }
+                else
+                {
+                    // Parser les numéros entrés
+                    string[] numbers = input.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string numStr in numbers)
+                    {
+                        if (int.TryParse(numStr.Trim(), out int jobNumber))
+                        {
+                            if (jobNumber > 0 && jobNumber <= jobs.Count)
+                            {
+                                jobsToExecute.Add(jobs[jobNumber - 1]);
+                            }
+                            else
+                            {
+                                Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_InvalidNumber", jobNumber));
+                            }
+                        }
+                    }
+                }
+
+                Console.WriteLine();
+
+                // Exécuter les jobs sélectionnés
+                if (jobsToExecute.Count > 0)
+                {
+                    Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Executing", jobsToExecute.Count));
+                    Console.WriteLine();
+
+                    foreach (var job in jobsToExecute)
+                    {
+                        try
+                        {
+                            Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_ExecutingJob", job.Name));
+                            _jobManager.LaunchJob(job);
+                            Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Success", job.Name));
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Error", job.Name, ex.Message));
+                        }
+                        Console.WriteLine();
+                    }
+                }
+                else
+                {
+                    Console.WriteLine(LocalizationManager.Get("ExecuteJobs_NoSelection"));
+                }
+            }
         }
     }
 }

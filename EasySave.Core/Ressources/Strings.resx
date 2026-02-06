@@ -140,6 +140,41 @@
     <value>✓ Toutes les sauvegardes sont terminées!</value>
   </data>
   
+  <!-- Exécution de jobs -->
+  <data name="ExecuteJobs_Title" xml:space="preserve">
+    <value>=== EXÉCUTER DES TRAVAUX ===</value>
+  </data>
+  <data name="ExecuteJobs_AvailableJobs" xml:space="preserve">
+    <value>Jobs disponibles :</value>
+  </data>
+  <data name="ExecuteJobs_SelectPrompt" xml:space="preserve">
+    <value>Entrez le(s) numéro(s) des jobs à exécuter (séparés par des virgules) ou 'all' pour tous : </value>
+  </data>
+  <data name="ExecuteJobs_Executing" xml:space="preserve">
+    <value>Exécution de {0} job(s)...</value>
+  </data>
+  <data name="ExecuteJobs_ExecutingJob" xml:space="preserve">
+    <value>Exécution du job : {0}...</value>
+  </data>
+  <data name="ExecuteJobs_NoSelection" xml:space="preserve">
+    <value>Aucun job sélectionné.</value>
+  </data>
+  <data name="ExecuteJobs_InvalidNumber" xml:space="preserve">
+    <value>Numéro invalide : {0}</value>
+  </data>
+  <data name="ExecuteJobs_NoJobs" xml:space="preserve">
+    <value>Aucun travail configuré pour le moment.</value>
+  </data>
+  <data name="ExecuteJobs_Instructions" xml:space="preserve">
+    <value>Utilisez l'option 'Créer un travail' pour commencer.</value>
+  </data>
+  <data name="ExecuteJobs_Success" xml:space="preserve">
+    <value>✓ Job '{0}' exécuté avec succès!</value>
+  </data>
+  <data name="ExecuteJobs_Error" xml:space="preserve">
+    <value>✗ Erreur lors de l'exécution du job '{0}' : {1}</value>
+  </data>
+  
   <!-- Suppression -->
   <data name="DeleteJob_Title" xml:space="preserve">
     <value>=== SUPPRIMER UN TRAVAIL ===</value>

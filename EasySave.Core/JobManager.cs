@@ -13,19 +13,52 @@ public class JobManager
         _configParser = new ConfigParser("../config.json");
         _logFormatter = new JsonLogFormatter();
         _logger = new EasyLog(_logFormatter, _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json");
-        /// TODO : logger le lancement du configparser 
-        /// TODO : logger le lancement du logger et fromatter 
+
+        _logger.Write(
+            DateTime.Now,
+            "ConfigParserInitialized",
+            new Dictionary<string, object>
+            {
+                { "configPath", "../config.json" }
+            }
+        );
+
+        _logger.Write(
+            DateTime.Now,
+            "LoggerInitialized",
+            new Dictionary<string, object>
+            {
+                { "formatterType", _logFormatter.GetType().Name },
+                { "logsPath", _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json" }
+            }
+        );
+
         /// TODO : initialiser le stateTracker et logger son lancement
 
         _jobs = new List<Job>();
 
-        var logFormatter = new JsonLogFormatter();
-        var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "easysave.log");
-        _logger = new EasyLog(logFormatter, logPath);
+        _logger.Write(
+            DateTime.Now,
+            "JobsListCreated",
+            new Dictionary<string, object>()
+        );
+
+        LoadJobsFromConfig();
+
+        _logger.Write(
+            DateTime.Now,
+            "JobsLoadedFromConfig",
+            new Dictionary<string, object>
+            {
+                { "jobsCount", _jobs.Count }
+            }
+        );
     }
 
-    public void AddJob(Job job)
+    public void CreateJob(string name, JobType type, string sourcePath, string destinationPath)
     {
+        var job = new Job(name, type, sourcePath, destinationPath);
+
         _jobs.Add(job);
     }
 
@@ -138,5 +171,163 @@ public class JobManager
 
             _configParser.EditAndSaveConfig(_configParser.Config!);
         }
+    }
+
+    public void LaunchJob(Job job)
+    {
+        _logger.Write(
+            DateTime.Now,
+            "JobStarted",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name },
+                { "jobType", job.Type.ToString() },
+                { "sourcePath", job.SourcePath },
+                { "destinationPath", job.DestinationPath }
+            }
+        );
+
+        try
+        {
+            switch (job.Type)
+            {
+                case JobType.Full:
+                    ExecuteFullBackup(job);
+                    break;
+                case JobType.Differential:
+                    ExecuteDifferentialBackup(job);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Type de job non supporté : {job.Type}");
+            }
+
+            _logger.Write(
+                DateTime.Now,
+                "JobCompleted",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "jobType", job.Type.ToString() }
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.Write(
+                DateTime.Now,
+                "JobFailed",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "jobType", job.Type.ToString() },
+                    { "error", ex.Message }
+                }
+            );
+            throw;
+        }
+    }
+
+    private void ExecuteFullBackup(Job job)
+    {
+        if (!Directory.Exists(job.SourcePath))
+        {
+            throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
+        }
+
+        if (!Directory.Exists(job.DestinationPath))
+        {
+            Directory.CreateDirectory(job.DestinationPath);
+            _logger.Write(
+                DateTime.Now,
+                "DestinationDirectoryCreated",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "destinationPath", job.DestinationPath }
+                }
+            );
+        }
+
+        var sourceFiles = Directory.GetFiles(job.SourcePath, "*", SearchOption.AllDirectories);
+        int totalFiles = sourceFiles.Length;
+        int filesProcessed = 0;
+        long totalBytesTransferred = 0;
+
+        _logger.Write(
+            DateTime.Now,
+            "FullBackupStarted",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name },
+                { "totalFiles", totalFiles }
+            }
+        );
+
+        foreach (var sourceFile in sourceFiles)
+        {
+            try
+            {
+                var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
+                var destinationFile = Path.Combine(job.DestinationPath, relativePath);
+
+                var destinationDir = Path.GetDirectoryName(destinationFile);
+                if (destinationDir != null && !Directory.Exists(destinationDir))
+                {
+                    Directory.CreateDirectory(destinationDir);
+                }
+
+                var fileInfo = new FileInfo(sourceFile);
+                var fileSize = fileInfo.Length;
+
+                File.Copy(sourceFile, destinationFile, overwrite: true);
+
+                filesProcessed++;
+                totalBytesTransferred += fileSize;
+
+                _logger.Write(
+                    DateTime.Now,
+                    "FileCopied",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFile", sourceFile },
+                        { "destinationFile", destinationFile },
+                        { "fileSize", fileSize },
+                        { "progress", $"{filesProcessed}/{totalFiles}" }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.Write(
+                    DateTime.Now,
+                    "FileCopyError",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFile", sourceFile },
+                        { "error", ex.Message }
+                    }
+                );
+            }
+        }
+
+        _logger.Write(
+            DateTime.Now,
+            "FullBackupCompleted",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name },
+                { "filesProcessed", filesProcessed },
+                { "totalFiles", totalFiles },
+                { "totalBytesTransferred", totalBytesTransferred }
+            }
+        );
+    }
+
+    private void ExecuteDifferentialBackup(Job job)
+    {
+        // TODO : Implémenter la logique de sauvegarde différentielle
+        throw new NotImplementedException("La sauvegarde différentielle n'est pas encore implémentée");
     }
 }
