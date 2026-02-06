@@ -1,3 +1,22 @@
+## v1.0.0 (2026-02-06)
+
+### Feat
+
+- **StateTracker**: implement statetracker in jobmanager
+- **StateTracker**: add StateTracker class
+
+### Fix
+
+- **core**: fix conflicts
+- **StateTracker**: fix StateTracker
+- **StateTracker**: make optionnal some params in StateEntry class constructor
+
+## v0.4.1 (2026-02-06)
+
+### Fix
+
+- **easylog**: implement unc format for logger
+
 ## v0.4.0 (2026-02-06)
 
 ### Feat
