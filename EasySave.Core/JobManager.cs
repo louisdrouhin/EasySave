@@ -335,9 +335,23 @@ public class JobManager
 
         var sourceFiles = Directory.GetFiles(job.SourcePath, "*", SearchOption.AllDirectories);
         int totalFiles = sourceFiles.Length;
+        long totalSize = sourceFiles.Select(f => new FileInfo(f).Length).Sum();
         int filesProcessed = 0;
         long totalBytesTransferred = 0;
         var hashDictionary = createHashFile ? new Dictionary<string, string>() : null;
+
+        _stateTracker.UpdateJobState(new StateEntry(
+            job.Name,
+            DateTime.Now,
+            JobState.Active,
+            totalFiles,
+            totalSize,
+            0,
+            totalFiles,
+            totalSize,
+            "",
+            ""
+        ));
 
         _logger.Write(
             DateTime.Now,
@@ -398,6 +412,19 @@ public class JobManager
 
                 filesProcessed++;
                 totalBytesTransferred += fileSize;
+
+                _stateTracker.UpdateJobState(new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Active,
+                    totalFiles,
+                    totalSize,
+                    (double)filesProcessed / totalFiles * 100,
+                    totalFiles - filesProcessed,
+                    totalSize - totalBytesTransferred,
+                    sourceFile,
+                    destinationFile
+                ));
 
                 _logger.Write(
                     DateTime.Now,
@@ -537,19 +564,18 @@ public class JobManager
             }
         );
 
-        int totalFiles = 0;
-        int filesProcessed = 0;
-        int filesModified = 0;
-        long totalBytesTransferred = 0;
+        var allSourceFiles = Directory.GetFiles(job.SourcePath, "*", SearchOption.AllDirectories);
+        var filesToCopy = new List<(string Path, string RelativePath, long Size, string Hash)>();
         var newHashDictionary = new Dictionary<string, string>();
+        long totalSizeToTransfer = 0;
 
-        foreach (var sourceFile in Directory.EnumerateFiles(job.SourcePath, "*", SearchOption.AllDirectories))
+        foreach (var sourceFile in allSourceFiles)
         {
-            totalFiles++;
-            string currentHash = string.Empty;
-
             try
             {
+                var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
+                var fileInfo = new FileInfo(sourceFile);
+                string currentHash;
                 using (var sha256 = System.Security.Cryptography.SHA256.Create())
                 using (var stream = File.OpenRead(sourceFile))
                 {
@@ -557,23 +583,12 @@ public class JobManager
                     currentHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
                 }
 
-                var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
-
                 newHashDictionary[relativePath] = currentHash;
 
-                bool needsCopy = false;
-                if (!hashDictionary.ContainsKey(relativePath))
+                if (!hashDictionary.TryGetValue(relativePath, out var oldHash) || oldHash != currentHash)
                 {
-                    needsCopy = true;
-                    _logger.Write(
-                        DateTime.Now,
-                        "NewFileDetected",
-                        new Dictionary<string, object>
-                        {
-                            { "jobName", job.Name },
-                            { "file", relativePath }
-                        }
-                    );
+                    filesToCopy.Add((sourceFile, relativePath, fileInfo.Length, currentHash));
+                    totalSizeToTransfer += fileInfo.Length;
                 }
                 else if (hashDictionary[relativePath] != currentHash)
                 {
@@ -640,6 +655,81 @@ public class JobManager
             }
         }
 
+        int totalFilesToTransfer = filesToCopy.Count;
+        int filesProcessed = 0;
+        long totalBytesTransferred = 0;
+
+        _stateTracker.UpdateJobState(new StateEntry(
+            job.Name,
+            DateTime.Now,
+            JobState.Active,
+            totalFilesToTransfer,
+            totalSizeToTransfer,
+            0,
+            totalFilesToTransfer,
+            totalSizeToTransfer,
+            "",
+            ""
+        ));
+
+        foreach (var fileToCopy in filesToCopy)
+        {
+            try
+            {
+                var destinationFile = Path.Combine(diffBackupPath, fileToCopy.RelativePath);
+                var destinationDir = Path.GetDirectoryName(destinationFile);
+
+                if (destinationDir != null && !Directory.Exists(destinationDir))
+                {
+                    Directory.CreateDirectory(destinationDir);
+                }
+
+                File.Copy(fileToCopy.Path, destinationFile, true);
+
+                filesProcessed++;
+                totalBytesTransferred += fileToCopy.Size;
+
+                _stateTracker.UpdateJobState(new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Active,
+                    totalFilesToTransfer,
+                    totalSizeToTransfer,
+                    (double)filesProcessed / totalFilesToTransfer * 100,
+                    totalFilesToTransfer - filesProcessed,
+                    totalSizeToTransfer - totalBytesTransferred,
+                    fileToCopy.Path,
+                    destinationFile
+                ));
+
+                _logger.Write(
+                    DateTime.Now,
+                    "FileCopied",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFile", fileToCopy.Path },
+                        { "destinationFile", destinationFile },
+                        { "fileSize", fileToCopy.Size },
+                        { "hash", fileToCopy.Hash }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.Write(
+                    DateTime.Now,
+                    "FileCopyError",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFile", fileToCopy.Path },
+                        { "error", ex.Message }
+                    }
+                );
+            }
+        }
+
         try
         {
             var newHashJson = System.Text.Json.JsonSerializer.Serialize(newHashDictionary, new System.Text.Json.JsonSerializerOptions
@@ -678,9 +768,9 @@ public class JobManager
             new Dictionary<string, object>
             {
                 { "jobName", job.Name },
-                { "totalFiles", totalFiles },
-                { "filesProcessed", filesProcessed },
-                { "filesModified", filesModified },
+                { "totalFiles", allSourceFiles.Length },
+                { "filesProcessed", allSourceFiles.Length },
+                { "filesModified", totalFilesToTransfer },
                 { "totalBytesTransferred", totalBytesTransferred },
                 { "backupFolder", backupFolderName }
             }
