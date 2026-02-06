@@ -4,24 +4,25 @@ namespace EasyLog.Lib.Tests;
 
 public class EasyLogTests
 {
-    private string GetTempLogPath()
+    private string GetTempLogBasePath()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "EasyLogTests", Guid.NewGuid().ToString());
-        return Path.Combine(tempDir, "test.log");
+        return Path.Combine(tempDir, "test");
     }
 
-    private void CleanupTestFile(string logPath)
+    private void CleanupTestFile(string logBasePath)
     {
-        if (File.Exists(logPath))
-        {
-            File.Delete(logPath);
-        }
-
-        var directory = Path.GetDirectoryName(logPath);
+        var directory = Path.GetDirectoryName(logBasePath);
         if (Directory.Exists(directory))
         {
             Directory.Delete(directory, true);
         }
+    }
+
+    private string GetActualLogFilePath(string logBasePath)
+    {
+        var dateStr = DateTime.Now.ToString("yyyy-MM-dd");
+        return $"{logBasePath}_{dateStr}.json";
     }
 
     #region Constructor Tests
@@ -31,24 +32,26 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
-        var logPath = GetTempLogPath();
+        var logBasePath = GetTempLogBasePath();
 
         // Act
-        var easyLog = new EasyLog(formatter.Object, logPath);
+        var easyLog = new EasyLog(formatter.Object, logBasePath);
 
         // Assert
         Assert.NotNull(easyLog);
-        Assert.Equal(logPath, easyLog.GetCurrentLogPath());
+        // Vérifier que le chemin contient la date (ex: test_2026-02-05.json)
+        var currentPath = easyLog.GetCurrentLogPath();
+        Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd"), currentPath);
 
         // Cleanup
-        CleanupTestFile(logPath);
+        CleanupTestFile(logBasePath);
     }
 
     [Fact]
     public void Constructor_WithNullFormatter_ThrowsArgumentNullException()
     {
         // Arrange
-        var logPath = GetTempLogPath();
+        var logPath = GetTempLogBasePath();
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
@@ -99,8 +102,8 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new JsonLogFormatter();
-        var logPath = GetTempLogPath();
-        var easyLog = new EasyLog(formatter, logPath);
+        var logBasePath = GetTempLogBasePath();
+        var easyLog = new EasyLog(formatter, logBasePath);
 
         var timestamp = new DateTime(2025, 2, 4, 10, 30, 45);
         var name = "TestEvent";
@@ -110,13 +113,13 @@ public class EasyLogTests
         easyLog.Write(timestamp, name, content);
 
         // Assert
-        Assert.True(File.Exists(logPath));
-        var fileContent = File.ReadAllText(logPath);
+        Assert.True(File.Exists(easyLog.GetCurrentLogPath()));
+        var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
         Assert.Contains("TestEvent", fileContent);
         Assert.Contains("value", fileContent);
 
         // Cleanup
-        CleanupTestFile(logPath);
+        CleanupTestFile(logBasePath);
     }
 
     [Fact]
@@ -124,7 +127,7 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
-        var logPath = GetTempLogPath();
+        var logPath = GetTempLogBasePath();
         var easyLog = new EasyLog(formatter.Object, logPath);
 
         // Act & Assert
@@ -140,8 +143,8 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new JsonLogFormatter();
-        var logPath = GetTempLogPath();
-        var easyLog = new EasyLog(formatter, logPath);
+        var logBasePath = GetTempLogBasePath();
+        var easyLog = new EasyLog(formatter, logBasePath);
 
         var content1 = new Dictionary<string, object> { { "entry", "first" } };
         var content2 = new Dictionary<string, object> { { "entry", "second" } };
@@ -151,12 +154,14 @@ public class EasyLogTests
         easyLog.Write(DateTime.Now, "Event2", content2);
 
         // Assert
-        var fileContent = File.ReadAllText(logPath);
-        var lines = fileContent.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-        Assert.Equal(2, lines.Length);
+        var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
+        Assert.Contains("first", fileContent);
+        Assert.Contains("second", fileContent);
+        Assert.Contains("Event1", fileContent);
+        Assert.Contains("Event2", fileContent);
 
         // Cleanup
-        CleanupTestFile(logPath);
+        CleanupTestFile(logBasePath);
     }
 
     [Fact]
@@ -167,7 +172,7 @@ public class EasyLogTests
         formatterMock.Setup(f => f.Format(It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
             .Returns("formatted log");
 
-        var logPath = GetTempLogPath();
+        var logPath = GetTempLogBasePath();
         var easyLog = new EasyLog(formatterMock.Object, logPath);
 
         var timestamp = new DateTime(2025, 2, 4, 10, 30, 45);
@@ -192,7 +197,7 @@ public class EasyLogTests
         formatterMock.Setup(f => f.Format(It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
             .Throws(new InvalidOperationException("Formatter error"));
 
-        var logPath = GetTempLogPath();
+        var logPath = GetTempLogBasePath();
         var easyLog = new EasyLog(formatterMock.Object, logPath);
 
         // Act & Assert
@@ -212,20 +217,22 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
-        var initialPath = GetTempLogPath();
-        var newPath = GetTempLogPath();
+        var initialBasePath = GetTempLogBasePath();
+        var newBasePath = GetTempLogBasePath();
 
-        var easyLog = new EasyLog(formatter.Object, initialPath);
+        var easyLog = new EasyLog(formatter.Object, initialBasePath);
 
         // Act
-        easyLog.SetLogPath(newPath);
+        easyLog.SetLogPath(newBasePath);
 
         // Assert
-        Assert.Equal(newPath, easyLog.GetCurrentLogPath());
+        var currentPath = easyLog.GetCurrentLogPath();
+        Assert.StartsWith(newBasePath, currentPath);
+        Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd"), currentPath);
 
         // Cleanup
-        CleanupTestFile(initialPath);
-        CleanupTestFile(newPath);
+        CleanupTestFile(initialBasePath);
+        CleanupTestFile(newBasePath);
     }
 
     [Theory]
@@ -236,7 +243,7 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
-        var logPath = GetTempLogPath();
+        var logPath = GetTempLogBasePath();
         var easyLog = new EasyLog(formatter.Object, logPath);
 
         // Act & Assert
@@ -252,7 +259,7 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
-        var initialPath = GetTempLogPath();
+        var initialPath = GetTempLogBasePath();
         var tempDir = Path.Combine(Path.GetTempPath(), "EasyLogTests", Guid.NewGuid().ToString());
         var newPath = Path.Combine(tempDir, "newdir", "test.log");
 
@@ -277,27 +284,29 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new JsonLogFormatter();
-        var initialPath = GetTempLogPath();
-        var newPath = GetTempLogPath();
+        var initialBasePath = GetTempLogBasePath();
+        var newBasePath = GetTempLogBasePath();
 
-        var easyLog = new EasyLog(formatter, initialPath);
+        var easyLog = new EasyLog(formatter, initialBasePath);
         easyLog.Write(DateTime.Now, "Event1", new Dictionary<string, object> { { "data", "initial" } });
+        var initialFilePath = easyLog.GetCurrentLogPath();
 
         // Act
-        easyLog.SetLogPath(newPath);
+        easyLog.SetLogPath(newBasePath);
         easyLog.Write(DateTime.Now, "Event2", new Dictionary<string, object> { { "data", "new" } });
+        var newFilePath = easyLog.GetCurrentLogPath();
 
         // Assert
-        Assert.True(File.Exists(initialPath));
-        Assert.True(File.Exists(newPath));
+        Assert.True(File.Exists(initialFilePath));
+        Assert.True(File.Exists(newFilePath));
 
-        var newFileContent = File.ReadAllText(newPath);
+        var newFileContent = File.ReadAllText(newFilePath);
         Assert.Contains("Event2", newFileContent);
         Assert.DoesNotContain("Event1", newFileContent);
 
         // Cleanup
-        CleanupTestFile(initialPath);
-        CleanupTestFile(newPath);
+        CleanupTestFile(initialBasePath);
+        CleanupTestFile(newBasePath);
     }
 
     #endregion
@@ -309,18 +318,19 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
-        var logPath = GetTempLogPath();
+        var logBasePath = GetTempLogBasePath();
 
-        var easyLog = new EasyLog(formatter.Object, logPath);
+        var easyLog = new EasyLog(formatter.Object, logBasePath);
 
         // Act
         var result = easyLog.GetCurrentLogPath();
 
         // Assert
-        Assert.Equal(logPath, result);
+        Assert.StartsWith(logBasePath, result);
+        Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd"), result);
 
         // Cleanup
-        CleanupTestFile(logPath);
+        CleanupTestFile(logBasePath);
     }
 
     [Fact]
@@ -328,21 +338,114 @@ public class EasyLogTests
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
-        var initialPath = GetTempLogPath();
-        var newPath = GetTempLogPath();
+        var initialBasePath = GetTempLogBasePath();
+        var newBasePath = GetTempLogBasePath();
 
-        var easyLog = new EasyLog(formatter.Object, initialPath);
-        easyLog.SetLogPath(newPath);
+        var easyLog = new EasyLog(formatter.Object, initialBasePath);
+        easyLog.SetLogPath(newBasePath);
 
         // Act
         var result = easyLog.GetCurrentLogPath();
 
         // Assert
-        Assert.Equal(newPath, result);
+        Assert.StartsWith(newBasePath, result);
+        Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd"), result);
 
         // Cleanup
-        CleanupTestFile(initialPath);
-        CleanupTestFile(newPath);
+        CleanupTestFile(initialBasePath);
+        CleanupTestFile(newBasePath);
+    }
+
+    #endregion
+
+    #region JSON Structure Tests
+
+    [Fact]
+    public void Write_InitializesFileWithJsonStructure()
+    {
+        // Arrange
+        var formatter = new JsonLogFormatter();
+        var logBasePath = GetTempLogBasePath();
+        var easyLog = new EasyLog(formatter, logBasePath);
+
+        // Act
+        var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
+
+        // Assert
+        Assert.StartsWith("{\"logs\":[", fileContent);
+
+        // Cleanup
+        CleanupTestFile(logBasePath);
+    }
+
+    [Fact]
+    public void CloseJsonStructure_ClosesJsonProperly()
+    {
+        // Arrange
+        var formatter = new JsonLogFormatter();
+        var logBasePath = GetTempLogBasePath();
+        var easyLog = new EasyLog(formatter, logBasePath);
+        var content = new Dictionary<string, object> { { "test", "data" } };
+
+        // Act
+        easyLog.Write(DateTime.Now, "Event", content);
+        easyLog.CloseJsonStructure();
+
+        // Assert
+        var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
+        Assert.EndsWith("]}", fileContent);
+        Assert.StartsWith("{\"logs\":[", fileContent);
+
+        // Cleanup
+        CleanupTestFile(logBasePath);
+    }
+
+    [Fact]
+    public void CloseJsonStructure_WithMultipleEntries_CreatesValidJson()
+    {
+        // Arrange
+        var formatter = new JsonLogFormatter();
+        var logBasePath = GetTempLogBasePath();
+        var easyLog = new EasyLog(formatter, logBasePath);
+
+        // Act
+        easyLog.Write(DateTime.Now, "Event1", new Dictionary<string, object> { { "data", "first" } });
+        easyLog.Write(DateTime.Now, "Event2", new Dictionary<string, object> { { "data", "second" } });
+        easyLog.CloseJsonStructure();
+
+        // Assert
+        var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
+
+        // Vérifier que c'est un JSON valide
+        var parsedJson = System.Text.Json.JsonDocument.Parse(fileContent);
+        var logsArray = parsedJson.RootElement.GetProperty("logs");
+
+        Assert.Equal(2, logsArray.GetArrayLength());
+
+        // Cleanup
+        CleanupTestFile(logBasePath);
+    }
+
+    [Fact]
+    public void CloseJsonStructure_CalledMultipleTimes_DoesNotDuplicate()
+    {
+        // Arrange
+        var formatter = new JsonLogFormatter();
+        var logBasePath = GetTempLogBasePath();
+        var easyLog = new EasyLog(formatter, logBasePath);
+        easyLog.Write(DateTime.Now, "Event", new Dictionary<string, object> { { "test", "data" } });
+
+        // Act
+        easyLog.CloseJsonStructure();
+        var contentAfterFirstClose = File.ReadAllText(easyLog.GetCurrentLogPath());
+        easyLog.CloseJsonStructure();
+        var contentAfterSecondClose = File.ReadAllText(easyLog.GetCurrentLogPath());
+
+        // Assert
+        Assert.Equal(contentAfterFirstClose, contentAfterSecondClose);
+
+        // Cleanup
+        CleanupTestFile(logBasePath);
     }
 
     #endregion

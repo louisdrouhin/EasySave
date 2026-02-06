@@ -19,7 +19,8 @@
 
 - Formatage flexible : Implémentez votre propre format de log (JSON, CSV, texte brut, etc.)
 - Gestion des répertoires : Création automatique des répertoires si nécessaire
-- Chemin dynamique : Changez le fichier de destination des logs à tout moment
+- Rotation journalière : Rotation automatique des fichiers de log (un fichier par jour)
+- Répertoire dynamique : Changez le répertoire de destination des logs à tout moment
 
 ---
 
@@ -51,8 +52,9 @@ Formatter par défaut qui sérialise les logs au format JSON.
 // Créer un formatter (JSON dans cet exemple)
 ILogFormatter formatter = new JsonLogFormatter();
 
-// Initialiser EasyLog avec le formatter et le chemin du fichier
-EasyLog logger = new EasyLog(formatter, "logs/application.log");
+// Initialiser EasyLog avec le formatter et le répertoire des logs
+// Les logs seront automatiquement rotatés quotidiennement avec les fichiers nommés : yyyy-MM-dd_logs.json
+EasyLog logger = new EasyLog(formatter, "logs");
 
 // Écrire un log
 var content = new Dictionary<string, object>
@@ -74,7 +76,7 @@ logger.Write(DateTime.Now, "user_event", content);
 
 ```csharp
 ILogFormatter formatter = new JsonLogFormatter();
-EasyLog logger = new EasyLog(formatter, "logs/user_events.log");
+EasyLog logger = new EasyLog(formatter, "logs/user_events");
 
 // Événement de connexion
 var loginEvent = new Dictionary<string, object>
@@ -88,10 +90,12 @@ var loginEvent = new Dictionary<string, object>
 logger.Write(DateTime.Now, "auth", loginEvent);
 ```
 
-**Sortie dans le fichier** :
+**Sortie dans le fichier** (par exemple `logs/user_events/2025-02-05_logs.json`) :
 ```json
-{"timestamp":"2025-02-05 14:30:45","name":"auth","content":{"event_type":"login","user_id":42,"ip_address":"192.168.1.100","success":true}}
+{"logs":[{"timestamp":"2025-02-05 14:30:45","name":"auth","content":{"event_type":"login","user_id":42,"ip_address":"192.168.1.100","success":true}}]}
 ```
+
+**Rotation journalière** : Chaque jour, un nouveau fichier est créé automatiquement (par exemple `2025-02-06_logs.json` le jour suivant).
 
 ---
 
@@ -101,12 +105,12 @@ logger.Write(DateTime.Now, "auth", loginEvent);
 
 #### Constructeur
 ```csharp
-public EasyLog(ILogFormatter formatter, string logPath)
+public EasyLog(ILogFormatter formatter, string logDirectory)
 ```
 
 **Paramètres:**
 - `formatter` (ILogFormatter) : Implémentation du formatter pour mettre en forme les logs
-- `logPath` (string) : Chemin du fichier de log (créé s'il n'existe pas)
+- `logDirectory` (string) : Chemin du répertoire des logs. Les logs sont stockés en fichiers quotidiens au format `yyyy-MM-dd_logs.json`
 
 #### Méthode Write
 ```csharp
@@ -122,22 +126,38 @@ public void Write(DateTime timestamp, string name, Dictionary<string, object> co
 
 #### Méthode SetLogPath
 ```csharp
-public void SetLogPath(string newLogPath)
+public void SetLogPath(string newLogDirectory)
 ```
 
-**Description:** Change le fichier de destination des logs.
+**Description:** Change le répertoire de destination des logs. Le fichier de log actuel est fermé avant le changement de répertoire.
 
 **Paramètres:**
-- `newLogPath` (string) : Nouveau chemin du fichier de log
+- `newLogDirectory` (string) : Nouveau chemin du répertoire des logs
 
 #### Méthode GetCurrentLogPath
 ```csharp
 public string GetCurrentLogPath()
 ```
 
-**Description:** Retourne le chemin actuellement utilisé pour les logs.
+**Description:** Retourne le chemin complet du fichier de log actuellement utilisé (incluant le nom du fichier avec la date).
 
-**Retour:** Le chemin du fichier de log (string)
+**Retour:** Le chemin complet du fichier de log actuel (string)
+
+#### Méthode GetLogDirectory
+```csharp
+public string GetLogDirectory()
+```
+
+**Description:** Retourne le chemin du répertoire des logs actuellement utilisé.
+
+**Retour:** Le chemin du répertoire des logs (string)
+
+#### Méthode CloseJsonStructure
+```csharp
+public void CloseJsonStructure()
+```
+
+**Description:** Ferme la structure JSON du fichier de log actuel en ajoutant `]}`. Ceci est utile pour finaliser le fichier de log avant de changer de répertoire ou de terminer l'application.
 
 ---
 
@@ -175,7 +195,3 @@ public class JsonLogFormatter : ILogFormatter
 ```
 
 ---
-
-## Version
-- v1.0.0 - Version initiale avec format JSON
-- Framework cible : .NET 10.0
