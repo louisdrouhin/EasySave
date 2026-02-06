@@ -99,6 +99,32 @@ logger.Write(DateTime.Now, "auth", loginEvent);
 
 ---
 
+### Example 2: UNC Path Normalization
+
+```csharp
+ILogFormatter formatter = new JsonLogFormatter();
+EasyLog logger = new EasyLog(formatter, "logs");
+
+// Backup event with local paths
+var backupEvent = new Dictionary<string, object>
+{
+    { "sourcePath", "C:\\Documents\\Data" },
+    { "destinationPath", "D:\\Backups\\Data" },
+    { "status", "completed" }
+};
+
+logger.Write(DateTime.Now, "backup", backupEvent);
+```
+
+**Output in file**:
+```json
+{"logs":[{"timestamp":"2025-02-05 14:30:45","name":"backup","content":{"sourcePath":"\\\\localhost\\C$\\Documents\\Data","destinationPath":"\\\\localhost\\D$\\Backups\\Data","status":"completed"}}]}
+```
+
+**Note:** Local paths are automatically converted to UNC format to ensure network compatibility and centralization.
+
+---
+
 ## Reference
 
 ### EasyLog Class
@@ -117,12 +143,14 @@ public EasyLog(ILogFormatter formatter, string logDirectory)
 public void Write(DateTime timestamp, string name, Dictionary<string, object> content)
 ```
 
-**Description:** Writes a formatted log to the file.
+**Description:** Writes a formatted log to the file. Any field containing the keyword "Path" in its key will be automatically normalized to UNC format.
 
 **Parameters:**
 - `timestamp` (DateTime): Event timestamp
 - `name` (string): Event name or category
 - `content` (Dictionary<string, object>): Event data
+
+**UNC Normalization:** Local paths (ex: `C:\Users\file.txt`) are automatically converted to UNC paths (ex: `\\localhost\C$\Users\file.txt`)
 
 #### SetLogPath Method
 ```csharp

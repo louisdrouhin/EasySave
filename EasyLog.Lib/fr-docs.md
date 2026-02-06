@@ -21,6 +21,7 @@
 - Gestion des répertoires : Création automatique des répertoires si nécessaire
 - Rotation journalière : Rotation automatique des fichiers de log (un fichier par jour)
 - Répertoire dynamique : Changez le répertoire de destination des logs à tout moment
+- Normalisation UNC : Conversion automatique des chemins locaux en chemins UNC pour la compatibilité réseau
 
 ---
 
@@ -99,6 +100,32 @@ logger.Write(DateTime.Now, "auth", loginEvent);
 
 ---
 
+### Exemple 2 : Normalisation UNC des chemins
+
+```csharp
+ILogFormatter formatter = new JsonLogFormatter();
+EasyLog logger = new EasyLog(formatter, "logs");
+
+// Événement de sauvegarde avec des chemins locaux
+var backupEvent = new Dictionary<string, object>
+{
+    { "sourcePath", "C:\\Documents\\Data" },
+    { "destinationPath", "D:\\Backups\\Data" },
+    { "status", "completed" }
+};
+
+logger.Write(DateTime.Now, "backup", backupEvent);
+```
+
+**Sortie dans le fichier** :
+```json
+{"logs":[{"timestamp":"2025-02-05 14:30:45","name":"backup","content":{"sourcePath":"\\\\localhost\\C$\\Documents\\Data","destinationPath":"\\\\localhost\\D$\\Backups\\Data","status":"completed"}}]}
+```
+
+**Note:** Les chemins locaux sont automatiquement convertis au format UNC pour assurer la compatibilité réseau et centralisée.
+
+---
+
 ## Référence
 
 ### Classe EasyLog
@@ -117,12 +144,14 @@ public EasyLog(ILogFormatter formatter, string logDirectory)
 public void Write(DateTime timestamp, string name, Dictionary<string, object> content)
 ```
 
-**Description:** Écrit un log formaté dans le fichier.
+**Description:** Écrit un log formaté dans le fichier. Les chemins contenus dans les données (clés contenant "Path") sont automatiquement normalisés au format UNC.
 
 **Paramètres:**
 - `timestamp` (DateTime) : Horodatage de l'événement
 - `name` (string) : Nom ou catégorie de l'événement
 - `content` (Dictionary<string, object>) : Données de l'événement
+
+**Normalisation UNC:** Les chemins locaux (ex: `C:\Users\file.txt`) sont automatiquement convertis en chemins UNC (ex: `\\localhost\C$\Users\file.txt`)
 
 #### Méthode SetLogPath
 ```csharp
