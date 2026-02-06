@@ -1,7 +1,9 @@
 <Solution>
   <Project Path="EasyLog.Lib/EasyLog.Lib.csproj" />
+  <Project Path="EasyLog.Lib.Tests/EasyLog.Lib.Tests.csproj" />
   <Project Path="EasySave.Cli/EasySave.Cli.csproj" />
   <Project Path="EasySave.Core/EasySave.Core.csproj" />
   <Project Path="EasySave.Gui/EasySave.Gui.csproj" />
   <Project Path="EasySave.Models/EasySave.Models.csproj" />
+  <Project Path="EasySave.Models.Tests/EasySave.Models.Tests.csproj" />
 </Solution>
