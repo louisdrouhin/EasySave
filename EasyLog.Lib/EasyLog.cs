@@ -91,6 +91,47 @@ public class EasyLog
         }
     }
 
+    private void NormalizePathsInContent(Dictionary<string, object> content)
+    {
+        var keysToUpdate = content.Keys
+            .Where(k => k.Contains("Path", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        foreach (var key in keysToUpdate)
+        {
+            if (content[key] is string pathValue)
+            {
+                content[key] = ConvertToUncPath(pathValue);
+            }
+        }
+    }
+
+    private string ConvertToUncPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return path;
+
+        try
+        {
+            if (path.StartsWith("\\\\", StringComparison.OrdinalIgnoreCase))
+                return path;
+
+            var fullPath = Path.GetFullPath(path);
+
+            if (fullPath.Length >= 2 && fullPath[1] == ':')
+            {
+                var drive = fullPath[0];
+                var pathWithoutDrive = fullPath.Substring(2);
+                return $"\\\\localhost\\{drive}$\\{pathWithoutDrive}";
+            }
+            return fullPath;
+        }
+        catch
+        {
+            return path;
+        }
+    }
+
     public void Write(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (content == null)
@@ -98,6 +139,7 @@ public class EasyLog
 
         CheckAndRotateIfNeeded();
         EnsureFileIsOpen();
+        NormalizePathsInContent(content);
 
         try
         {

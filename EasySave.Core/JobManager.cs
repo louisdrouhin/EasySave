@@ -344,7 +344,7 @@ public class JobManager
                             new Dictionary<string, object>
                             {
                                 { "jobName", job.Name },
-                                { "sourceFile", sourceFile },
+                                { "sourceFilePath", sourceFile },
                                 { "error", hashEx.Message }
                             }
                         );
@@ -360,8 +360,8 @@ public class JobManager
                     new Dictionary<string, object>
                     {
                         { "jobName", job.Name },
-                        { "sourceFile", sourceFile },
-                        { "destinationFile", destinationFile },
+                        { "sourceFilePath", sourceFile },
+                        { "destinationFilePath", destinationFile },
                         { "fileSize", fileSize },
                         { "progress", $"{filesProcessed}/{totalFiles}" }
                     }
@@ -375,7 +375,7 @@ public class JobManager
                     new Dictionary<string, object>
                     {
                         { "jobName", job.Name },
-                        { "sourceFile", sourceFile },
+                        { "sourceFilePath", sourceFile },
                         { "error", ex.Message }
                     }
                 );
@@ -570,7 +570,7 @@ public class JobManager
                         new Dictionary<string, object>
                         {
                             { "jobName", job.Name },
-                            { "sourceFile", sourceFile },
+                            { "sourceFilePath", sourceFile },
                             { "destinationFile", destinationFile },
                             { "fileSize", fileSize },
                             { "hash", currentHash }
@@ -588,7 +588,7 @@ public class JobManager
                     new Dictionary<string, object>
                     {
                         { "jobName", job.Name },
-                        { "sourceFile", sourceFile },
+                        { "sourceFilePath", sourceFile },
                         { "error", ex.Message }
                     }
                 );
