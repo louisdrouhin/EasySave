@@ -18,4 +18,25 @@ public class JsonLogFormatter : ILogFormatter
 
         return JsonSerializer.Serialize(logEntry, new JsonSerializerOptions { WriteIndented = false });
     }
+
+    public void Close(string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                var content = File.ReadAllText(filePath);
+                if (!content.EndsWith("]}"))
+                {
+                    File.AppendAllText(filePath, "]}");
+                }
+            }
+        }
+        catch (IOException ex)
+        {
+            throw new InvalidOperationException(
+                $"Erreur lors de la fermeture du fichier de log JSON : {filePath}",
+                ex);
+        }
+    }
 }

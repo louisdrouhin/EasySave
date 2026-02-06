@@ -137,7 +137,12 @@ public class EasyLog
         return _logDirectory;
     }
 
-    public void CloseJsonStructure()
+    public void Close()
+    {
+        _formatter.Close(_logPath);
+    }
+
+    private void CloseJsonStructure()
     {
         try
         {

@@ -379,7 +379,7 @@ public class EasyLogTests
     }
 
     [Fact]
-    public void CloseJsonStructure_ClosesJsonProperly()
+    public void Close_ClosesJsonProperly()
     {
         // Arrange
         var formatter = new JsonLogFormatter();
@@ -389,7 +389,7 @@ public class EasyLogTests
 
         // Act
         easyLog.Write(DateTime.Now, "Event", content);
-        easyLog.CloseJsonStructure();
+        easyLog.Close();
 
         // Assert
         var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
@@ -401,7 +401,7 @@ public class EasyLogTests
     }
 
     [Fact]
-    public void CloseJsonStructure_WithMultipleEntries_CreatesValidJson()
+    public void Close_WithMultipleEntries_CreatesValidJson()
     {
         // Arrange
         var formatter = new JsonLogFormatter();
@@ -411,7 +411,7 @@ public class EasyLogTests
         // Act
         easyLog.Write(DateTime.Now, "Event1", new Dictionary<string, object> { { "data", "first" } });
         easyLog.Write(DateTime.Now, "Event2", new Dictionary<string, object> { { "data", "second" } });
-        easyLog.CloseJsonStructure();
+        easyLog.Close();
 
         // Assert
         var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
@@ -427,7 +427,7 @@ public class EasyLogTests
     }
 
     [Fact]
-    public void CloseJsonStructure_CalledMultipleTimes_DoesNotDuplicate()
+    public void Close_CalledMultipleTimes_DoesNotDuplicate()
     {
         // Arrange
         var formatter = new JsonLogFormatter();
@@ -436,9 +436,9 @@ public class EasyLogTests
         easyLog.Write(DateTime.Now, "Event", new Dictionary<string, object> { { "test", "data" } });
 
         // Act
-        easyLog.CloseJsonStructure();
+        easyLog.Close();
         var contentAfterFirstClose = File.ReadAllText(easyLog.GetCurrentLogPath());
-        easyLog.CloseJsonStructure();
+        easyLog.Close();
         var contentAfterSecondClose = File.ReadAllText(easyLog.GetCurrentLogPath());
 
         // Assert

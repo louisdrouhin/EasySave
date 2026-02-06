@@ -81,6 +81,7 @@ namespace EasySave.Cli
                             break;
                         case 5:
                             continuer = false;
+                            _jobManager.Close();
                             Console.WriteLine(LocalizationManager.Get("Common_Closing"));
                             continue;
                     }
