@@ -1,0 +1,9 @@
+{
+    "config": {
+        "logsPath": "./logs/",
+        "stateFilePath": "./state.json"
+    },
+    "jobs": [
+
+    ]
+}

@@ -6,7 +6,7 @@
 3. [Architecture](#architecture)
 4. [Utilisation](#utilisation)
 5. [Exemples](#exemples)
-6. [Référence API](#référence-api)
+6. [Référence](#référence)
 7. [Créer un formatter personnalisé](#créer-un-formatter-personnalisé)
 
 ---
@@ -152,12 +152,12 @@ public string GetLogDirectory()
 
 **Retour:** Le chemin du répertoire des logs (string)
 
-#### Méthode CloseJsonStructure
+#### Méthode Close
 ```csharp
-public void CloseJsonStructure()
+public void Close()
 ```
 
-**Description:** Ferme la structure JSON du fichier de log actuel en ajoutant `]}`. Ceci est utile pour finaliser le fichier de log avant de changer de répertoire ou de terminer l'application.
+**Description:** Ferme le fichier de log actuel en utilisant le formatter. Ceci est utile pour finaliser le fichier de log avant de terminer l'application.
 
 ---
 

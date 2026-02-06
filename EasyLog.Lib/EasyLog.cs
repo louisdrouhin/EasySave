@@ -68,12 +68,39 @@ public class EasyLog
         }
     }
 
+    private void EnsureFileIsOpen()
+    {
+        try
+        {
+            if (File.Exists(_logPath))
+            {
+                var content = File.ReadAllText(_logPath);
+                // Si le fichier se termine par "}", il est probablement fermé avec "]}"
+                if (content.EndsWith("]}"))
+                {
+                    // Supprimer les 2 derniers caractères pour le rouvrir
+                    var reopenedContent = content.Substring(0, content.Length - 2);
+                    File.WriteAllText(_logPath, reopenedContent);
+                    // Le fichier contient déjà des données, donc pas la première entrée
+                    _isFirstEntry = false;
+                }
+            }
+        }
+        catch (IOException ex)
+        {
+            throw new InvalidOperationException(
+                $"Erreur lors de la vérification d'ouverture du fichier de log : {_logPath}",
+                ex);
+        }
+    }
+
     public void Write(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (content == null)
             throw new ArgumentNullException(nameof(content));
 
         CheckAndRotateIfNeeded();
+        EnsureFileIsOpen();
 
         try
         {
@@ -103,7 +130,7 @@ public class EasyLog
 
         if (todayDate != _currentDate)
         {
-            CloseJsonStructure();
+            Close();
             _currentDate = todayDate;
             _logPath = GetLogPathForDate(_currentDate);
             _isFirstEntry = true;
@@ -116,7 +143,7 @@ public class EasyLog
         if (string.IsNullOrWhiteSpace(newLogDirectory))
             throw new ArgumentException("Le nouveau chemin du dossier des logs ne peut pas être null, vide ou whitespace.", nameof(newLogDirectory));
 
-        CloseJsonStructure();
+        Close();
 
         _logDirectory = newLogDirectory;
         _currentDate = DateTime.Now.Date;
@@ -137,25 +164,9 @@ public class EasyLog
         return _logDirectory;
     }
 
-    public void CloseJsonStructure()
+    public void Close()
     {
-        try
-        {
-            if (File.Exists(_logPath))
-            {
-                var content = File.ReadAllText(_logPath);
-                if (!content.EndsWith("]}"))
-                {
-                    File.AppendAllText(_logPath, "]}");
-                }
-            }
-        }
-        catch (IOException ex)
-        {
-            throw new InvalidOperationException(
-                $"Erreur lors de la fermeture du fichier de log : {_logPath}",
-                ex);
-        }
+        _formatter.Close(_logPath);
     }
 
     private static void EnsureDirectoryExists(string directory)

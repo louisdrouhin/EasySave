@@ -152,12 +152,12 @@ public string GetLogDirectory()
 
 **Return:** The log directory path (string)
 
-#### CloseJsonStructure Method
+#### Close Method
 ```csharp
-public void CloseJsonStructure()
+public void Close()
 ```
 
-**Description:** Closes the JSON structure of the current log file by appending `]}`. This is useful when you want to finalize the log file before switching directories or ending the application.
+**Description:** Closes the current log file using the formatter. This is useful when you want to finalize the log file before ending the application.
 
 ---
 

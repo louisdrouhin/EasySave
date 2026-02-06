@@ -611,3 +611,5 @@ tags
 
 # End of https://www.toptal.com/developers/gitignore/api/dotnetcore,visualstudio,vim,csharp
 Expliquer
+
+config.json

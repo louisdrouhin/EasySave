@@ -86,6 +86,12 @@
   <data name="CreateJob_Title" xml:space="preserve">
     <value>=== CREATE A BACKUP JOB ===</value>
   </data>
+  <data name="CreateJob_ExistingJobs" xml:space="preserve">
+    <value>Existing jobs:</value>
+  </data>
+  <data name="CreateJob_NoExistingJobs" xml:space="preserve">
+    <value>No existing jobs.</value>
+  </data>
   <data name="CreateJob_JobName" xml:space="preserve">
     <value>Job name: </value>
   </data>
@@ -140,9 +146,50 @@
     <value>✓ All backups completed!</value>
   </data>
   
+  <!-- Job Execution -->
+  <data name="ExecuteJobs_Title" xml:space="preserve">
+    <value>=== EXECUTE JOBS ===</value>
+  </data>
+  <data name="ExecuteJobs_AvailableJobs" xml:space="preserve">
+    <value>Available jobs:</value>
+  </data>
+  <data name="ExecuteJobs_SelectPrompt" xml:space="preserve">
+    <value>Enter the job number(s) to execute (comma-separated) or 'all' for all: </value>
+  </data>
+  <data name="ExecuteJobs_Executing" xml:space="preserve">
+    <value>Executing {0} job(s)...</value>
+  </data>
+  <data name="ExecuteJobs_ExecutingJob" xml:space="preserve">
+    <value>Executing job: {0}...</value>
+  </data>
+  <data name="ExecuteJobs_NoSelection" xml:space="preserve">
+    <value>No job selected.</value>
+  </data>
+  <data name="ExecuteJobs_InvalidNumber" xml:space="preserve">
+    <value>Invalid number: {0}</value>
+  </data>
+  <data name="ExecuteJobs_NoJobs" xml:space="preserve">
+    <value>No jobs configured yet.</value>
+  </data>
+  <data name="ExecuteJobs_Instructions" xml:space="preserve">
+    <value>Use 'Create a backup job' option to get started.</value>
+  </data>
+  <data name="ExecuteJobs_Success" xml:space="preserve">
+    <value>✓ Job '{0}' executed successfully!</value>
+  </data>
+  <data name="ExecuteJobs_Error" xml:space="preserve">
+    <value>✗ Error executing job '{0}': {1}</value>
+  </data>
+  
   <!-- Deletion -->
   <data name="DeleteJob_Title" xml:space="preserve">
     <value>=== DELETE A JOB ===</value>
+  </data>
+  <data name="DeleteJob_ExistingJobs" xml:space="preserve">
+    <value>Existing jobs:</value>
+  </data>
+  <data name="DeleteJob_NoJobsToDelete" xml:space="preserve">
+    <value>No jobs to delete.</value>
   </data>
   <data name="DeleteJob_JobName" xml:space="preserve">
     <value>Job name to delete: </value>
@@ -205,5 +252,10 @@
   </data>
   <data name="Language_Changed" xml:space="preserve">
     <value>✓ Language changed to '{0}' successfully!</value>
+  </data>
+  
+  <!-- Errors -->
+  <data name="Error_ConfigFileNotFound" xml:space="preserve">
+    <value>Unable to start: the base configuration file cannot be found.</value>
   </data>
 </root>
