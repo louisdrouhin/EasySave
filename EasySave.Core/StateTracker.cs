@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using EasySave.Models;
 
 namespace EasySave.Core;
@@ -22,7 +23,11 @@ public class StateTracker
     _jobStates[stateEntry.JobName] = stateEntry;
 
     // Sérialisation et écriture dans le fichier
-    var options = new JsonSerializerOptions { WriteIndented = true };
+    var options = new JsonSerializerOptions
+    {
+      WriteIndented = true,
+      Converters = { new JsonStringEnumConverter() }
+    };
     var json = JsonSerializer.Serialize(_jobStates.Values, options);
 
     // S'assurer que le dossier existe
@@ -43,7 +48,11 @@ public class StateTracker
     if (_jobStates.Remove(jobName))
     {
       // Mise à jour du fichier après suppression
-      var options = new JsonSerializerOptions { WriteIndented = true };
+      var options = new JsonSerializerOptions
+      {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+      };
       var json = JsonSerializer.Serialize(_jobStates.Values, options);
       File.WriteAllText(_stateFilePath, json);
     }

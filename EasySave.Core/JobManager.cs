@@ -590,55 +590,6 @@ public class JobManager
                     filesToCopy.Add((sourceFile, relativePath, fileInfo.Length, currentHash));
                     totalSizeToTransfer += fileInfo.Length;
                 }
-                else if (hashDictionary[relativePath] != currentHash)
-                {
-                    needsCopy = true;
-                    _logger.Write(
-                        DateTime.Now,
-                        "ModifiedFileDetected",
-                        new Dictionary<string, object>
-                        {
-                            { "jobName", job.Name },
-                            { "file", relativePath },
-                            { "oldHash", hashDictionary[relativePath] },
-                            { "newHash", currentHash }
-                        }
-                    );
-                }
-
-                if (needsCopy)
-                {
-                    var destinationFile = Path.Combine(diffBackupPath, relativePath);
-                    var destinationDir = Path.GetDirectoryName(destinationFile);
-
-                    if (destinationDir != null && !Directory.Exists(destinationDir))
-                    {
-                        Directory.CreateDirectory(destinationDir);
-                    }
-
-                    var fileInfo = new FileInfo(sourceFile);
-                    var fileSize = fileInfo.Length;
-
-                    File.Copy(sourceFile, destinationFile, true);
-
-                    filesModified++;
-                    totalBytesTransferred += fileSize;
-
-                    _logger.Write(
-                        DateTime.Now,
-                        "FileCopied",
-                        new Dictionary<string, object>
-                        {
-                            { "jobName", job.Name },
-                            { "sourceFilePath", sourceFile },
-                            { "destinationFile", destinationFile },
-                            { "fileSize", fileSize },
-                            { "hash", currentHash }
-                        }
-                    );
-                }
-
-                filesProcessed++;
             }
             catch (Exception ex)
             {
