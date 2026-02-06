@@ -10,6 +10,7 @@ public class JobManager
     private readonly EasyLog _logger;
     private readonly ConfigParser _configParser;
     private readonly ILogFormatter _logFormatter;
+    private readonly StateTracker _stateTracker;
 
     public JobManager()
     {
@@ -36,8 +37,6 @@ public class JobManager
             }
         );
 
-        /// TODO : initialiser le stateTracker et logger son lancement
-
         _jobs = new List<Job>();
 
         _logger.Write(
@@ -56,6 +55,26 @@ public class JobManager
                 { "jobsCount", _jobs.Count }
             }
         );
+
+        string stateFilePath = _configParser.Config?["config"]?["stateFilePath"]?.GetValue<string>() ?? "state.json";
+        _stateTracker = new StateTracker(stateFilePath);
+
+        foreach (var job in _jobs)
+        {
+            _stateTracker.UpdateJobState(
+                new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Inactive
+                )
+            );
+        }
+
+        _logger.Write(
+            DateTime.Now,
+            "StateTrackerCreated",
+            new Dictionary<string, object>()
+        );
     }
 
     public void CreateJob(string name, JobType type, string sourcePath, string destinationPath)
@@ -65,6 +84,14 @@ public class JobManager
         _jobs.Add(job);
 
         SaveJobToConfig(job);
+
+        _stateTracker.UpdateJobState(
+            new StateEntry(
+              job.Name,
+              DateTime.Now,
+              JobState.Inactive
+            )
+        );
 
         _logger.Write(
             DateTime.Now,
@@ -93,6 +120,8 @@ public class JobManager
         _jobs.Remove(jobToRemove);
 
         RemoveJobFromConfig(name);
+
+        _stateTracker.RemoveJobState(name);
 
         _logger.Write(
             DateTime.Now,
@@ -206,7 +235,15 @@ public class JobManager
 
     public void LaunchJob(Job job)
     {
-        //TODO: use index for execution
+
+        _stateTracker.UpdateJobState(
+            new StateEntry(
+                job.Name,
+                DateTime.Now,
+                JobState.Active
+              )
+            );
+
         _logger.Write(
             DateTime.Now,
             "JobStarted",
@@ -232,6 +269,14 @@ public class JobManager
                 default:
                     throw new InvalidOperationException($"Type de job non supporté : {job.Type}");
             }
+
+            _stateTracker.UpdateJobState(
+                new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Inactive
+                  )
+                );
 
             _logger.Write(
                 DateTime.Now,
