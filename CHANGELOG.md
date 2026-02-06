@@ -1,3 +1,20 @@
+## v0.4.0 (2026-02-06)
+
+### Feat
+
+- **jobmanager.cs**: add method ExecuteDifferentialBackup
+- **Jobmanager.cs**: add launchjob method for full type
+- **jobmanager.cs**: add GetJobs method
+- **JobManager.cs**: add removejob method
+- **configParser.cs**: add configParser class
+
+### Fix
+
+- fix conflicts
+- **easylog**: fix reopen log file logicin order to keep clear structure
+- **easylog**: close log files when exit
+- **jobmanager.cs**: fix class
+
 ## v0.3.0 (2026-02-06)
 
 ### Fix
