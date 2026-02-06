@@ -105,7 +105,6 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.Get("CreateJob_Title"));
             Console.WriteLine();
 
-            // Afficher les jobs existants
             var existingJobs = _jobManager.GetJobs();
             if (existingJobs.Count > 0)
             {
@@ -153,7 +152,6 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.Get("DeleteJob_Title"));
             Console.WriteLine();
 
-            // Afficher les jobs existants
             var existingJobs = _jobManager.GetJobs();
             if (existingJobs.Count > 0)
             {

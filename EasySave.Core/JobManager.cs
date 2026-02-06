@@ -81,6 +81,8 @@ public class JobManager
 
     public void removeJob(string name)
     {
+        //TODO: use index for execution
+        //TODO: control if job exist before delete
         var jobToRemove = _jobs.FirstOrDefault(j => j.Name == name);
 
         if (jobToRemove == null)
@@ -204,6 +206,7 @@ public class JobManager
 
     public void LaunchJob(Job job)
     {
+        //TODO: use index for execution
         _logger.Write(
             DateTime.Now,
             "JobStarted",
@@ -321,7 +324,6 @@ public class JobManager
 
                 File.Copy(sourceFile, destinationFile, overwrite: true);
 
-                // Calculer le hash SHA-256 seulement si demandé
                 if (createHashFile && hashDictionary != null)
                 {
                     try

@@ -14,7 +14,7 @@ public class EasyLog
             throw new ArgumentNullException(nameof(formatter));
 
         if (string.IsNullOrWhiteSpace(logDirectory))
-            throw new ArgumentException("Le chemin du dossier des logs ne peut pas être null, vide ou whitespace.", nameof(logDirectory));
+            throw new ArgumentException("The log directory path can't be null", nameof(logDirectory));
 
         _formatter = formatter;
         _logDirectory = logDirectory;
@@ -63,7 +63,7 @@ public class EasyLog
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Erreur lors de la réouverture du fichier de log : {_logPath}",
+                $"Error when reopening the log file: {_logPath}",
                 ex);
         }
     }
@@ -75,13 +75,10 @@ public class EasyLog
             if (File.Exists(_logPath))
             {
                 var content = File.ReadAllText(_logPath);
-                // Si le fichier se termine par "}", il est probablement fermé avec "]}"
                 if (content.EndsWith("]}"))
                 {
-                    // Supprimer les 2 derniers caractères pour le rouvrir
                     var reopenedContent = content.Substring(0, content.Length - 2);
                     File.WriteAllText(_logPath, reopenedContent);
-                    // Le fichier contient déjà des données, donc pas la première entrée
                     _isFirstEntry = false;
                 }
             }
@@ -89,7 +86,7 @@ public class EasyLog
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Erreur lors de la vérification d'ouverture du fichier de log : {_logPath}",
+                $"Error checking log file opening: {_logPath}",
                 ex);
         }
     }
@@ -119,7 +116,7 @@ public class EasyLog
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Erreur lors de l'écriture dans le fichier de log : {_logPath}",
+                $"Error while writing to the log file: {_logPath}",
                 ex);
         }
     }
@@ -141,7 +138,7 @@ public class EasyLog
     public void SetLogPath(string newLogDirectory)
     {
         if (string.IsNullOrWhiteSpace(newLogDirectory))
-            throw new ArgumentException("Le nouveau chemin du dossier des logs ne peut pas être null, vide ou whitespace.", nameof(newLogDirectory));
+            throw new ArgumentException("The new path for the log file cannot be null, empty, or whitespace.", nameof(newLogDirectory));
 
         Close();
 

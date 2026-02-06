@@ -37,7 +37,6 @@ public class ConfigParser
 
     public void EditAndSaveConfig(JsonNode newConfig)
     {
-        // Fusion des configurations (spread operator style JS: {...Config, ...newConfig})
         if (Config is JsonObject configObject && newConfig is JsonObject newConfigObject)
         {
             foreach (var property in newConfigObject)

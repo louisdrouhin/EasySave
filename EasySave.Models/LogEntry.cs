@@ -37,4 +37,7 @@ public class LogEntry
 
         return (Timestamp, BackupName, content);
     }
+
+    //TODO: Create method for data validation (e.g., check if paths are valid, file size is non-negative, etc.)
+    //TODO: Create method for converting path into UNC format
 }
