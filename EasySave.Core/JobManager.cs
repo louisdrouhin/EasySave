@@ -227,31 +227,42 @@ public class JobManager
         }
     }
 
-    private void ExecuteFullBackup(Job job)
+    private void ExecuteFullBackup(Job job, bool createHashFile = false)
     {
         if (!Directory.Exists(job.SourcePath))
         {
             throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
         }
 
+        // Créer le répertoire de destination principal s'il n'existe pas
         if (!Directory.Exists(job.DestinationPath))
         {
             Directory.CreateDirectory(job.DestinationPath);
-            _logger.Write(
-                DateTime.Now,
-                "DestinationDirectoryCreated",
-                new Dictionary<string, object>
-                {
-                    { "jobName", job.Name },
-                    { "destinationPath", job.DestinationPath }
-                }
-            );
         }
+
+        // Créer un sous-dossier avec timestamp pour cette sauvegarde
+        var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
+        var backupFolderName = $"FULL_{timestamp}";
+        var fullBackupPath = Path.Combine(job.DestinationPath, backupFolderName);
+
+        Directory.CreateDirectory(fullBackupPath);
+
+        _logger.Write(
+            DateTime.Now,
+            "BackupFolderCreated",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name },
+                { "backupPath", fullBackupPath },
+                { "timestamp", timestamp }
+            }
+        );
 
         var sourceFiles = Directory.GetFiles(job.SourcePath, "*", SearchOption.AllDirectories);
         int totalFiles = sourceFiles.Length;
         int filesProcessed = 0;
         long totalBytesTransferred = 0;
+        var hashDictionary = createHashFile ? new Dictionary<string, string>() : null;
 
         _logger.Write(
             DateTime.Now,
@@ -259,7 +270,9 @@ public class JobManager
             new Dictionary<string, object>
             {
                 { "jobName", job.Name },
-                { "totalFiles", totalFiles }
+                { "totalFiles", totalFiles },
+                { "backupFolder", backupFolderName },
+                { "createHashFile", createHashFile }
             }
         );
 
@@ -268,7 +281,7 @@ public class JobManager
             try
             {
                 var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
-                var destinationFile = Path.Combine(job.DestinationPath, relativePath);
+                var destinationFile = Path.Combine(fullBackupPath, relativePath);
 
                 var destinationDir = Path.GetDirectoryName(destinationFile);
                 if (destinationDir != null && !Directory.Exists(destinationDir))
@@ -280,6 +293,34 @@ public class JobManager
                 var fileSize = fileInfo.Length;
 
                 File.Copy(sourceFile, destinationFile, overwrite: true);
+
+                // Calculer le hash SHA-256 seulement si demandé
+                if (createHashFile && hashDictionary != null)
+                {
+                    try
+                    {
+                        using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                        using (var stream = File.OpenRead(sourceFile))
+                        {
+                            var hashBytes = sha256.ComputeHash(stream);
+                            var fileHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                            hashDictionary[relativePath] = fileHash;
+                        }
+                    }
+                    catch (Exception hashEx)
+                    {
+                        _logger.Write(
+                            DateTime.Now,
+                            "HashCalculationError",
+                            new Dictionary<string, object>
+                            {
+                                { "jobName", job.Name },
+                                { "sourceFile", sourceFile },
+                                { "error", hashEx.Message }
+                            }
+                        );
+                    }
+                }
 
                 filesProcessed++;
                 totalBytesTransferred += fileSize;
@@ -312,6 +353,43 @@ public class JobManager
             }
         }
 
+        // Créer/Mettre à jour le fichier hash.json seulement si demandé
+        if (createHashFile && hashDictionary != null)
+        {
+            var hashFilePath = Path.Combine(job.DestinationPath, "hash.json");
+            try
+            {
+                var hashJson = System.Text.Json.JsonSerializer.Serialize(hashDictionary, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+                File.WriteAllText(hashFilePath, hashJson);
+
+                _logger.Write(
+                    DateTime.Now,
+                    "HashFileCreated",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "hashFilePath", hashFilePath },
+                        { "entriesCount", hashDictionary.Count }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.Write(
+                    DateTime.Now,
+                    "HashFileCreationError",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "error", ex.Message }
+                    }
+                );
+            }
+        }
+
         _logger.Write(
             DateTime.Now,
             "FullBackupCompleted",
@@ -320,14 +398,229 @@ public class JobManager
                 { "jobName", job.Name },
                 { "filesProcessed", filesProcessed },
                 { "totalFiles", totalFiles },
-                { "totalBytesTransferred", totalBytesTransferred }
+                { "totalBytesTransferred", totalBytesTransferred },
+                { "backupFolder", backupFolderName }
             }
         );
     }
 
     private void ExecuteDifferentialBackup(Job job)
     {
-        // TODO : Implémenter la logique de sauvegarde différentielle
-        throw new NotImplementedException("La sauvegarde différentielle n'est pas encore implémentée");
+        // Vérifier que le répertoire source existe
+        if (!Directory.Exists(job.SourcePath))
+        {
+            throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
+        }
+
+        // Créer le répertoire de destination principal s'il n'existe pas
+        if (!Directory.Exists(job.DestinationPath))
+        {
+            Directory.CreateDirectory(job.DestinationPath);
+        }
+
+        // Vérifier si le fichier hash.json existe
+        var hashFilePath = Path.Combine(job.DestinationPath, "hash.json");
+        if (!File.Exists(hashFilePath))
+        {
+            _logger.Write(
+                DateTime.Now,
+                "NoHashFileFound",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "message", "Aucun fichier hash.json trouvé, basculement vers une sauvegarde complète" }
+                }
+            );
+
+            // Bascule automatiquement vers une sauvegarde complète avec création du fichier hash
+            ExecuteFullBackup(job, createHashFile: true);
+            return;
+        }
+
+        Dictionary<string, string> hashDictionary;
+        try
+        {
+            var hashJson = File.ReadAllText(hashFilePath);
+            hashDictionary = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(hashJson)
+                ?? new Dictionary<string, string>();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Erreur lors de la lecture du fichier hash.json : {ex.Message}", ex);
+        }
+
+        // Créer le dossier de sauvegarde différentielle avec timestamp
+        var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
+        var backupFolderName = $"DIFF_{timestamp}";
+        var diffBackupPath = Path.Combine(job.DestinationPath, backupFolderName);
+        Directory.CreateDirectory(diffBackupPath);
+
+        _logger.Write(
+            DateTime.Now,
+            "DifferentialBackupStarted",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name },
+                { "backupFolder", backupFolderName },
+                { "hashFileLoaded", hashFilePath }
+            }
+        );
+
+        int totalFiles = 0;
+        int filesProcessed = 0;
+        int filesModified = 0;
+        long totalBytesTransferred = 0;
+        var newHashDictionary = new Dictionary<string, string>();
+
+        // Parcourir séquentiellement tous les fichiers de la source
+        foreach (var sourceFile in Directory.EnumerateFiles(job.SourcePath, "*", SearchOption.AllDirectories))
+        {
+            totalFiles++;
+            string currentHash = string.Empty;
+
+            try
+            {
+                // Calculer le hash SHA-256 du fichier
+                using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                using (var stream = File.OpenRead(sourceFile))
+                {
+                    var hashBytes = sha256.ComputeHash(stream);
+                    currentHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                }
+
+                // Obtenir le chemin relatif
+                var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
+
+                // Stocker le nouveau hash
+                newHashDictionary[relativePath] = currentHash;
+
+                // Vérifier si le fichier a été modifié ou est nouveau
+                bool needsCopy = false;
+                if (!hashDictionary.ContainsKey(relativePath))
+                {
+                    needsCopy = true;
+                    _logger.Write(
+                        DateTime.Now,
+                        "NewFileDetected",
+                        new Dictionary<string, object>
+                        {
+                            { "jobName", job.Name },
+                            { "file", relativePath }
+                        }
+                    );
+                }
+                else if (hashDictionary[relativePath] != currentHash)
+                {
+                    needsCopy = true;
+                    _logger.Write(
+                        DateTime.Now,
+                        "ModifiedFileDetected",
+                        new Dictionary<string, object>
+                        {
+                            { "jobName", job.Name },
+                            { "file", relativePath },
+                            { "oldHash", hashDictionary[relativePath] },
+                            { "newHash", currentHash }
+                        }
+                    );
+                }
+
+                // Copier le fichier s'il a été modifié ou est nouveau
+                if (needsCopy)
+                {
+                    var destinationFile = Path.Combine(diffBackupPath, relativePath);
+                    var destinationDir = Path.GetDirectoryName(destinationFile);
+
+                    if (destinationDir != null && !Directory.Exists(destinationDir))
+                    {
+                        Directory.CreateDirectory(destinationDir);
+                    }
+
+                    var fileInfo = new FileInfo(sourceFile);
+                    var fileSize = fileInfo.Length;
+
+                    File.Copy(sourceFile, destinationFile, true);
+
+                    filesModified++;
+                    totalBytesTransferred += fileSize;
+
+                    _logger.Write(
+                        DateTime.Now,
+                        "FileCopied",
+                        new Dictionary<string, object>
+                        {
+                            { "jobName", job.Name },
+                            { "sourceFile", sourceFile },
+                            { "destinationFile", destinationFile },
+                            { "fileSize", fileSize },
+                            { "hash", currentHash }
+                        }
+                    );
+                }
+
+                filesProcessed++;
+            }
+            catch (Exception ex)
+            {
+                _logger.Write(
+                    DateTime.Now,
+                    "FileProcessError",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFile", sourceFile },
+                        { "error", ex.Message }
+                    }
+                );
+                // Continuer avec les autres fichiers
+            }
+        }
+
+        // Mettre à jour le fichier hash.json avec les nouveaux hash
+        try
+        {
+            var newHashJson = System.Text.Json.JsonSerializer.Serialize(newHashDictionary, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            File.WriteAllText(hashFilePath, newHashJson);
+
+            _logger.Write(
+                DateTime.Now,
+                "HashFileUpdated",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "hashFilePath", hashFilePath },
+                    { "entriesCount", newHashDictionary.Count }
+                }
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.Write(
+                DateTime.Now,
+                "HashFileUpdateError",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "error", ex.Message }
+                }
+            );
+        }
+
+        _logger.Write(
+            DateTime.Now,
+            "DifferentialBackupCompleted",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name },
+                { "totalFiles", totalFiles },
+                { "filesProcessed", filesProcessed },
+                { "filesModified", filesModified },
+                { "totalBytesTransferred", totalBytesTransferred },
+                { "backupFolder", backupFolderName }
+            }
+        );
     }
 }
