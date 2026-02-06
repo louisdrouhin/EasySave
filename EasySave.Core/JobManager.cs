@@ -2,11 +2,14 @@
 
 using EasySave.Models;
 using EasyLog.Lib;
+using System.Text.Json.Nodes;
 
 public class JobManager
 {
     private readonly List<Job> _jobs;
     private readonly EasyLog _logger;
+    private readonly ConfigParser _configParser;
+    private readonly ILogFormatter _logFormatter;
 
     public JobManager()
     {
@@ -60,10 +63,11 @@ public class JobManager
         var job = new Job(name, type, sourcePath, destinationPath);
 
         _jobs.Add(job);
-    }
 
-    _logger.Write(
-        DateTime.Now,
+        SaveJobToConfig(job);
+
+        _logger.Write(
+            DateTime.Now,
             "JobCreated",
             new Dictionary<string, object>
             {
@@ -71,7 +75,7 @@ public class JobManager
                 { "jobType", job.Type.ToString() },
                 { "sourcePath", job.SourcePath },
                 { "destinationPath", job.DestinationPath }
-    }
+            }
         );
     }
 
@@ -143,7 +147,32 @@ public class JobManager
 
     private void SaveJobToConfig(Job job)
     {
-        _jobs.Remove(job);
+        var jobsArray = _configParser.Config?["jobs"]?.AsArray();
+
+        if (jobsArray == null)
+        {
+            if (_configParser.Config is JsonObject configObject)
+            {
+                jobsArray = new JsonArray();
+                configObject["jobs"] = jobsArray;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        var newJobNode = new JsonObject
+        {
+            ["name"] = job.Name,
+            ["type"] = job.Type.ToString(),
+            ["sourceDir"] = job.SourcePath,
+            ["targetDir"] = job.DestinationPath
+        };
+
+        jobsArray.Add(newJobNode);
+
+        _configParser.EditAndSaveConfig(_configParser.Config!);
     }
 
     private void RemoveJobFromConfig(string jobName)
@@ -234,13 +263,11 @@ public class JobManager
             throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
         }
 
-        // Créer le répertoire de destination principal s'il n'existe pas
         if (!Directory.Exists(job.DestinationPath))
         {
             Directory.CreateDirectory(job.DestinationPath);
         }
 
-        // Créer un sous-dossier avec timestamp pour cette sauvegarde
         var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
         var backupFolderName = $"FULL_{timestamp}";
         var fullBackupPath = Path.Combine(job.DestinationPath, backupFolderName);
@@ -353,7 +380,6 @@ public class JobManager
             }
         }
 
-        // Créer/Mettre à jour le fichier hash.json seulement si demandé
         if (createHashFile && hashDictionary != null)
         {
             var hashFilePath = Path.Combine(job.DestinationPath, "hash.json");
@@ -406,19 +432,19 @@ public class JobManager
 
     private void ExecuteDifferentialBackup(Job job)
     {
-        // Vérifier que le répertoire source existe
+
+        /// TO DO : check if modif else print message and no copy
+
         if (!Directory.Exists(job.SourcePath))
         {
             throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
         }
 
-        // Créer le répertoire de destination principal s'il n'existe pas
         if (!Directory.Exists(job.DestinationPath))
         {
             Directory.CreateDirectory(job.DestinationPath);
         }
 
-        // Vérifier si le fichier hash.json existe
         var hashFilePath = Path.Combine(job.DestinationPath, "hash.json");
         if (!File.Exists(hashFilePath))
         {
@@ -432,7 +458,6 @@ public class JobManager
                 }
             );
 
-            // Bascule automatiquement vers une sauvegarde complète avec création du fichier hash
             ExecuteFullBackup(job, createHashFile: true);
             return;
         }
@@ -449,7 +474,6 @@ public class JobManager
             throw new InvalidOperationException($"Erreur lors de la lecture du fichier hash.json : {ex.Message}", ex);
         }
 
-        // Créer le dossier de sauvegarde différentielle avec timestamp
         var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
         var backupFolderName = $"DIFF_{timestamp}";
         var diffBackupPath = Path.Combine(job.DestinationPath, backupFolderName);
@@ -472,7 +496,6 @@ public class JobManager
         long totalBytesTransferred = 0;
         var newHashDictionary = new Dictionary<string, string>();
 
-        // Parcourir séquentiellement tous les fichiers de la source
         foreach (var sourceFile in Directory.EnumerateFiles(job.SourcePath, "*", SearchOption.AllDirectories))
         {
             totalFiles++;
@@ -480,7 +503,6 @@ public class JobManager
 
             try
             {
-                // Calculer le hash SHA-256 du fichier
                 using (var sha256 = System.Security.Cryptography.SHA256.Create())
                 using (var stream = File.OpenRead(sourceFile))
                 {
@@ -488,13 +510,10 @@ public class JobManager
                     currentHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
                 }
 
-                // Obtenir le chemin relatif
                 var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
 
-                // Stocker le nouveau hash
                 newHashDictionary[relativePath] = currentHash;
 
-                // Vérifier si le fichier a été modifié ou est nouveau
                 bool needsCopy = false;
                 if (!hashDictionary.ContainsKey(relativePath))
                 {
@@ -525,7 +544,6 @@ public class JobManager
                     );
                 }
 
-                // Copier le fichier s'il a été modifié ou est nouveau
                 if (needsCopy)
                 {
                     var destinationFile = Path.Combine(diffBackupPath, relativePath);
@@ -572,11 +590,9 @@ public class JobManager
                         { "error", ex.Message }
                     }
                 );
-                // Continuer avec les autres fichiers
             }
         }
 
-        // Mettre à jour le fichier hash.json avec les nouveaux hash
         try
         {
             var newHashJson = System.Text.Json.JsonSerializer.Serialize(newHashDictionary, new System.Text.Json.JsonSerializerOptions
