@@ -1,3 +1,13 @@
+## v1.1.0 (2026-02-09)
+
+### Feat
+
+- **XmlLogFormatter.cs**: Added the function to write logs in XML format
+
+### Fix
+
+- **xml-and-json-log**: fix swipe xml and json logs
+
 ## v1.0.0 (2026-02-06)
 
 ### Feat
