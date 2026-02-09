@@ -17,13 +17,15 @@ public class ConfigParser
 
     public void LoadConfig()
     {
-        string pathTemplate = "..\\config.example.json";
+        string appDirectory = AppContext.BaseDirectory;
+        string fullConfigPath = Path.IsPathRooted(_configPath) ? _configPath : Path.Combine(appDirectory, _configPath);
+        string pathTemplate = Path.Combine(appDirectory, "config.example.json");
 
-        if (!File.Exists(_configPath))
+        if (!File.Exists(fullConfigPath))
         {
             if (File.Exists(pathTemplate))
             {
-                File.Copy(pathTemplate, _configPath);
+                File.Copy(pathTemplate, fullConfigPath);
             }
             else
             {
@@ -31,12 +33,24 @@ public class ConfigParser
             }
         }
 
-        string jsonContent = File.ReadAllText(_configPath);
+        string jsonContent = File.ReadAllText(fullConfigPath);
+        Config = JsonNode.Parse(jsonContent);
+    }
+
+    private void SaveConfig()
+    {
+        string appDirectory = AppContext.BaseDirectory;
+        string fullConfigPath = Path.IsPathRooted(_configPath) ? _configPath : Path.Combine(appDirectory, _configPath);
+
+        string jsonContent = File.ReadAllText(fullConfigPath);
         Config = JsonNode.Parse(jsonContent);
     }
 
     public void EditAndSaveConfig(JsonNode newConfig)
     {
+        string appDirectory = AppContext.BaseDirectory;
+        string fullConfigPath = Path.IsPathRooted(_configPath) ? _configPath : Path.Combine(appDirectory, _configPath);
+
         if (Config is JsonObject configObject && newConfig is JsonObject newConfigObject)
         {
             foreach (var property in newConfigObject)
@@ -50,7 +64,7 @@ public class ConfigParser
         }
 
         string jsonString = Config?.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) ?? "{}";
-        File.WriteAllText(_configPath, jsonString);
+        File.WriteAllText(fullConfigPath, jsonString);
     }
 
     public void saveJobs(List<Job> jobs)

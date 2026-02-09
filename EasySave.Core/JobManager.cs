@@ -14,7 +14,7 @@ public class JobManager
 
     public JobManager()
     {
-        _configParser = new ConfigParser("../config.json");
+        _configParser = new ConfigParser("config.json");
         _logFormatter = new JsonLogFormatter();
         _logger = new EasyLog(_logFormatter, _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json");
 
