@@ -75,4 +75,23 @@ public class ConfigParser
             EditAndSaveConfig(configObject);
         }
     }
+
+    public void SetLogFormat(string format)
+    {
+        if (format != "json" && format != "xml")
+        {
+            throw new ArgumentException("Le format de log doit être 'json' ou 'xml'", nameof(format));
+        }
+
+        if (Config is JsonObject configObject && configObject["config"] is JsonObject configSection)
+        {
+            configSection["logFormat"] = format;
+            EditAndSaveConfig(configObject);
+        }
+    }
+
+    public string GetLogFormat()
+    {
+        return Config?["config"]?["logFormat"]?.GetValue<string>() ?? "json";
+    }
 }
