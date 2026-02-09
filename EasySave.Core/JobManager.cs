@@ -7,9 +7,9 @@ using System.Text.Json.Nodes;
 public class JobManager
 {
     private readonly List<Job> _jobs;
-    private readonly EasyLog _logger;
+    private EasyLog _logger;
     private readonly ConfigParser _configParser;
-    private readonly ILogFormatter _logFormatter;
+    private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
 
     public JobManager()
@@ -80,8 +80,6 @@ public class JobManager
     private ILogFormatter CreateLogFormatter()
     {
         string logFormat = _configParser.Config?["config"]?["logFormat"]?.GetValue<string>()?.ToLower() ?? "json";
-        
-        Console.WriteLine($"[DEBUG] Log format configuré : '{logFormat}'");
 
         return logFormat switch
         {
@@ -158,6 +156,44 @@ public class JobManager
     public void Close()
     {
         _logger.Close();
+    }
+
+    public void SetLogFormat(string format)
+    {
+        string oldFormat = _configParser.GetLogFormat();
+
+        // Ferme l'ancien logger
+        _logger.Close();
+
+        // Sauvegarde le nouveau format dans la config
+        _configParser.SetLogFormat(format);
+
+        // Recharge la config pour s'assurer que les changements sont pris en compte
+        _configParser.LoadConfig();
+
+        // Crée un nouveau formatter avec le nouveau format
+        _logFormatter = CreateLogFormatter();
+
+        // Crée un nouveau logger avec le nouveau formatter
+        string logsPath = _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json";
+        _logger = new EasyLog(_logFormatter, logsPath);
+
+        // Logge le changement dans le nouveau format
+        _logger.Write(
+            DateTime.Now,
+            "LogFormatChanged",
+            new Dictionary<string, object>
+            {
+                { "oldFormat", oldFormat },
+                { "newFormat", format },
+                { "newFormatterType", _logFormatter.GetType().Name }
+            }
+        );
+    }
+
+    public string GetLogFormat()
+    {
+        return _configParser.GetLogFormat();
     }
 
     private void LoadJobsFromConfig()

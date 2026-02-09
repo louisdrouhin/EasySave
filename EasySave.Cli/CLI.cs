@@ -32,6 +32,7 @@ namespace EasySave.Cli
                     LocalizationManager.Get("Menu_DeleteJob"),
                     LocalizationManager.Get("Menu_ShowJobs"),
                     LocalizationManager.Get("Menu_ChangeLanguage"),
+                    LocalizationManager.Get("Menu_ChangeLogFormat"),
                     LocalizationManager.Get("Menu_Quit")
                 };
 
@@ -85,6 +86,9 @@ namespace EasySave.Cli
                             ChangeLanguage();
                             break;
                         case 5:
+                            ChangeLogFormat();
+                            break;
+                        case 6:
                             continuer = false;
                             _jobManager.Close();
                             Console.WriteLine(LocalizationManager.Get("Common_Closing"));
@@ -218,6 +222,38 @@ namespace EasySave.Cli
 
             Console.WriteLine();
             Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", nouvelleLangue));
+        }
+
+        private void ChangeLogFormat()
+        {
+            Console.WriteLine(LocalizationManager.Get("LogFormat_Title"));
+            Console.WriteLine();
+
+            string currentFormat = _jobManager.GetLogFormat();
+            Console.WriteLine(LocalizationManager.GetFormatted("LogFormat_CurrentFormat", currentFormat.ToUpper()));
+            Console.WriteLine();
+
+            Console.WriteLine(LocalizationManager.Get("LogFormat_SelectFormat"));
+            Console.WriteLine("1. " + LocalizationManager.Get("LogFormat_JSON"));
+            Console.WriteLine("2. " + LocalizationManager.Get("LogFormat_XML"));
+            Console.WriteLine();
+
+            Console.Write("> ");
+            string choix = Console.ReadLine() ?? "1";
+
+            string nouveauFormat = choix == "2" ? "xml" : "json";
+
+            try
+            {
+                _jobManager.SetLogFormat(nouveauFormat);
+                Console.WriteLine();
+                Console.WriteLine(LocalizationManager.GetFormatted("LogFormat_Changed", nouveauFormat.ToUpper()));
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine();
+                Console.WriteLine(LocalizationManager.Get("LogFormat_InvalidFormat"));
+            }
         }
 
         private void ExecuteJobs()
