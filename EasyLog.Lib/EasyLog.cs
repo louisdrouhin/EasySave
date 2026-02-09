@@ -7,6 +7,8 @@ public class EasyLog
     private string _logPath;
     private bool _isFirstEntry;
     private DateTime _currentDate;
+    private readonly string _fileExtension;
+    private readonly string _entrySeparator;
 
     public EasyLog(ILogFormatter formatter, string logDirectory)
     {
@@ -19,41 +21,56 @@ public class EasyLog
         _formatter = formatter;
         _logDirectory = logDirectory;
         _currentDate = DateTime.Now.Date;
+        
+        // Détecte le format basé sur le type de formatter
+        bool isXmlFormat = formatter is XmlLogFormatter;
+        _fileExtension = isXmlFormat ? "xml" : "json";
+        _entrySeparator = isXmlFormat ? "" : ",";
+        
         _logPath = GetLogPathForDate(_currentDate);
         _isFirstEntry = true;
 
         EnsureDirectoryExists(_logDirectory);
-        InitializeJsonStructure();
+        InitializeLogStructure();
     }
 
     private string GetLogPathForDate(DateTime date)
     {
         var dateStr = date.ToString("yyyy-MM-dd");
-        var fileName = $"{dateStr}_logs.json";
+        var fileName = $"{dateStr}_logs.{_fileExtension}";
         var dailyLogPath = Path.Combine(_logDirectory, fileName);
         return dailyLogPath;
     }
 
-    private void InitializeJsonStructure()
+    private void InitializeLogStructure()
     {
         if (!File.Exists(_logPath))
         {
-            File.WriteAllText(_logPath, "{\"logs\":[");
+            bool isXml = _fileExtension == "xml";
+            string header = isXml ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<logs>" : "{\"logs\":[";            File.WriteAllText(_logPath, header);
             _isFirstEntry = true;
         }
         else
         {
-            ReopenClosedJsonFile();
+            ReopenClosedFile();
             _isFirstEntry = false;
         }
     }
 
-    private void ReopenClosedJsonFile()
+    private void ReopenClosedFile()
     {
         try
         {
             var content = File.ReadAllText(_logPath);
-            if (content.EndsWith("]}"))
+            bool isXml = _fileExtension == "xml";
+            
+            if (isXml && content.EndsWith("</logs>"))
+            {
+                var reopenedContent = content.Substring(0, content.Length - 7); // Enlève </logs>
+                File.WriteAllText(_logPath, reopenedContent);
+                _isFirstEntry = false;
+            }
+            else if (!isXml && content.EndsWith("]}"))
             {
                 var reopenedContent = content.Substring(0, content.Length - 2);
                 File.WriteAllText(_logPath, reopenedContent);
@@ -75,7 +92,15 @@ public class EasyLog
             if (File.Exists(_logPath))
             {
                 var content = File.ReadAllText(_logPath);
-                if (content.EndsWith("]}"))
+                bool isXml = _fileExtension == "xml";
+                
+                if (isXml && content.EndsWith("</logs>"))
+                {
+                    var reopenedContent = content.Substring(0, content.Length - 7);
+                    File.WriteAllText(_logPath, reopenedContent);
+                    _isFirstEntry = false;
+                }
+                else if (!isXml && content.EndsWith("]}"))
                 {
                     var reopenedContent = content.Substring(0, content.Length - 2);
                     File.WriteAllText(_logPath, reopenedContent);
@@ -152,7 +177,7 @@ public class EasyLog
             }
             else
             {
-                File.AppendAllText(_logPath, "," + formattedLog);
+                File.AppendAllText(_logPath, _entrySeparator + formattedLog);
             }
         }
         catch (IOException ex)
@@ -173,7 +198,7 @@ public class EasyLog
             _currentDate = todayDate;
             _logPath = GetLogPathForDate(_currentDate);
             _isFirstEntry = true;
-            InitializeJsonStructure();
+            InitializeLogStructure();
         }
     }
 
@@ -190,7 +215,7 @@ public class EasyLog
         _isFirstEntry = true;
 
         EnsureDirectoryExists(_logDirectory);
-        InitializeJsonStructure();
+        InitializeLogStructure();
     }
 
     public string GetCurrentLogPath()
