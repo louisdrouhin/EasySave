@@ -15,7 +15,7 @@ public class JobManager
     public JobManager()
     {
         _configParser = new ConfigParser("config.json");
-        _logFormatter = new JsonLogFormatter();
+        _logFormatter = CreateLogFormatter();
         _logger = new EasyLog(_logFormatter, _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json");
 
         _logger.Write(
@@ -75,6 +75,20 @@ public class JobManager
             "StateTrackerCreated",
             new Dictionary<string, object>()
         );
+    }
+
+    private ILogFormatter CreateLogFormatter()
+    {
+        string logFormat = _configParser.Config?["config"]?["logFormat"]?.GetValue<string>()?.ToLower() ?? "json";
+        
+        Console.WriteLine($"[DEBUG] Log format configuré : '{logFormat}'");
+
+        return logFormat switch
+        {
+            "xml" => new XmlLogFormatter(),
+            "json" => new JsonLogFormatter(),
+            _ => new JsonLogFormatter() // Format par défaut
+        };
     }
 
     public void CreateJob(string name, JobType type, string sourcePath, string destinationPath)

@@ -62,14 +62,14 @@ public class EasyLogTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Constructor_WithInvalidPath_ThrowsArgumentException(string invalidPath)
+    public void Constructor_WithInvalidPath_ThrowsArgumentException(string? invalidPath)
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            new EasyLog(formatter.Object, invalidPath));
+            new EasyLog(formatter.Object, invalidPath!));
     }
 
     [Fact]
@@ -239,7 +239,7 @@ public class EasyLogTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void SetLogPath_WithInvalidPath_ThrowsArgumentException(string invalidPath)
+    public void SetLogPath_WithInvalidPath_ThrowsArgumentException(string? invalidPath)
     {
         // Arrange
         var formatter = new Mock<ILogFormatter>();
@@ -248,7 +248,7 @@ public class EasyLogTests
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() =>
-            easyLog.SetLogPath(invalidPath));
+            easyLog.SetLogPath(invalidPath!));
 
         // Cleanup
         CleanupTestFile(logPath);
