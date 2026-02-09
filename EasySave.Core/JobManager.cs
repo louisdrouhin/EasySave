@@ -80,6 +80,8 @@ public class JobManager
     private ILogFormatter CreateLogFormatter()
     {
         string logFormat = _configParser.Config?["config"]?["logFormat"]?.GetValue<string>()?.ToLower() ?? "json";
+        
+        Console.WriteLine($"[DEBUG] Log format configuré : '{logFormat}'");
 
         return logFormat switch
         {

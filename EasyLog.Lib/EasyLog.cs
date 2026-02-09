@@ -39,6 +39,19 @@ public class EasyLog
         var dateStr = date.ToString("yyyy-MM-dd");
         var fileName = $"{dateStr}_logs.{_fileExtension}";
         var dailyLogPath = Path.Combine(_logDirectory, fileName);
+
+        // Vérifie si un fichier de l'autre format existe
+        string otherExtension = _fileExtension == "xml" ? "json" : "xml";
+        var otherFormatPath = Path.Combine(_logDirectory, $"{dateStr}_logs.{otherExtension}");
+
+        // Si le fichier du format actuel n'existe pas mais que l'autre format existe,
+        // on crée un nouveau fichier dans le format actuel
+        if (!File.Exists(dailyLogPath) && File.Exists(otherFormatPath))
+        {
+            // Le fichier sera créé par InitializeLogStructure
+            return dailyLogPath;
+        }
+
         return dailyLogPath;
     }
 
@@ -47,41 +60,40 @@ public class EasyLog
         if (!File.Exists(_logPath))
         {
             bool isXml = _fileExtension == "xml";
-            string header = isXml ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<logs>" : "{\"logs\":["; File.WriteAllText(_logPath, header);
+            string header = isXml ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<logs>" : "{\"logs\":[";
+            File.WriteAllText(_logPath, header);
             _isFirstEntry = true;
         }
         else
         {
-            ReopenClosedFile();
-            _isFirstEntry = false;
-        }
-    }
-
-    private void ReopenClosedFile()
-    {
-        try
-        {
+            // Vérifions si le fichier contient déjà des entrées
             var content = File.ReadAllText(_logPath);
             bool isXml = _fileExtension == "xml";
 
-            if (isXml && content.EndsWith("</logs>"))
+            if (isXml)
             {
-                var reopenedContent = content.Substring(0, content.Length - 7); // Enlève </logs>
-                File.WriteAllText(_logPath, reopenedContent);
-                _isFirstEntry = false;
+                // Vérifie si le fichier XML contient des entrées (cherche <logEntry>)
+                _isFirstEntry = !content.Contains("<logEntry>");
+
+                // Si le fichier est fermé, on le rouvre
+                if (content.EndsWith("</logs>"))
+                {
+                    var reopenedContent = content.Substring(0, content.Length - 7);
+                    File.WriteAllText(_logPath, reopenedContent);
+                }
             }
-            else if (!isXml && content.EndsWith("]}"))
+            else
             {
-                var reopenedContent = content.Substring(0, content.Length - 2);
-                File.WriteAllText(_logPath, reopenedContent);
-                _isFirstEntry = false;
+                // Vérifie si le fichier JSON contient des entrées (cherche "timestamp")
+                _isFirstEntry = !content.Contains("\"timestamp\"");
+
+                // Si le fichier est fermé, on le rouvre
+                if (content.EndsWith("]}"))
+                {
+                    var reopenedContent = content.Substring(0, content.Length - 2);
+                    File.WriteAllText(_logPath, reopenedContent);
+                }
             }
-        }
-        catch (IOException ex)
-        {
-            throw new InvalidOperationException(
-                $"Error when reopening the log file: {_logPath}",
-                ex);
         }
     }
 
@@ -94,17 +106,28 @@ public class EasyLog
                 var content = File.ReadAllText(_logPath);
                 bool isXml = _fileExtension == "xml";
 
-                if (isXml && content.EndsWith("</logs>"))
+                if (isXml)
                 {
-                    var reopenedContent = content.Substring(0, content.Length - 7);
-                    File.WriteAllText(_logPath, reopenedContent);
-                    _isFirstEntry = false;
+                    // Vérifie si le fichier contient des entrées                    _isFirstEntry = !content.Contains("<logEntry>");
+
+                    // Si le fichier est fermé, on le rouvre
+                    if (content.EndsWith("</logs>"))
+                    {
+                        var reopenedContent = content.Substring(0, content.Length - 7);
+                        File.WriteAllText(_logPath, reopenedContent);
+                    }
                 }
-                else if (!isXml && content.EndsWith("]}"))
+                else
                 {
-                    var reopenedContent = content.Substring(0, content.Length - 2);
-                    File.WriteAllText(_logPath, reopenedContent);
-                    _isFirstEntry = false;
+                    // Vérifie si le fichier contient des entrées
+                    _isFirstEntry = !content.Contains("\"timestamp\"");
+
+                    // Si le fichier est fermé, on le rouvre
+                    if (content.EndsWith("]}"))
+                    {
+                        var reopenedContent = content.Substring(0, content.Length - 2);
+                        File.WriteAllText(_logPath, reopenedContent);
+                    }
                 }
             }
         }

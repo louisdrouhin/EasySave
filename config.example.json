@@ -1,10 +1,8 @@
 {
-    "config": {
-        "logsPath": "./logs/",
-        "stateFilePath": "./state.json",
-        "logFormat": "json"
-    },
-    "jobs": [
-
-    ]
+  "config": {
+    "logsPath": "./logs/",
+    "stateFilePath": "./state.json",
+    "logFormat": "json"
+  },
+  "jobs": []
 }
