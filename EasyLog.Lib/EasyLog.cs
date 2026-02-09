@@ -21,12 +21,12 @@ public class EasyLog
         _formatter = formatter;
         _logDirectory = logDirectory;
         _currentDate = DateTime.Now.Date;
-        
+
         // Détecte le format basé sur le type de formatter
         bool isXmlFormat = formatter is XmlLogFormatter;
         _fileExtension = isXmlFormat ? "xml" : "json";
         _entrySeparator = isXmlFormat ? "" : ",";
-        
+
         _logPath = GetLogPathForDate(_currentDate);
         _isFirstEntry = true;
 
@@ -47,7 +47,7 @@ public class EasyLog
         if (!File.Exists(_logPath))
         {
             bool isXml = _fileExtension == "xml";
-            string header = isXml ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<logs>" : "{\"logs\":[";            File.WriteAllText(_logPath, header);
+            string header = isXml ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<logs>" : "{\"logs\":["; File.WriteAllText(_logPath, header);
             _isFirstEntry = true;
         }
         else
@@ -63,7 +63,7 @@ public class EasyLog
         {
             var content = File.ReadAllText(_logPath);
             bool isXml = _fileExtension == "xml";
-            
+
             if (isXml && content.EndsWith("</logs>"))
             {
                 var reopenedContent = content.Substring(0, content.Length - 7); // Enlève </logs>
@@ -93,7 +93,7 @@ public class EasyLog
             {
                 var content = File.ReadAllText(_logPath);
                 bool isXml = _fileExtension == "xml";
-                
+
                 if (isXml && content.EndsWith("</logs>"))
                 {
                     var reopenedContent = content.Substring(0, content.Length - 7);
