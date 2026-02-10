@@ -415,7 +415,7 @@ public class JobManager
                 var fileInfo = new FileInfo(sourceFile);
                 var fileSize = fileInfo.Length;
 
-                CopyOrEncryptFile(sourceFile, destinationFile, password, encryptExtensions);
+                long encryptResult = CopyOrEncryptFile(sourceFile, destinationFile, password, encryptExtensions);
 
                 if (createHashFile && hashDictionary != null)
                 {
@@ -460,18 +460,48 @@ public class JobManager
                     destinationFile
                 ));
 
-                _logger.Write(
-                    DateTime.Now,
-                    "FileCopied",
-                    new Dictionary<string, object>
+                bool wasEncrypted = encryptResult > 0 || encryptResult == 0;
+                bool hadError = encryptResult < 0;
+
+                if (!hadError)
+                {
+                    string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
+                    var logData = new Dictionary<string, object>
                     {
                         { "jobName", job.Name },
                         { "sourceFilePath", sourceFile },
                         { "destinationFilePath", destinationFile },
                         { "fileSize", fileSize },
+                        { "operation", encryptResult > 0 ? "encryption" : "copy" },
+                        { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
                         { "progress", $"{filesProcessed}/{totalFiles}" }
-                    }
-                );
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        logType,
+                        logData
+                    );
+                }
+                else
+                {
+                    var logData = new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFilePath", sourceFile },
+                        { "destinationFilePath", destinationFile },
+                        { "fileSize", fileSize },
+                        { "operation", "encryption" },
+                        { "encryptTimeMs", encryptResult },
+                        { "progress", $"{filesProcessed}/{totalFiles}" }
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        "FileEncryptionError",
+                        logData
+                    );
+                }
             }
             catch (Exception ex)
             {
@@ -670,7 +700,7 @@ public class JobManager
                     Directory.CreateDirectory(destinationDir);
                 }
 
-                CopyOrEncryptFile(fileToCopy.Path, destinationFile, password, encryptExtensions);
+                long encryptResult = CopyOrEncryptFile(fileToCopy.Path, destinationFile, password, encryptExtensions);
 
                 filesProcessed++;
                 totalBytesTransferred += fileToCopy.Size;
@@ -688,18 +718,47 @@ public class JobManager
                     destinationFile
                 ));
 
-                _logger.Write(
-                    DateTime.Now,
-                    "FileCopied",
-                    new Dictionary<string, object>
+                bool hadError = encryptResult < 0;
+
+                if (!hadError)
+                {
+                    string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
+                    var logData = new Dictionary<string, object>
                     {
                         { "jobName", job.Name },
                         { "sourceFile", fileToCopy.Path },
                         { "destinationFile", destinationFile },
                         { "fileSize", fileToCopy.Size },
+                        { "operation", encryptResult > 0 ? "encryption" : "copy" },
+                        { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
                         { "hash", fileToCopy.Hash }
-                    }
-                );
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        logType,
+                        logData
+                    );
+                }
+                else
+                {
+                    var logData = new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFile", fileToCopy.Path },
+                        { "destinationFile", destinationFile },
+                        { "fileSize", fileToCopy.Size },
+                        { "operation", "encryption" },
+                        { "encryptTimeMs", encryptResult },
+                        { "hash", fileToCopy.Hash }
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        "FileEncryptionError",
+                        logData
+                    );
+                }
             }
             catch (Exception ex)
             {
@@ -767,7 +826,7 @@ public class JobManager
     //                CRYPTOSOFT UTILS                //
     //================================================//
 
-    private void CopyOrEncryptFile(string sourceFile, string destinationFile, string password, List<string> encryptExtensions)
+    private long CopyOrEncryptFile(string sourceFile, string destinationFile, string password, List<string> encryptExtensions)
     {
         var fileExtension = Path.GetExtension(sourceFile).ToLower();
 
@@ -778,18 +837,22 @@ public class JobManager
             {
                 throw new InvalidOperationException($"Unable to determine the target directory for : {destinationFile}");
             }
-            ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
+            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
         }
         else
         {
             File.Copy(sourceFile, destinationFile, overwrite: true);
+            return 0;
         }
     }
 
-    private void ExecuteCryptosoftCommand(string operation, string sourceFile, string password, string targetDirectory, string errorLogType)
+    private long ExecuteCryptosoftCommand(string operation, string sourceFile, string password, string targetDirectory, string errorLogType)
     {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
+            //TODO: manage password for no-null and no space
+
             // Remonte depuis bin/Debug/net10.0 jusqu'à la racine du projet
             var appDirectory = AppContext.BaseDirectory;
             var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
@@ -797,7 +860,7 @@ public class JobManager
 
             if (!File.Exists(cryptosoftPath))
             {
-                throw new FileNotFoundException($"Cryptosoft.exe was not found at : {cryptosoftPath}");
+                return -1;
             }
 
             var arguments = $"{operation} \"{sourceFile}\" \"{password}\" \"{targetDirectory}\"";
@@ -816,7 +879,7 @@ public class JobManager
             {
                 if (process == null)
                 {
-                    throw new InvalidOperationException("Unable to start the Cryptosoft.exe process");
+                    return -2;
                 }
 
                 process.WaitForExit();
@@ -824,9 +887,23 @@ public class JobManager
                 if (process.ExitCode != 0)
                 {
                     var error = process.StandardError.ReadToEnd();
-                    throw new InvalidOperationException($"Cryptosoft.exe failed with code : {process.ExitCode}. Error : {error}");
+                    _logger.Write(
+                        DateTime.Now,
+                        errorLogType,
+                        new Dictionary<string, object>
+                        {
+                            { "sourceFile", sourceFile },
+                            { "targetDirectory", targetDirectory },
+                            { "exitCode", process.ExitCode },
+                            { "error", error }
+                        }
+                    );
+                    return -process.ExitCode;
                 }
             }
+
+            stopwatch.Stop();
+            return stopwatch.ElapsedMilliseconds;
         }
         catch (Exception ex)
         {
@@ -840,7 +917,7 @@ public class JobManager
                     { "error", ex.Message }
                 }
             );
-            throw;
+            return -999;
         }
     }
 
