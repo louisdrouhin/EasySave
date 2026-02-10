@@ -1,7 +1,9 @@
-## v1.1.0 (2026-02-09)
+## v1.1.0 (2026-02-10)
 
 ### Feat
 
+- **logs**: add change logs-mod features
+- **cryptosoft**: add cryptosoft.exe in the project
 - **XmlLogFormatter.cs**: Added the function to write logs in XML format
 
 ### Fix
