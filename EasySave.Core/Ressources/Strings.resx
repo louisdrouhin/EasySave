@@ -181,7 +181,7 @@
     </data>
     <data name="CreateJob_Success"
           xml:space="preserve">
-        <value>✓ Job '{0}' created successfully!</value>
+        <value>Job '{0}' created successfully!</value>
     </data>
     <data name="CreateJob_Source"
           xml:space="preserve">
@@ -214,11 +214,11 @@
     </data>
     <data name="ExecuteJob_InProgress"
           xml:space="preserve">
-        <value>⏳ Executing job '{0}'...</value>
+        <value>Executing job '{0}'...</value>
     </data>
     <data name="ExecuteJob_Success"
           xml:space="preserve">
-        <value>✓ Backup completed successfully!</value>
+        <value>Backup completed successfully!</value>
     </data>
     <data name="ExecuteAllJobs_Title"
           xml:space="preserve">
@@ -226,11 +226,11 @@
     </data>
     <data name="ExecuteAllJobs_InProgress"
           xml:space="preserve">
-        <value>⏳ Executing all jobs...</value>
+        <value>Executing all jobs...</value>
     </data>
     <data name="ExecuteAllJobs_Success"
           xml:space="preserve">
-        <value>✓ All backups completed!</value>
+        <value>All backups completed!</value>
     </data>
     <!-- Job Execution -->
     <data name="ExecuteJobs_Title"
@@ -271,11 +271,23 @@
     </data>
     <data name="ExecuteJobs_Success"
           xml:space="preserve">
-        <value>✓ Job '{0}' executed successfully!</value>
+        <value>Job '{0}' executed successfully!</value>
     </data>
     <data name="ExecuteJobs_Error"
           xml:space="preserve">
-        <value>✗ Error executing job '{0}': {1}</value>
+        <value>Error executing job '{0}': {1}</value>
+    </data>
+      <data name="ExecuteJobs_PasswordPrompt" 
+          xml:space="preserve">
+        <value>Enter your password for encryption: </value>
+    </data>
+      <data name="ExecuteJobs_PasswordEmpty" 
+          xml:space="preserve">
+        <value>Error: Password cannot be empty.</value>
+    </data>
+      <data name="ExecuteJobs_PasswordWithSpaces" 
+          xml:space="preserve">
+        <value>Error: Password cannot contain spaces.</value>
     </data>
     <!-- Deletion -->
     <data name="DeleteJob_Title"
@@ -296,7 +308,7 @@
     </data>
     <data name="DeleteJob_Success"
           xml:space="preserve">
-        <value>✓ Job '{0}' deleted successfully!</value>
+        <value>Job '{0}' deleted successfully!</value>
     </data>
     <!-- Job List -->
     <data name="ShowJobs_Title"
@@ -364,7 +376,7 @@
     </data>
     <data name="Language_Changed"
           xml:space="preserve">
-        <value>✓ Language changed to '{0}' successfully!</value>
+        <value>Language changed to '{0}' successfully!</value>
     </data>
     <!-- Errors -->
     <data name="Error_ConfigFileNotFound"
