@@ -277,12 +277,16 @@ namespace EasySave.Cli
                     Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Executing", jobsToExecute.Count));
                     Console.WriteLine();
 
+                    Console.Write("Entrez votre mot de passe pour le chiffrement : ");
+                    string password = Console.ReadLine() ?? string.Empty;
+                    Console.WriteLine();
+
                     foreach (var job in jobsToExecute)
                     {
                         try
                         {
                             Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_ExecutingJob", job.Name));
-                            _jobManager.LaunchJob(job);
+                            _jobManager.LaunchJob(job, password);
                             Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Success", job.Name));
                         }
                         catch (Exception ex)
