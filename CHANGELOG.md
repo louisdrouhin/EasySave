@@ -1,3 +1,9 @@
+## v1.1.1 (2026-02-10)
+
+### Fix
+
+- fix todo and change default language to english
+
 ## v1.1.0 (2026-02-10)
 
 ### Feat
