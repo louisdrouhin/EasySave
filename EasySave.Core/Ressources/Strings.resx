@@ -277,6 +277,18 @@
           xml:space="preserve">
         <value>✗ Error executing job '{0}': {1}</value>
     </data>
+      <data name="ExecuteJobs_PasswordPrompt" 
+          xml:space="preserve">
+        <value>Enter your password for encryption: </value>
+    </data>
+      <data name="ExecuteJobs_PasswordEmpty" 
+          xml:space="preserve">
+        <value>Error: Password cannot be empty.</value>
+    </data>
+      <data name="ExecuteJobs_PasswordWithSpaces" 
+          xml:space="preserve">
+        <value>Error: Password cannot contain spaces.</value>
+    </data>
     <!-- Deletion -->
     <data name="DeleteJob_Title"
           xml:space="preserve">
