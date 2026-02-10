@@ -2,7 +2,10 @@
   "config": {
     "logsPath": "./logs/",
     "stateFilePath": "./state.json",
-    "logFormat": "json"
+    "logFormat": "json",
+    "encryption": {
+      "extensions": [".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".txt"]
+    }
   },
   "jobs": []
 }

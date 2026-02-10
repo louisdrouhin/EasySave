@@ -3,13 +3,15 @@
 using EasySave.Models;
 using EasyLog.Lib;
 using System.Text.Json.Nodes;
+using System.Diagnostics;
+
 
 public class JobManager
 {
     private readonly List<Job> _jobs;
-    private readonly EasyLog _logger;
+    private EasyLog _logger;
     private readonly ConfigParser _configParser;
-    private readonly ILogFormatter _logFormatter;
+    private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
 
     public JobManager()
@@ -80,8 +82,6 @@ public class JobManager
     private ILogFormatter CreateLogFormatter()
     {
         string logFormat = _configParser.Config?["config"]?["logFormat"]?.GetValue<string>()?.ToLower() ?? "json";
-        
-        Console.WriteLine($"[DEBUG] Log format configuré : '{logFormat}'");
 
         return logFormat switch
         {
@@ -158,6 +158,38 @@ public class JobManager
     public void Close()
     {
         _logger.Close();
+    }
+
+    public void SetLogFormat(string format)
+    {
+        string oldFormat = _configParser.GetLogFormat();
+
+        _logger.Close();
+
+        _configParser.SetLogFormat(format);
+
+        _configParser.LoadConfig();
+
+        _logFormatter = CreateLogFormatter();
+
+        string logsPath = _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json";
+        _logger = new EasyLog(_logFormatter, logsPath);
+
+        _logger.Write(
+            DateTime.Now,
+            "LogFormatChanged",
+            new Dictionary<string, object>
+            {
+                { "oldFormat", oldFormat },
+                { "newFormat", format },
+                { "newFormatterType", _logFormatter.GetType().Name }
+            }
+        );
+    }
+
+    public string GetLogFormat()
+    {
+        return _configParser.GetLogFormat();
     }
 
     private void LoadJobsFromConfig()
@@ -247,7 +279,7 @@ public class JobManager
         }
     }
 
-    public void LaunchJob(Job job)
+    public void LaunchJob(Job job, string password)
     {
 
         _stateTracker.UpdateJobState(
@@ -275,13 +307,13 @@ public class JobManager
             switch (job.Type)
             {
                 case JobType.Full:
-                    ExecuteFullBackup(job);
+                    ExecuteFullBackup(job, password);
                     break;
                 case JobType.Differential:
-                    ExecuteDifferentialBackup(job);
+                    ExecuteDifferentialBackup(job, password);
                     break;
                 default:
-                    throw new InvalidOperationException($"Type de job non supporté : {job.Type}");
+                    throw new InvalidOperationException($"Job type not supported : {job.Type}");
             }
 
             _stateTracker.UpdateJobState(
@@ -318,11 +350,11 @@ public class JobManager
         }
     }
 
-    private void ExecuteFullBackup(Job job, bool createHashFile = false)
+    private void ExecuteFullBackup(Job job, string password, bool createHashFile = false)
     {
         if (!Directory.Exists(job.SourcePath))
         {
-            throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
+            throw new DirectoryNotFoundException($"The source directory does not exist : {job.SourcePath}");
         }
 
         if (!Directory.Exists(job.DestinationPath))
@@ -330,6 +362,7 @@ public class JobManager
             Directory.CreateDirectory(job.DestinationPath);
         }
 
+        var encryptExtensions = _configParser.GetEncryptionExtensions();
         var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
         var backupFolderName = $"FULL_{timestamp}";
         var fullBackupPath = Path.Combine(job.DestinationPath, backupFolderName);
@@ -395,7 +428,7 @@ public class JobManager
                 var fileInfo = new FileInfo(sourceFile);
                 var fileSize = fileInfo.Length;
 
-                File.Copy(sourceFile, destinationFile, overwrite: true);
+                long encryptResult = CopyOrEncryptFile(sourceFile, destinationFile, password, encryptExtensions);
 
                 if (createHashFile && hashDictionary != null)
                 {
@@ -440,18 +473,48 @@ public class JobManager
                     destinationFile
                 ));
 
-                _logger.Write(
-                    DateTime.Now,
-                    "FileCopied",
-                    new Dictionary<string, object>
+                bool wasEncrypted = encryptResult > 0 || encryptResult == 0;
+                bool hadError = encryptResult < 0;
+
+                if (!hadError)
+                {
+                    string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
+                    var logData = new Dictionary<string, object>
                     {
                         { "jobName", job.Name },
                         { "sourceFilePath", sourceFile },
                         { "destinationFilePath", destinationFile },
                         { "fileSize", fileSize },
+                        { "operation", encryptResult > 0 ? "encryption" : "copy" },
+                        { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
                         { "progress", $"{filesProcessed}/{totalFiles}" }
-                    }
-                );
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        logType,
+                        logData
+                    );
+                }
+                else
+                {
+                    var logData = new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFilePath", sourceFile },
+                        { "destinationFilePath", destinationFile },
+                        { "fileSize", fileSize },
+                        { "operation", "encryption" },
+                        { "encryptTimeMs", encryptResult },
+                        { "progress", $"{filesProcessed}/{totalFiles}" }
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        "FileEncryptionError",
+                        logData
+                    );
+                }
             }
             catch (Exception ex)
             {
@@ -518,14 +581,14 @@ public class JobManager
         );
     }
 
-    private void ExecuteDifferentialBackup(Job job)
+    private void ExecuteDifferentialBackup(Job job, string password)
     {
 
         /// TO DO : check if modif else print message and no copy
 
         if (!Directory.Exists(job.SourcePath))
         {
-            throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
+            throw new DirectoryNotFoundException($"The source directory does not exist : {job.SourcePath}");
         }
 
         if (!Directory.Exists(job.DestinationPath))
@@ -533,6 +596,7 @@ public class JobManager
             Directory.CreateDirectory(job.DestinationPath);
         }
 
+        var encryptExtensions = _configParser.GetEncryptionExtensions();
         var hashFilePath = Path.Combine(job.DestinationPath, "hash.json");
         if (!File.Exists(hashFilePath))
         {
@@ -542,11 +606,11 @@ public class JobManager
                 new Dictionary<string, object>
                 {
                     { "jobName", job.Name },
-                    { "message", "Aucun fichier hash.json trouvé, basculement vers une sauvegarde complète" }
+                    { "message", "No hash.json file found, switching to full backup" }
                 }
             );
 
-            ExecuteFullBackup(job, createHashFile: true);
+            ExecuteFullBackup(job, password, createHashFile: true);
             return;
         }
 
@@ -559,7 +623,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Erreur lors de la lecture du fichier hash.json : {ex.Message}", ex);
+            throw new InvalidOperationException($"Error reading the hash.json file : {ex.Message}", ex);
         }
 
         var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
@@ -649,7 +713,7 @@ public class JobManager
                     Directory.CreateDirectory(destinationDir);
                 }
 
-                File.Copy(fileToCopy.Path, destinationFile, true);
+                long encryptResult = CopyOrEncryptFile(fileToCopy.Path, destinationFile, password, encryptExtensions);
 
                 filesProcessed++;
                 totalBytesTransferred += fileToCopy.Size;
@@ -667,18 +731,47 @@ public class JobManager
                     destinationFile
                 ));
 
-                _logger.Write(
-                    DateTime.Now,
-                    "FileCopied",
-                    new Dictionary<string, object>
+                bool hadError = encryptResult < 0;
+
+                if (!hadError)
+                {
+                    string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
+                    var logData = new Dictionary<string, object>
                     {
                         { "jobName", job.Name },
                         { "sourceFile", fileToCopy.Path },
                         { "destinationFile", destinationFile },
                         { "fileSize", fileToCopy.Size },
+                        { "operation", encryptResult > 0 ? "encryption" : "copy" },
+                        { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
                         { "hash", fileToCopy.Hash }
-                    }
-                );
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        logType,
+                        logData
+                    );
+                }
+                else
+                {
+                    var logData = new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "sourceFile", fileToCopy.Path },
+                        { "destinationFile", destinationFile },
+                        { "fileSize", fileToCopy.Size },
+                        { "operation", "encryption" },
+                        { "encryptTimeMs", encryptResult },
+                        { "hash", fileToCopy.Hash }
+                    };
+
+                    _logger.Write(
+                        DateTime.Now,
+                        "FileEncryptionError",
+                        logData
+                    );
+                }
             }
             catch (Exception ex)
             {
@@ -741,4 +834,194 @@ public class JobManager
             }
         );
     }
+
+    //================================================//
+    //                CRYPTOSOFT UTILS                //
+    //================================================//
+
+    private long CopyOrEncryptFile(string sourceFile, string destinationFile, string password, List<string> encryptExtensions)
+    {
+        var fileExtension = Path.GetExtension(sourceFile).ToLower();
+
+        if (encryptExtensions.Contains(fileExtension))
+        {
+            var targetDirectory = Path.GetDirectoryName(destinationFile);
+            if (targetDirectory == null)
+            {
+                throw new InvalidOperationException($"Unable to determine the target directory for : {destinationFile}");
+            }
+            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
+        }
+        else
+        {
+            File.Copy(sourceFile, destinationFile, overwrite: true);
+            return 0;
+        }
+    }
+
+    private long ExecuteCryptosoftCommand(string operation, string sourceFile, string password, string targetDirectory, string errorLogType)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            //TODO: manage password for no-null and no space
+
+            // Remonte depuis bin/Debug/net10.0 jusqu'à la racine du projet
+            var appDirectory = AppContext.BaseDirectory;
+            var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
+            var cryptosoftPath = Path.Combine(projectRootDirectory, "Cryptosoft.exe");
+
+            if (!File.Exists(cryptosoftPath))
+            {
+                return -1;
+            }
+
+            var arguments = $"{operation} \"{sourceFile}\" \"{password}\" \"{targetDirectory}\"";
+
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = cryptosoftPath,
+                Arguments = arguments,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var process = Process.Start(processInfo))
+            {
+                if (process == null)
+                {
+                    return -2;
+                }
+
+                process.WaitForExit();
+
+                if (process.ExitCode != 0)
+                {
+                    var error = process.StandardError.ReadToEnd();
+                    _logger.Write(
+                        DateTime.Now,
+                        errorLogType,
+                        new Dictionary<string, object>
+                        {
+                            { "sourceFile", sourceFile },
+                            { "targetDirectory", targetDirectory },
+                            { "exitCode", process.ExitCode },
+                            { "error", error }
+                        }
+                    );
+                    return -process.ExitCode;
+                }
+            }
+
+            stopwatch.Stop();
+            return stopwatch.ElapsedMilliseconds;
+        }
+        catch (Exception ex)
+        {
+            _logger.Write(
+                DateTime.Now,
+                errorLogType,
+                new Dictionary<string, object>
+                {
+                    { "sourceFile", sourceFile },
+                    { "targetDirectory", targetDirectory },
+                    { "error", ex.Message }
+                }
+            );
+            return -999;
+        }
+    }
+
+    public void DecryptBackup(string backupPath, string restorePath, string password)
+    {
+        if (!Directory.Exists(backupPath))
+        {
+            throw new DirectoryNotFoundException($"The backup path does not exist : {backupPath}");
+        }
+
+        if (!Directory.Exists(restorePath))
+        {
+            Directory.CreateDirectory(restorePath);
+        }
+
+        _logger.Write(
+            DateTime.Now,
+            "DecryptBackupStarted",
+            new Dictionary<string, object>
+            {
+                { "backupPath", backupPath },
+                { "restorePath", restorePath }
+            }
+        );
+
+        var encryptedFiles = Directory.GetFiles(backupPath, "*", SearchOption.AllDirectories);
+        int totalFiles = encryptedFiles.Length;
+        int filesProcessed = 0;
+        long totalBytesTransferred = 0;
+
+        foreach (var encryptedFile in encryptedFiles)
+        {
+            try
+            {
+                var relativePath = Path.GetRelativePath(backupPath, encryptedFile);
+                var restoreFile = Path.Combine(restorePath, relativePath);
+                var restoreDir = Path.GetDirectoryName(restoreFile);
+
+                if (restoreDir == null)
+                {
+                    throw new InvalidOperationException($"Unable to determine the restore directory for : {restoreFile}");
+                }
+
+                if (!Directory.Exists(restoreDir))
+                {
+                    Directory.CreateDirectory(restoreDir);
+                }
+
+                ExecuteCryptosoftCommand("-d", encryptedFile, password, restoreDir, "CryptosoftDecryptionError");
+
+                var fileInfo = new FileInfo(encryptedFile);
+                filesProcessed++;
+                totalBytesTransferred += fileInfo.Length;
+
+                _logger.Write(
+                    DateTime.Now,
+                    "FileDecrypted",
+                    new Dictionary<string, object>
+                    {
+                        { "encryptedFile", encryptedFile },
+                        { "restoreFile", restoreFile },
+                        { "progress", $"{filesProcessed}/{totalFiles}" }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.Write(
+                    DateTime.Now,
+                    "FileDecryptError",
+                    new Dictionary<string, object>
+                    {
+                        { "encryptedFile", encryptedFile },
+                        { "error", ex.Message }
+                    }
+                );
+                throw;
+            }
+        }
+
+        _logger.Write(
+            DateTime.Now,
+            "DecryptBackupCompleted",
+            new Dictionary<string, object>
+            {
+                { "backupPath", backupPath },
+                { "restorePath", restorePath },
+                { "filesProcessed", filesProcessed },
+                { "totalBytesTransferred", totalBytesTransferred }
+            }
+        );
+    }
+
 }

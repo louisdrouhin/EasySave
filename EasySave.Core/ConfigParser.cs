@@ -75,4 +75,48 @@ public class ConfigParser
             EditAndSaveConfig(configObject);
         }
     }
+
+    public List<string> GetEncryptionExtensions()
+    {
+        var extensions = new List<string>();
+        var encryptionNode = Config?["config"]?["encryption"];
+
+        if (encryptionNode == null)
+        {
+            return extensions;
+        }
+
+        var extensionsArray = encryptionNode["extensions"]?.AsArray();
+
+        if (extensionsArray != null)
+        {
+            foreach (var ext in extensionsArray)
+            {
+                var extension = ext?.GetValue<string>();
+                if (!string.IsNullOrEmpty(extension))
+                {
+                    extensions.Add(extension.ToLower());
+                }
+            }
+        }
+
+        return extensions;
+    }
+
+    public string GetLogFormat()
+    {
+        return Config?["config"]?["logFormat"]?.GetValue<string>() ?? "json";
+    }
+
+    public void SetLogFormat(string format)
+    {
+        if (Config is JsonObject configObject)
+        {
+            if (configObject["config"] is JsonObject configNode)
+            {
+                configNode["logFormat"] = format;
+                EditAndSaveConfig(configObject);
+            }
+        }
+    }
 }
