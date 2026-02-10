@@ -118,11 +118,9 @@ public class JobManager
         );
     }
 
-    public void removeJob(string name)
+    public void removeJob(int index)
     {
-        //TODO: use index for execution
-        //TODO: control if job exist before delete
-        var jobToRemove = _jobs.FirstOrDefault(j => j.Name == name);
+        var jobToRemove = _jobs.ElementAtOrDefault(index);
 
         if (jobToRemove == null)
         {
@@ -131,9 +129,9 @@ public class JobManager
 
         _jobs.Remove(jobToRemove);
 
-        RemoveJobFromConfig(name);
+        RemoveJobFromConfig(index);
 
-        _stateTracker.RemoveJobState(name);
+        _stateTracker.RemoveJobState(index);
 
         _logger.Write(
             DateTime.Now,
@@ -256,7 +254,7 @@ public class JobManager
         _configParser.EditAndSaveConfig(_configParser.Config!);
     }
 
-    private void RemoveJobFromConfig(string jobName)
+    private void RemoveJobFromConfig(int index)
     {
         var jobsArray = _configParser.Config?["jobs"]?.AsArray();
 
@@ -265,20 +263,9 @@ public class JobManager
             return;
         }
 
-        JsonNode? jobToRemove = null;
-        foreach (var jobNode in jobsArray)
+        if (index >= 0 && index < jobsArray.Count)
         {
-            if (jobNode?["name"]?.GetValue<string>() == jobName)
-            {
-                jobToRemove = jobNode;
-                break;
-            }
-        }
-
-        if (jobToRemove != null)
-        {
-            jobsArray.Remove(jobToRemove);
-
+            jobsArray.RemoveAt(index);
             _configParser.EditAndSaveConfig(_configParser.Config!);
         }
     }

@@ -1,4 +1,3 @@
-using System;
 using EasySave.Core;
 using EasySave.Core.Localization;
 using EasySave.Models;
@@ -174,12 +173,12 @@ namespace EasySave.Cli
             }
 
             Console.Write(LocalizationManager.Get("DeleteJob_JobName"));
-            string nom = Console.ReadLine() ?? "";
+            string index = Console.ReadLine() ?? "";
 
-            _jobManager.removeJob(nom);
+            _jobManager.removeJob(int.Parse(index) - 1);
 
             Console.WriteLine();
-            Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", nom));
+            Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", index));
         }
 
         private void ShowJobs()
@@ -251,7 +250,7 @@ namespace EasySave.Cli
             }
             catch (ArgumentException ex)
             {
-                Console.WriteLine();
+                Console.WriteLine(ex);
                 Console.WriteLine(LocalizationManager.Get("LogFormat_InvalidFormat"));
             }
         }
