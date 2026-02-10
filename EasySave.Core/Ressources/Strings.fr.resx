@@ -216,8 +216,14 @@
   <data name="ShowState_NoBackup" xml:space="preserve">
     <value>Aucune sauvegarde en cours.</value>
   </data>
-  
-  <!-- Général -->
+	
+ <!-- Général -->
+  <data name="Common_PressKey" xml:space="preserve">
+    <value>Appuyez sur n'importe quelle touche pour revenir au menu...</value>
+  </data>
+  <data name="Common_Closing" xml:space="preserve">
+    <value>Fermeture d'EasySave...</value>
+  </data>
   <data name="General_PressKeyToContinue" xml:space="preserve">
     <value>Appuyez sur une touche pour revenir au menu...</value>
   </data>
