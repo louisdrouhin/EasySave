@@ -70,7 +70,12 @@ jobs:
           $tag = "${{ github.ref_name }}"
           $version = $tag -replace '^v', ''
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
-          if ($version -match '-') { echo "IS_PRERELEASE=true" >> $env:GITHUB_OUTPUT } else { echo "IS_PRERELEASE=false" >> $env:GITHUB_OUTPUT }
+
+          if ($version -match '^\d+\.0\.0$') { 
+              echo "IS_RELEASE=true" >> $env:GITHUB_OUTPUT 
+          } else { 
+              echo "IS_RELEASE=false" >> $env:GITHUB_OUTPUT 
+          }
 
       - name: Restore dependencies
         run: dotnet restore
@@ -108,8 +113,8 @@ jobs:
           name: EasySave v${{ steps.version.outputs.VERSION }}
           files: ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
           draft: false
-          prerelease: ${{ steps.version.outputs.IS_PRERELEASE == 'true' }}
-          make_latest: ${{ steps.version.outputs.IS_PRERELEASE == 'false' }}
+          prerelease: ${{ steps.version.outputs.IS_RELEASE == 'false' }}
+          make_latest: ${{ steps.version.outputs.IS_RELEASE == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
