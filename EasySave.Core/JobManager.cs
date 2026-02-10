@@ -164,23 +164,17 @@ public class JobManager
     {
         string oldFormat = _configParser.GetLogFormat();
 
-        // Ferme l'ancien logger
         _logger.Close();
 
-        // Sauvegarde le nouveau format dans la config
         _configParser.SetLogFormat(format);
 
-        // Recharge la config pour s'assurer que les changements sont pris en compte
         _configParser.LoadConfig();
 
-        // Crée un nouveau formatter avec le nouveau format
         _logFormatter = CreateLogFormatter();
 
-        // Crée un nouveau logger avec le nouveau formatter
         string logsPath = _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json";
         _logger = new EasyLog(_logFormatter, logsPath);
 
-        // Logge le changement dans le nouveau format
         _logger.Write(
             DateTime.Now,
             "LogFormatChanged",
@@ -319,7 +313,7 @@ public class JobManager
                     ExecuteDifferentialBackup(job, password);
                     break;
                 default:
-                    throw new InvalidOperationException($"Type de job non supporté : {job.Type}");
+                    throw new InvalidOperationException($"Job type not supported : {job.Type}");
             }
 
             _stateTracker.UpdateJobState(
@@ -360,7 +354,7 @@ public class JobManager
     {
         if (!Directory.Exists(job.SourcePath))
         {
-            throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
+            throw new DirectoryNotFoundException($"The source directory does not exist : {job.SourcePath}");
         }
 
         if (!Directory.Exists(job.DestinationPath))
@@ -564,7 +558,7 @@ public class JobManager
 
         if (!Directory.Exists(job.SourcePath))
         {
-            throw new DirectoryNotFoundException($"Le répertoire source n'existe pas : {job.SourcePath}");
+            throw new DirectoryNotFoundException($"The source directory does not exist : {job.SourcePath}");
         }
 
         if (!Directory.Exists(job.DestinationPath))
@@ -582,7 +576,7 @@ public class JobManager
                 new Dictionary<string, object>
                 {
                     { "jobName", job.Name },
-                    { "message", "Aucun fichier hash.json trouvé, basculement vers une sauvegarde complète" }
+                    { "message", "No hash.json file found, switching to full backup" }
                 }
             );
 
@@ -599,7 +593,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException($"Erreur lors de la lecture du fichier hash.json : {ex.Message}", ex);
+            throw new InvalidOperationException($"Error reading the hash.json file : {ex.Message}", ex);
         }
 
         var timestamp = DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
@@ -782,6 +776,10 @@ public class JobManager
         );
     }
 
+    //================================================//
+    //                CRYPTOSOFT UTILS                //
+    //================================================//
+
     private void CopyOrEncryptFile(string sourceFile, string destinationFile, string password, List<string> encryptExtensions)
     {
         var fileExtension = Path.GetExtension(sourceFile).ToLower();
@@ -791,9 +789,10 @@ public class JobManager
             var targetDirectory = Path.GetDirectoryName(destinationFile);
             if (targetDirectory == null)
             {
-                throw new InvalidOperationException($"Impossible de déterminer le répertoire cible pour : {destinationFile}");
+                throw new InvalidOperationException($"Unable to determine the target directory for : {destinationFile}");
             }
             ExecuteCryptosoft(sourceFile, targetDirectory, password);
+            // Add log for encryption (based on copy log template)
         }
         else
         {
@@ -801,6 +800,7 @@ public class JobManager
         }
     }
 
+    //TODO: refactor with ExecuteCryptosoft and avoid code duplication
     private void ExecuteCryptosoft(string sourceFile, string targetDirectory, string password)
     {
         ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
@@ -817,7 +817,7 @@ public class JobManager
 
             if (!File.Exists(cryptosoftPath))
             {
-                throw new FileNotFoundException($"Cryptosoft.exe n'a pas été trouvé à : {cryptosoftPath}");
+                throw new FileNotFoundException($"Cryptosoft.exe was not found at : {cryptosoftPath}");
             }
 
             var arguments = $"{operation} \"{sourceFile}\" \"{password}\" \"{targetDirectory}\"";
@@ -836,7 +836,7 @@ public class JobManager
             {
                 if (process == null)
                 {
-                    throw new InvalidOperationException("Impossible de démarrer le processus Cryptosoft.exe");
+                    throw new InvalidOperationException("Unable to start the Cryptosoft.exe process");
                 }
 
                 process.WaitForExit();
@@ -844,7 +844,7 @@ public class JobManager
                 if (process.ExitCode != 0)
                 {
                     var error = process.StandardError.ReadToEnd();
-                    throw new InvalidOperationException($"Cryptosoft.exe a échoué avec le code : {process.ExitCode}. Erreur : {error}");
+                    throw new InvalidOperationException($"Cryptosoft.exe failed with code : {process.ExitCode}. Error : {error}");
                 }
             }
         }
@@ -868,7 +868,7 @@ public class JobManager
     {
         if (!Directory.Exists(backupPath))
         {
-            throw new DirectoryNotFoundException($"Le chemin de backup n'existe pas : {backupPath}");
+            throw new DirectoryNotFoundException($"The backup path does not exist : {backupPath}");
         }
 
         if (!Directory.Exists(restorePath))
@@ -901,7 +901,7 @@ public class JobManager
 
                 if (restoreDir == null)
                 {
-                    throw new InvalidOperationException($"Impossible de déterminer le répertoire de restauration pour : {restoreFile}");
+                    throw new InvalidOperationException($"Unable to determine the restore directory for : {restoreFile}");
                 }
 
                 if (!Directory.Exists(restoreDir))
@@ -954,6 +954,7 @@ public class JobManager
         );
     }
 
+    //TODO: refactor with ExecuteCryptosoft and avoid code duplication
     private void ExecuteCryptosoftDecrypt(string encryptedFile, string targetDirectory, string password)
     {
         ExecuteCryptosoftCommand("-d", encryptedFile, password, targetDirectory, "CryptosoftDecryptionError");
