@@ -277,9 +277,31 @@ namespace EasySave.Cli
                     Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Executing", jobsToExecute.Count));
                     Console.WriteLine();
 
-                    Console.Write("Entrez votre mot de passe pour le chiffrement : ");
-                    string password = Console.ReadLine() ?? string.Empty;
-                    Console.WriteLine();
+                    string password = string.Empty;
+                    bool validPassword = false;
+
+                    while (!validPassword)
+                    {
+                        Console.Write(LocalizationManager.Get("ExecuteJobs_PasswordPrompt"));
+                        password = Console.ReadLine() ?? string.Empty;
+                        Console.WriteLine();
+
+                        if (string.IsNullOrEmpty(password))
+                        {
+                            Console.WriteLine(LocalizationManager.Get("ExecuteJobs_PasswordEmpty"));
+                            Console.WriteLine();
+                            continue;
+                        }
+
+                        if (password.Contains(" "))
+                        {
+                            Console.WriteLine(LocalizationManager.Get("ExecuteJobs_PasswordWithSpaces"));
+                            Console.WriteLine();
+                            continue;
+                        }
+
+                        validPassword = true;
+                    }
 
                     foreach (var job in jobsToExecute)
                     {
