@@ -121,9 +121,4 @@ public class ConfigParser
             EditAndSaveConfig(configObject);
         }
     }
-
-    public string GetLogFormat()
-    {
-        return Config?["config"]?["logFormat"]?.GetValue<string>() ?? "json";
-    }
 }
