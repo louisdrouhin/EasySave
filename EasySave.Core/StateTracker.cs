@@ -40,21 +40,22 @@ public class StateTracker
     File.WriteAllText(_stateFilePath, json);
   }
 
-  public void RemoveJobState(string jobName)
+  public void RemoveJobState(int index)
   {
-    if (string.IsNullOrEmpty(jobName))
-      return;
-    // Suppression de l'état en mémoire
-    if (_jobStates.Remove(jobName))
+    if (index < 0 || index >= _jobStates.Count)
+        return;
+
+    var jobStateKey = _jobStates.Keys.ElementAt(index);
+
+    if (_jobStates.Remove(jobStateKey))
     {
-      // Mise à jour du fichier après suppression
-      var options = new JsonSerializerOptions
-      {
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
-      };
-      var json = JsonSerializer.Serialize(_jobStates.Values, options);
-      File.WriteAllText(_stateFilePath, json);
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var json = JsonSerializer.Serialize(_jobStates.Values, options);
+        File.WriteAllText(_stateFilePath, json);
     }
   }
 }

@@ -210,7 +210,7 @@
     </data>
     <data name="ExecuteJob_Identifier"
           xml:space="preserve">
-        <value>Nom ou numéro du travail : </value>
+        <value>Numéro du travail : </value>
     </data>
     <data name="ExecuteJob_InProgress"
           xml:space="preserve">
@@ -292,7 +292,7 @@
     </data>
     <data name="DeleteJob_JobName"
           xml:space="preserve">
-        <value>Nom du travail à supprimer : </value>
+        <value> Numéro du travail à supprimer : </value>
     </data>
     <data name="DeleteJob_Success"
           xml:space="preserve">
