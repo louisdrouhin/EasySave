@@ -797,7 +797,10 @@ public class JobManager
     {
         try
         {
-            var cryptosoftPath = Path.Combine(AppContext.BaseDirectory, "Cryptosoft.exe");
+            // Remonte depuis bin/Debug/net10.0 jusqu'à la racine du projet
+            var appDirectory = AppContext.BaseDirectory;
+            var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
+            var cryptosoftPath = Path.Combine(projectRootDirectory, "Cryptosoft.exe");
 
             if (!File.Exists(cryptosoftPath))
             {
