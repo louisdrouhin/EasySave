@@ -778,19 +778,12 @@ public class JobManager
             {
                 throw new InvalidOperationException($"Unable to determine the target directory for : {destinationFile}");
             }
-            ExecuteCryptosoft(sourceFile, targetDirectory, password);
-            // Add log for encryption (based on copy log template)
+            ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
         }
         else
         {
             File.Copy(sourceFile, destinationFile, overwrite: true);
         }
-    }
-
-    //TODO: refactor with ExecuteCryptosoft and avoid code duplication
-    private void ExecuteCryptosoft(string sourceFile, string targetDirectory, string password)
-    {
-        ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
     }
 
     private void ExecuteCryptosoftCommand(string operation, string sourceFile, string password, string targetDirectory, string errorLogType)
@@ -896,7 +889,7 @@ public class JobManager
                     Directory.CreateDirectory(restoreDir);
                 }
 
-                ExecuteCryptosoftDecrypt(encryptedFile, restoreDir, password);
+                ExecuteCryptosoftCommand("-d", encryptedFile, password, restoreDir, "CryptosoftDecryptionError");
 
                 var fileInfo = new FileInfo(encryptedFile);
                 filesProcessed++;
@@ -941,9 +934,4 @@ public class JobManager
         );
     }
 
-    //TODO: refactor with ExecuteCryptosoft and avoid code duplication
-    private void ExecuteCryptosoftDecrypt(string encryptedFile, string targetDirectory, string password)
-    {
-        ExecuteCryptosoftCommand("-d", encryptedFile, password, targetDirectory, "CryptosoftDecryptionError");
-    }
 }
