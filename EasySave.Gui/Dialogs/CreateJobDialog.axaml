@@ -6,7 +6,8 @@
         Width="500"
         Height="400"
         WindowStartupLocation="CenterOwner"
-        CanResize="False">
+        CanResize="False"
+        RequestedThemeVariant="Light">
     <StackPanel Spacing="15" Margin="20">
         <!-- Job Name -->
         <StackPanel Spacing="8">
@@ -63,6 +64,10 @@
                          Watermark="Enter source directory path" />
                 <Button Grid.Column="1"
                         x:Name="BrowseSourceButton"
+                        Width="40"
+                        Height="40"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"
                         Content="..."
                         Background="#F0F0F0"
                         Foreground="#15171D"
@@ -93,6 +98,10 @@
                          Watermark="Enter destination directory path" />
                 <Button Grid.Column="1"
                         x:Name="BrowseDestinationButton"
+                        Width="40"
+                        Height="40"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"
                         Content="..."
                         Background="#F0F0F0"
                         Foreground="#15171D"
