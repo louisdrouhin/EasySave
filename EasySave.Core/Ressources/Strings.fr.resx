@@ -249,4 +249,8 @@
   <data name="Error_ConfigFileNotFound" xml:space="preserve">
     <value>Impossible de démarrer : le fichier de configuration de base est introuvable.</value>
   </data>
+  <!-- Vérification de l'application métier -->
+  <data name="BusinessCheck_ApplicationRunning" xml:space="preserve">
+    <value>L'application '{0}' est lancée. Impossible d'exécuter le job de sauvegarde.</value>
+  </data>
 </root>

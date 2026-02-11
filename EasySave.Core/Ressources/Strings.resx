@@ -383,4 +383,9 @@
           xml:space="preserve">
         <value>Unable to start: the base configuration file cannot be found.</value>
     </data>
+    <!-- Business Application Check -->
+    <data name="BusinessCheck_ApplicationRunning"
+          xml:space="preserve">
+        <value>The application '{0}' is running. Unable to execute the backup job.</value>
+    </data>
 </root>

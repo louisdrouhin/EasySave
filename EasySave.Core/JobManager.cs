@@ -2,6 +2,7 @@
 
 using EasySave.Models;
 using EasyLog.Lib;
+using EasySave.Core.Localization;
 using System.Text.Json.Nodes;
 using System.Diagnostics;
 
@@ -158,6 +159,47 @@ public class JobManager
         _logger.Close();
     }
 
+    public string? CheckBusinessApplications()
+    {
+        var businessApplications = new[] { "notepad" };
+
+        foreach (var appName in businessApplications)
+        {
+            try
+            {
+                var processes = Process.GetProcessesByName(appName);
+                if (processes.Length > 0)
+                {
+                    _logger.Write(
+                        DateTime.Now,
+                        "BusinessApplicationDetected",
+                        new Dictionary<string, object>
+                        {
+                            { "applicationName", appName },
+                            { "message", $"Business application '{appName}' is running. Backup job execution blocked." }
+                        }
+                    );
+
+                    return appName;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Write(
+                    DateTime.Now,
+                    "BusinessApplicationCheckError",
+                    new Dictionary<string, object>
+                    {
+                        { "applicationName", appName },
+                        { "error", ex.Message }
+                    }
+                );
+            }
+        }
+
+        return null;
+    }
+
     public void SetLogFormat(string format)
     {
         string oldFormat = _configParser.GetLogFormat();
@@ -268,7 +310,6 @@ public class JobManager
 
     public void LaunchJob(Job job, string password)
     {
-
         _stateTracker.UpdateJobState(
             new StateEntry(
                 job.Name,
