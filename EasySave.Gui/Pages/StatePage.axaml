@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="EasySave.GUI.LogsPage">
+             x:Class="EasySave.GUI.Pages.StatePage">
     <Grid>
-        <TextBlock Text="Logs Page"
+        <TextBlock Text="State Page"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" />
     </Grid>

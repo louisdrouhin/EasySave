@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:comp="clr-namespace:EasySave.GUI.Components"
+             x:Class="EasySave.GUI.Pages.JobsPage">
+    <Border Padding="20"
+            Background="#FFE6D5">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <StackPanel Grid.Row="0"
+                        Margin="0,0,0,20">
+                <TextBlock Text="Saved Jobs"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="#15171D" />
+                <TextBlock Text="Manage your backup jobs"
+                           FontSize="14"
+                           Foreground="#666666"
+                           Margin="0,8,0,0" />
+            </StackPanel>
+            
+            <!-- Jobs Grid -->
+            <ScrollViewer Grid.Row="1">
+                <ItemsControl x:Name="JobsItemsControl">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <comp:JobCard DataContext="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

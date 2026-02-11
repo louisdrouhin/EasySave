@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace EasySave.GUI;
+namespace EasySave.GUI.Pages;
 
 public partial class SettingsPage : UserControl
 {
