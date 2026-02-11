@@ -388,4 +388,8 @@
           xml:space="preserve">
         <value>The application '{0}' is running. Unable to execute the backup job.</value>
     </data>
+    <data name="Error_InvalidLogFormat"
+          xml:space="preserve">
+        <value>Invalid log format. The log format must be 'json' or 'xml'.</value>
+    </data>
 </root>

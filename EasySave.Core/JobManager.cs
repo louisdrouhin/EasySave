@@ -161,7 +161,7 @@ public class JobManager
 
     public string? CheckBusinessApplications()
     {
-        var businessApplications = new[] { "notepad" };
+        var businessApplications = _configParser.GetBusinessApplications();
 
         foreach (var appName in businessApplications)
         {
