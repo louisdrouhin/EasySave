@@ -1,9 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="EasySave.Gui.MainWindow"
-        Title="EasySave.Gui">
-    Welcome to Avalonia!
+        xmlns:views="clr-namespace:EasySave.GUI"
+        mc:Ignorable="d"
+        d:DesignWidth="800"
+        d:DesignHeight="450"
+        x:Class="EasySave.GUI.MainWindow"
+        Title="EasySave.GUI">
+    <Window.Styles>
+        <Style Selector="Button.menu-button">
+            <Setter Property="Background"
+                    Value="#F5CB5C" />
+            <Setter Property="BorderBrush"
+                    Value="Transparent" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+            <Setter Property="Foreground"
+                    Value="Black" />
+            <Setter Property="CornerRadius"
+                    Value="10" />
+            <Setter Property="Padding"
+                    Value="20" />
+            <Setter Property="FontSize"
+                    Value="18" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="Cursor"
+                    Value="Hand" />
+            <Style.Resources>
+                <ResourceDictionary>
+                    <SolidColorBrush x:Key="ButtonBackground">#F5CB5C</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver">#F5CB5C</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBackgroundPressed">#F5CB5C</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBorderBrush">Transparent</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver">Transparent</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBorderBrushPressed">Transparent</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonForeground">Black</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonForegroundPointerOver">Black</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonForegroundPressed">Black</SolidColorBrush>
+                </ResourceDictionary>
+            </Style.Resources>
+        </Style>
+        <Style Selector="Button.menu-button:pointerover">
+            <Setter Property="Background"
+                    Value="#F5CB5C" />
+            <Setter Property="BorderBrush"
+                    Value="Transparent" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+        </Style>
+    </Window.Styles>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <!-- Left Menu -->
+        <Border Grid.Column="0"
+                Background="#CFDBD5"
+                Padding="15">
+            <Grid RowDefinitions="*,Auto">
+                <StackPanel Spacing="15">
+                    <!-- Menu content will go here -->
+                    <Button Content="Jobs"
+                            Classes="menu-button"
+                            Click="OnJobsClick" />
+                    <Button Content="Logs"
+                            Classes="menu-button"
+                            Click="OnLogsClick" />
+                    <Button Content="State"
+                            Classes="menu-button"
+                            Click="OnStateClick" />
+                </StackPanel>
+                <Button Grid.Row="1"
+                        Content="Settings"
+                        Classes="menu-button"
+                        Click="OnSettingsClick"
+                        Margin="0,15,0,0" />
+            </Grid>
+        </Border>
+        <!-- Home Page Content -->
+        <Border Grid.Column="1"
+                Background="#E8EDDF">
+            <ContentControl x:Name="PageHost">
+                <views:JobsPage />
+            </ContentControl>
+        </Border>
+    </Grid>
 </Window>

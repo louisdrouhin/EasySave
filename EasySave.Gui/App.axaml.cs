@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-namespace EasySave.Gui;
+namespace EasySave.GUI;
 
 public partial class App : Application
 {
