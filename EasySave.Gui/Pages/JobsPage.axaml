@@ -18,7 +18,6 @@
                            Foreground="#666666"
                            Margin="0,8,0,0" />
             </StackPanel>
-            
             <!-- Jobs Grid -->
             <ScrollViewer Grid.Row="1">
                 <ItemsControl x:Name="JobsItemsControl">

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:EasySave.Models;assembly=EasySave.Models"
+             x:Class="EasySave.GUI.Components.JobCard"
+             x:DataType="models:Job">
+    <Border BorderBrush="#E0E0E0"
+            BorderThickness="1"
+            CornerRadius="10"
+            Padding="15"
+            Background="#FFFFFF"
+            Margin="5">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+            <!-- Job Name -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding Name}"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Foreground="#15171D"
+                       Margin="0,0,0,10" />
+            <!-- Job Type -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Type: "
+                           Foreground="#666666"
+                           FontSize="14" />
+                <TextBlock Text="{Binding Type}"
+                           Foreground="#F97316"
+                           FontWeight="Bold"
+                           FontSize="14" />
+            </StackPanel>
+            <!-- Source Path -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Vertical"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Source:"
+                           Foreground="#666666"
+                           FontSize="12" />
+                <TextBlock Text="{Binding SourcePath}"
+                           Foreground="#15171D"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <!-- Destination Path -->
+            <StackPanel Grid.Row="3"
+                        Orientation="Vertical">
+                <TextBlock Text="Destination:"
+                           Foreground="#666666"
+                           FontSize="12" />
+                <TextBlock Text="{Binding DestinationPath}"
+                           Foreground="#15171D"
+                           FontSize="13"
+                           TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

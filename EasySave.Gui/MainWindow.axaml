@@ -96,9 +96,7 @@
         <!-- Home Page Content -->
         <Border Grid.Column="1"
                 Background="#FFE6D5">
-            <ContentControl x:Name="PageHost">
-                <views:JobsPage />
-            </ContentControl>
+            <ContentControl x:Name="PageHost" />
         </Border>
     </Grid>
 </Window>
