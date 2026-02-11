@@ -12,17 +12,17 @@
     <Window.Styles>
         <Style Selector="Button.menu-button">
             <Setter Property="Background"
-                    Value="#F5CB5C" />
+                    Value="#F97316" />
             <Setter Property="BorderBrush"
                     Value="Transparent" />
             <Setter Property="BorderThickness"
                     Value="0" />
             <Setter Property="Foreground"
-                    Value="Black" />
+                    Value="#FFF4ED" />
             <Setter Property="CornerRadius"
                     Value="10" />
             <Setter Property="Padding"
-                    Value="20" />
+                    Value="20,30" />
             <Setter Property="FontSize"
                     Value="18" />
             <Setter Property="HorizontalAlignment"
@@ -35,21 +35,21 @@
                     Value="Hand" />
             <Style.Resources>
                 <ResourceDictionary>
-                    <SolidColorBrush x:Key="ButtonBackground">#F5CB5C</SolidColorBrush>
-                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver">#F5CB5C</SolidColorBrush>
-                    <SolidColorBrush x:Key="ButtonBackgroundPressed">#F5CB5C</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBackground">#F97316</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver">#F97316</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonBackgroundPressed">#F97316</SolidColorBrush>
                     <SolidColorBrush x:Key="ButtonBorderBrush">Transparent</SolidColorBrush>
                     <SolidColorBrush x:Key="ButtonBorderBrushPointerOver">Transparent</SolidColorBrush>
                     <SolidColorBrush x:Key="ButtonBorderBrushPressed">Transparent</SolidColorBrush>
-                    <SolidColorBrush x:Key="ButtonForeground">Black</SolidColorBrush>
-                    <SolidColorBrush x:Key="ButtonForegroundPointerOver">Black</SolidColorBrush>
-                    <SolidColorBrush x:Key="ButtonForegroundPressed">Black</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonForeground">#FFF4ED</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonForegroundPointerOver">#FFF4ED</SolidColorBrush>
+                    <SolidColorBrush x:Key="ButtonForegroundPressed">#FFF4ED</SolidColorBrush>
                 </ResourceDictionary>
             </Style.Resources>
         </Style>
         <Style Selector="Button.menu-button:pointerover">
             <Setter Property="Background"
-                    Value="#F5CB5C" />
+                    Value="#F97316" />
             <Setter Property="BorderBrush"
                     Value="Transparent" />
             <Setter Property="BorderThickness"
@@ -63,11 +63,19 @@
         </Grid.ColumnDefinitions>
         <!-- Left Menu -->
         <Border Grid.Column="0"
-                Background="#CFDBD5"
+                Background="#FFF4ED"
                 Padding="15">
             <Grid RowDefinitions="*,Auto">
                 <StackPanel Spacing="15">
                     <!-- Menu content will go here -->
+                    <Border CornerRadius="10"
+                            ClipToBounds="True"
+                            HorizontalAlignment="Stretch"
+                            Height="90"
+                            Margin="0,0,0,10">
+                        <Image Source="avares://EasySave.GUI/images/logo-easysave.png"
+                               Stretch="UniformToFill" />
+                    </Border>
                     <Button Content="Jobs"
                             Classes="menu-button"
                             Click="OnJobsClick" />
@@ -87,7 +95,7 @@
         </Border>
         <!-- Home Page Content -->
         <Border Grid.Column="1"
-                Background="#E8EDDF">
+                Background="#FFE6D5">
             <ContentControl x:Name="PageHost">
                 <views:JobsPage />
             </ContentControl>

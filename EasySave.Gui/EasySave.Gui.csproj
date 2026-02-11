@@ -18,4 +18,9 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="font\**\*" />
+    <AvaloniaResource Include="images\**\*" />
+  </ItemGroup>
 </Project>
