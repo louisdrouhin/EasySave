@@ -53,10 +53,14 @@ public partial class JobCard : UserControl
     private void OnToggleExpanded()
     {
         _isExpanded = !_isExpanded;
-        var toggleButton = this.FindControl<Button>("ToggleButton");
-        if (toggleButton != null)
+        var toggleIcon = this.FindControl<PathIcon>("ToggleIcon");
+        if (toggleIcon != null)
         {
-            toggleButton.Content = _isExpanded ? "▼" : "▶";
+            var resourceKey = _isExpanded ? "ChevronDownIcon" : "ChevronRightIcon";
+            if (this.TryGetResource(resourceKey, out var geometry))
+            {
+                toggleIcon.Data = (Geometry)geometry!;
+            }
         }
 
         var detailsPanel = this.FindControl<Border>("DetailsPanel");

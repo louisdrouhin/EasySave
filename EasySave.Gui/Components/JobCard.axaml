@@ -4,6 +4,13 @@
              xmlns:models="clr-namespace:EasySave.Models;assembly=EasySave.Models"
              x:Class="EasySave.GUI.Components.JobCard"
              x:DataType="models:Job">
+    <UserControl.Resources>
+        <Geometry x:Key="ChevronRightIcon">M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z</Geometry>
+        <Geometry x:Key="ChevronDownIcon">M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z</Geometry>
+        <Geometry x:Key="PlayIcon">M8,5.14V19.14L19,12.14L8,5.14Z</Geometry>
+        <Geometry x:Key="TrashIcon">M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z</Geometry>
+    </UserControl.Resources>
+
     <Border BorderBrush="#E0E0E0"
             BorderThickness="1"
             CornerRadius="10"
@@ -16,12 +23,19 @@
                     <!-- Toggle Button -->
                     <Button x:Name="ToggleButton"
                             Grid.Column="0"
-                            Content="▶"
                             Background="Transparent"
-                            Foreground="#15171D"
-                            FontSize="14"
                             BorderThickness="0"
-                            Padding="0" />
+                            Padding="0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <PathIcon x:Name="ToggleIcon" 
+                                  Data="{StaticResource ChevronRightIcon}" 
+                                  Width="12" 
+                                  Height="12" 
+                                  Foreground="#6B7280"/>
+                    </Button>
 
                     <!-- Index Text -->
                     <TextBlock x:Name="IndexText"
@@ -69,31 +83,29 @@
                             x:Name="PlayButton"
                             Width="30"
                             Height="30"
-                            Content="▷"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
                             Background="#22C55E"
-                            Foreground="White"
-                            FontSize="14"
                             BorderThickness="0"
                             CornerRadius="6"
                             Padding="0"
-                            Margin="0,0,5,0" />
+                            Margin="0,0,5,0">
+                        <PathIcon Data="{StaticResource PlayIcon}" Width="10" Height="10" Foreground="White" Margin="2,0,0,0"/>
+                    </Button>
 
                     <!-- Delete Button -->
                     <Button Grid.Column="5"
                             x:Name="DeleteButton"
                             Width="30"
                             Height="30"
-                            Content="X"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
                             Background="#EF4444"
-                            Foreground="White"
-                            FontSize="16"
                             BorderThickness="0"
                             CornerRadius="6"
-                            Padding="0" />
+                            Padding="0">
+                        <PathIcon Data="{StaticResource TrashIcon}" Width="14" Height="14" Foreground="White"/>
+                    </Button>
                 </Grid>
             </Border>
 
