@@ -29,10 +29,10 @@
                         VerticalAlignment="Top" />
             </Grid>
             <!-- Jobs List -->
-            <ScrollViewer Grid.Row="1">
-                <StackPanel x:Name="JobsStackPanel"
-                            Orientation="Vertical" />
-            </ScrollViewer>
-        </Grid>
+                <ScrollViewer Grid.Row="1">
+                                    <StackPanel x:Name="JobsStackPanel"
+                                                Orientation="Vertical" 
+                                                Spacing="15"
+                                                Margin="10"/>                </ScrollViewer>        </Grid>
     </Border>
 </UserControl>
