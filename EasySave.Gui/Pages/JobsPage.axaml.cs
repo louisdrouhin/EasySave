@@ -110,23 +110,18 @@ public partial class JobsPage : UserControl
             var password = await passwordDialog.ShowDialog<string?>(mainWindow2);
             if (password != null)
             {
-                try
+                await Task.Run(() =>
                 {
-                    // Exécuter le job en arrière-plan pour ne pas bloquer l'UI
-                    await Task.Run(() =>
+                    try
                     {
                         _jobManager?.LaunchJob(job, password);
-                    });
-                    Console.WriteLine($"Job {job.Name} completed successfully");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error launching job: {ex.Message}");
-                    
-                    // Afficher l'erreur dans une boîte de dialogue
-                    var errorDialog = new ErrorDialog("Job Error", $"Error executing job: {ex.Message}");
-                    await errorDialog.ShowDialog(mainWindow2);
-                }
+                        Console.WriteLine($"Job {job.Name} completed successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error launching job: {ex.Message}");
+                    }
+                });
             }
         }
     }
