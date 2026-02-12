@@ -1,3 +1,17 @@
+## v1.3.0 (2026-02-12)
+
+### Feat
+
+- **logs-page**: add logs in the GUI
+
+### Fix
+
+- **gui-logs**: fix log display
+- **gui-log**: add stage edit on the repo
+- **UML**: fix typo
+- **gui**: create errorDialog for error popup
+- **gui**: implement business app check for gui
+
 ## v1.2.0 (2026-02-12)
 
 ### Feat
