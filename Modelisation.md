@@ -4,7 +4,7 @@ This document contains the UML diagrams of the **EasySave** project, created wit
 
 ## 1. Use Case Diagram
 
-![EasySave Use Case Diagram](./ressources/easysave-use_case_v1.0.0.png)
+![EasySave Use Case Diagram](./ressources/easysave-use_case_v1.1.0.png)
 
 
 ## 2. Class Diagram
@@ -18,105 +18,157 @@ classDiagram
   JobManager *-- "0..5" Job
   JobManager o-- EasyLog
   JobManager o-- StateTracker
-
   JobManager --> ConfigParser
+  JobManager o-- ILogFormatter
+
   ConfigParser ..> Job
 
-  Job --> SaveType
-  StateEntry --> StateType
+  Job --> JobType
+  StateEntry --> JobState
 
   EasyLog o-- ILogFormatter
   ILogFormatter <|.. JsonLogFormatter
+  ILogFormatter <|.. XmlLogFormatter
 
   JobManager ..> LogEntry
   JobManager ..> StateEntry
   StateTracker ..> StateEntry
 
   namespace EasySave.CLI {
-	  class CLI {
-		-JobManager : JobManager
-	    +Start() void
-	    +WriteLine(message: string) void
-	  }
-	}
+    class CLI {
+      -JobManager _jobManager
+      +WriteLine(message: string) void
+      +start() void
+      -CreateJob() void
+      -DeleteJob() void
+      -ShowJobs() void
+      -ChangeLanguage() void
+      -ExecuteJobs() void
+    }
+  }
 
-	namespace EasySave.Core {
-	  class JobManager {
-	    -List~Job~ Jobs
-	    -EasyLog Logger
-	    -StateTracker StateTracker
-	    +createLogger() void
-	    +createJob(name: string, type: SaveType, sourceDir: string, targetDir: string) void
-	    +deleteJob(id: int) void
-	    +launchJob(id: int) void
-	  }
+  namespace EasySave.Core {
+    class JobManager {
+      -List~Job~ _jobs
+      -EasyLog _logger
+      -ConfigParser _configParser
+      -ILogFormatter _logFormatter
+      -StateTracker _stateTracker
+      +CreateJob(name: string, type: JobType, sourcePath: string, destinationPath: string) void
+      +removeJob(name: string) void
+      +GetJobs() List~Job~
+      +Close() void
+      +LaunchJob(job: Job) void
+      -CreateLogFormatter() ILogFormatter
+      -LoadJobsFromConfig() void
+      -SaveJobToConfig(job: Job) void
+      -RemoveJobFromConfig(jobName: string) void
+      -ExecuteFullBackup(job: Job, createHashFile: bool) void
+      -ExecuteDifferentialBackup(job: Job) void
+    }
 
-      class StateTracker {
-	    -string StatePath
-	    +addOrEditJobState(state: StateEntry) void
-	  }
+    class StateTracker {
+      -string _stateFilePath
+      -Dictionary~string, StateEntry~ _jobStates
+      +UpdateJobState(stateEntry: StateEntry) void
+      +RemoveJobState(jobName: string) void
+    }
 
-      class ConfigParser {
-        -string _configPath
-        -JSON Config
-        +LoadConfig() void
-        +EditAndSaveConfig(newConfig: JSON) void
-        +saveJobs(jobs: List<Job>) void
-      }
+    class ConfigParser {
+      -string _configPath
+      +JsonNode? Config
+      +LoadConfig() void
+      +EditAndSaveConfig(newConfig: JsonNode) void
+      +saveJobs(jobs: List~Job~) void
+      -SaveConfig() void
+    }
   }
 
   namespace EasySave.Models {
-	  class Job {
-	    -string Name
-	    -SaveType Type
-	    -string SourceDir
-	    -string TargetDir
-	  }
-	  class SaveType {
-	    <<enumeration>>
-	    Full
-	    Differential
-	  }
-	  class LogEntry {
-		  -string Name
-		  -Datetime Timestamp
-		  -string SourceFile
-		  -string TargetFile
-		  -long SizeFile
-		  -long CopyTime
-		  +ToString() string
-	  }
-	  class StateEntry {
-		  -string Name
-          -StateType State
-          -long? TotalSize = null
-          -float? Progress = null
-          -long? RemainingSize = null
-          +ToString() string?
-	  }
-      class StateType {
-	    <<enumeration>>
-	    Active
-	    Inactive
-	  }
+    class Job {
+      +string Name
+      +JobType Type
+      +string SourcePath
+      +string DestinationPath
+      +ToString() string
+    }
+    
+    class JobType {
+      <<enumeration>>
+      Full
+      Differential
+    }
+    
+    class LogEntry {
+      +DateTime Timestamp
+      +string BackupName
+      +string SourcePath
+      +string DestinationPath
+      +long FileSize
+      +int TransferTimeMs
+      +ToNormalizedFormat() (DateTime, string, Dictionary~string, object~)
+    }
+    
+    class StateEntry {
+      +string JobName
+      +DateTime LastActionTime
+      +JobState State
+      +int? TotalFiles
+      +long? TotalSizeToTransfer
+      +double? Progress
+      +int? RemainingFiles
+      +long? RemainingSizeToTransfer
+      +string? CurrentSourcePath
+      +string? CurrentDestinationPath
+      +ToString() string
+    }
+    
+    class JobState {
+      <<enumeration>>
+      Active
+      Inactive
+    }
   }
 
   namespace EasyLog.lib {
-	  class EasyLog {
-        -ILogFormatter _formatter
-        -string _logPath
-        +Write(timestamp: DateTime, name: string, content: Dictionary<string, object>) void
-        +SetLogPath(newLogPath string) void
-        +GetCurrentLogPath() string
-        -EnsureDirectoryExists(logPath string) void
-	  }
+    class EasyLog {
+      -ILogFormatter _formatter
+      -string _logDirectory
+      -string _logPath
+      -bool _isFirstEntry
+      -DateTime _currentDate
+      -string _fileExtension
+      -string _entrySeparator
+      +Write(timestamp: DateTime, name: string, content: Dictionary~string, object~) void
+      +SetLogPath(newLogDirectory: string) void
+      +GetCurrentLogPath() string
+      +GetLogDirectory() string
+      +Close() void
+      -GetLogPathForDate(date: DateTime) string
+      -InitializeLogStructure() void
+      -EnsureFileIsOpen() void
+      -NormalizePathsInContent(content: Dictionary~string, object~) void
+      -ConvertToUncPath(path: string) string
+      -CheckAndRotateIfNeeded() void
+      -EnsureDirectoryExists(directory: string) void$
+    }
 
-      class ILogFormatter {
-        +Format(timestamp: DateTime, name: string, content: Dictionary<string, object>) string
-      }
+    class ILogFormatter {
+      <<interface>>
+      +Format(timestamp: DateTime, name: string, content: Dictionary~string, object~) string
+      +Close(filePath: string) void
+    }
 
-      class JsonLogFormatter {
-      }
+    class JsonLogFormatter {
+      +Format(timestamp: DateTime, name: string, content: Dictionary~string, object~) string
+      +Close(filePath: string) void
+    }
+
+    class XmlLogFormatter {
+      +Format(timestamp: DateTime, name: string, content: Dictionary~string, object~) string
+      +Close(filePath: string) void
+      -SanitizeXmlElementName(name: string) string
+    }
   }
 ```
 
