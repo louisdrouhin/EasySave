@@ -610,9 +610,8 @@ tags
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/dotnetcore,visualstudio,vim,csharp
-Expliquer
+.idea
 
 config.json
-
-
-.idea
+state.json
+logs/
