@@ -48,6 +48,18 @@ public partial class JobCard : UserControl
         {
             deleteButton.Click += (s, e) => OnDeleteClicked();
         }
+
+        var cancelDeleteButton = this.FindControl<Button>("CancelDeleteButton");
+        if (cancelDeleteButton != null)
+        {
+            cancelDeleteButton.Click += (s, e) => OnCancelDeleteClicked();
+        }
+
+        var confirmDeleteButton = this.FindControl<Button>("ConfirmDeleteButton");
+        if (confirmDeleteButton != null)
+        {
+            confirmDeleteButton.Click += (s, e) => OnConfirmDeleteClicked();
+        }
     }
 
     private void OnToggleExpanded()
@@ -77,7 +89,31 @@ public partial class JobCard : UserControl
 
     private void OnDeleteClicked()
     {
+        ToggleDeleteMode(true);
+    }
+
+    private void OnCancelDeleteClicked()
+    {
+        ToggleDeleteMode(false);
+    }
+
+    private void OnConfirmDeleteClicked()
+    {
+        ToggleDeleteMode(false);
         DeleteClicked?.Invoke(this, (_index - 1, _job));
+    }
+
+    private void ToggleDeleteMode(bool isDeleting)
+    {
+        var playButton = this.FindControl<Button>("PlayButton");
+        var deleteButton = this.FindControl<Button>("DeleteButton");
+        var cancelButton = this.FindControl<Button>("CancelDeleteButton");
+        var confirmButton = this.FindControl<Button>("ConfirmDeleteButton");
+
+        if (playButton != null) playButton.IsVisible = !isDeleting;
+        if (deleteButton != null) deleteButton.IsVisible = !isDeleting;
+        if (cancelButton != null) cancelButton.IsVisible = isDeleting;
+        if (confirmButton != null) confirmButton.IsVisible = isDeleting;
     }
 
     public void UpdateState(StateEntry state)
