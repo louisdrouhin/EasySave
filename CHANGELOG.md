@@ -1,3 +1,33 @@
+## v1.2.0 (2026-02-12)
+
+### Feat
+
+- **gui**: implement create, execute and delete jobs + change grid for job list
+- **gui**: add joblist card
+- **gui**: add style on the gui
+- **gui**: add menu + buttons
+- **EasySave.GUI**: add Avalonia based GUI
+- **core**: add logic for app check. Curent use hardcoded app name
+
+### Fix
+
+- **EasySave.GUI**: fix buttons size and fix dialogs theme
+- **ci**: fix ci build error
+- **core**: change the hardcoded name of business app to a json key into the config file
+- **cryptosoft.exe**: add new version of cryptosoft.exe
+- **core**: fix deduplicate method
+- **language**: fix strings
+- **global**: fix conflicts
+- **jobmanager**: change language of error descriptions and logs for english
+- **cryptosoft**: fix error intergration cryptosoft
+- **global**: fix conflicts
+
+### Refactor
+
+- **GUI**: refacto code
+- **jobmanager**: add encryption time into logs
+- **jobmanager**: refacto executeCryptosoft method to avoid code duplication
+
 ## v1.1.1 (2026-02-10)
 
 ### Fix
