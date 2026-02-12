@@ -34,7 +34,7 @@ public partial class LogsPage : UserControl
     {
         _logs = new ObservableCollection<SimpleLogEntry>();
         _configParser = configParser ?? new ConfigParser("config.json");
-        
+
         InitializeComponent();
 
         // Assigner l'ItemsSource après InitializeComponent
@@ -68,7 +68,7 @@ public partial class LogsPage : UserControl
         try
         {
             string logsPath = _configParser.GetLogsPath();
-            
+
             // Créer le dossier s'il n'existe pas
             if (!Directory.Exists(logsPath))
             {
@@ -109,10 +109,10 @@ public partial class LogsPage : UserControl
         {
             string logsPath = _configParser.GetLogsPath();
             string logFormat = _configParser.GetLogFormat();
-            
+
             Console.WriteLine($"[LogsPage] LoadLogs() - logsPath: {logsPath}");
             Console.WriteLine($"[LogsPage] LoadLogs() - logFormat: {logFormat}");
-            
+
             // Créer le dossier des logs s'il n'existe pas
             if (!Directory.Exists(logsPath))
             {
@@ -124,7 +124,7 @@ public partial class LogsPage : UserControl
             // Obtenir le nom du fichier de logs du jour
             string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.{logFormat}";
             _currentLogFilePath = Path.Combine(logsPath, todayLogFileName);
-            
+
             Console.WriteLine($"[LogsPage] Chemin du fichier de logs: {_currentLogFilePath}");
             Console.WriteLine($"[LogsPage] Le fichier existe: {File.Exists(_currentLogFilePath)}");
 
@@ -159,7 +159,7 @@ public partial class LogsPage : UserControl
         try
         {
             Console.WriteLine($"[LogsPage] LoadJsonLogs() - Lecture du fichier: {filePath}");
-            
+
             // IMPORTANT: Utiliser FileShare.ReadWrite car le fichier est ouvert en écriture par EasyLog
             string jsonContent;
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -167,9 +167,9 @@ public partial class LogsPage : UserControl
             {
                 jsonContent = reader.ReadToEnd();
             }
-            
+
             Console.WriteLine($"[LogsPage] Contenu JSON lu, longueur: {jsonContent.Length}");
-            
+
             // Vérifier si le contenu est vide
             if (string.IsNullOrWhiteSpace(jsonContent))
             {
@@ -180,15 +180,15 @@ public partial class LogsPage : UserControl
             // Diviser les logs individuellement
             Console.WriteLine($"[LogsPage] Division des logs");
             _logs.Clear();
-            
+
             // Chercher toutes les entrées de log (entre {"timestamp": et })
             var matches = System.Text.RegularExpressions.Regex.Matches(
-                jsonContent, 
+                jsonContent,
                 @"\{""timestamp"":""[^""]+""[^}]*\}",
                 System.Text.RegularExpressions.RegexOptions.None);
-            
+
             Console.WriteLine($"[LogsPage] Nombre de logs trouvés: {matches.Count}");
-            
+
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
                 string logEntry = match.Value;
@@ -197,7 +197,7 @@ public partial class LogsPage : UserControl
                     LogText = logEntry
                 });
             }
-            
+
             Console.WriteLine($"[LogsPage] Total de logs ajoutés: {_logs.Count}");
         }
         catch (Exception ex)
@@ -226,7 +226,7 @@ public partial class LogsPage : UserControl
         try
         {
             string logsPath = _configParser.GetLogsPath();
-            
+
             // Créer le dossier s'il n'existe pas
             if (!Directory.Exists(logsPath))
             {
@@ -254,7 +254,7 @@ public partial class LogsPage : UserControl
     {
         // Vérifier si c'est le fichier de logs du jour
         string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.json";
-        
+
         if (Path.GetFileName(e.FullPath) == todayLogFileName)
         {
             // Exécuter sur le thread UI
@@ -274,7 +274,7 @@ public partial class LogsPage : UserControl
         {
             logsCountText.Text = _logs.Count.ToString();
         }
-        
+
         Console.WriteLine($"[LogsPage] UpdateLogsCount - Total: {_logs.Count}");
     }
 
