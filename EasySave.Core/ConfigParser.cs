@@ -103,6 +103,13 @@ public class ConfigParser
         return extensions;
     }
 
+    public string GetLogsPath()
+    {
+        string logsPath = Config?["config"]?["logsPath"]?.GetValue<string>() ?? "./logs/";
+        string appDirectory = AppContext.BaseDirectory;
+        return Path.IsPathRooted(logsPath) ? logsPath : Path.Combine(appDirectory, logsPath);
+    }
+
     public string GetLogFormat()
     {
         return Config?["config"]?["logFormat"]?.GetValue<string>() ?? "json";
