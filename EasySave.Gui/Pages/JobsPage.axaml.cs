@@ -88,11 +88,27 @@ public partial class JobsPage : UserControl
     {
         Console.WriteLine($"Playing job: {job.Name}");
 
-        var passwordDialog = new PasswordDialog();
-        var mainWindow = (Window?)TopLevel.GetTopLevel(this);
-        if (mainWindow != null)
+        // Check if business applications are running
+        var runningBusinessApp = _jobManager?.CheckBusinessApplications();
+        if (runningBusinessApp != null)
         {
-            var password = await passwordDialog.ShowDialog<string?>(mainWindow);
+            var errorMessage = $"Business application '{runningBusinessApp}' is running. Backup job execution blocked.";
+            Console.WriteLine(errorMessage);
+
+            var mainWindow = (Window?)TopLevel.GetTopLevel(this);
+            if (mainWindow != null)
+            {
+                var errorDialog = new ErrorDialog("Business Application Running", errorMessage);
+                await errorDialog.ShowDialog(mainWindow);
+            }
+            return;
+        }
+
+        var passwordDialog = new PasswordDialog();
+        var mainWindow2 = (Window?)TopLevel.GetTopLevel(this);
+        if (mainWindow2 != null)
+        {
+            var password = await passwordDialog.ShowDialog<string?>(mainWindow2);
             if (password != null)
             {
                 try
