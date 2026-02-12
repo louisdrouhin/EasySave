@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Threading;
 
 namespace EasySave.GUI.Pages;
 
@@ -25,6 +26,8 @@ public partial class LogsPage : UserControl
     private readonly ConfigParser _configParser;
     private FileSystemWatcher? _fileWatcher;
     private string _currentLogFilePath = string.Empty;
+    private Timer? _reloadTimer;
+    private readonly object _reloadLock = new object();
 
     public LogsPage() : this(null)
     {
@@ -61,6 +64,9 @@ public partial class LogsPage : UserControl
 
         // Démarrer la surveillance du fichier
         StartFileWatcher();
+        
+        // Scroller vers le bas après le chargement initial
+        ScrollToBottom();
     }
 
     private void OnOpenFolderClick(object? sender, RoutedEventArgs e)
@@ -146,6 +152,9 @@ public partial class LogsPage : UserControl
 
             UpdateLogsCount();
             Console.WriteLine($"[LogsPage] Nombre de logs chargés: {_logs.Count}");
+            
+            // Scroller vers le bas après le chargement
+            ScrollToBottom();
         }
         catch (Exception ex)
         {
@@ -252,18 +261,37 @@ public partial class LogsPage : UserControl
 
     private void OnLogFileChanged(object sender, FileSystemEventArgs e)
     {
-        // Vérifier si c'est le fichier de logs du jour
-        string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.json";
-
-        if (Path.GetFileName(e.FullPath) == todayLogFileName)
+        try
         {
-            // Exécuter sur le thread UI
-            Dispatcher.UIThread.InvokeAsync(() =>
+            // Vérifier si c'est le fichier de logs du jour
+            string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.json";
+
+            if (Path.GetFileName(e.FullPath) == todayLogFileName)
             {
-                // Attendre un peu pour s'assurer que le fichier est complètement écrit
-                System.Threading.Thread.Sleep(100);
-                LoadLogs();
-            });
+                // Debounce: relancer le timer à chaque changement pour éviter les multiples recharges
+                lock (_reloadLock)
+                {
+                    _reloadTimer?.Dispose();
+                    _reloadTimer = new Timer(_ =>
+                    {
+                        Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            try
+                            {
+                                LoadLogs();
+                            }
+                            catch (Exception ex2)
+                            {
+                                Console.WriteLine($"[LogsPage] Erreur lors du rechargement: {ex2.Message}");
+                            }
+                        });
+                    }, null, 200, Timeout.Infinite);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LogsPage] Erreur dans OnLogFileChanged: {ex.Message}");
         }
     }
 
@@ -278,9 +306,27 @@ public partial class LogsPage : UserControl
         Console.WriteLine($"[LogsPage] UpdateLogsCount - Total: {_logs.Count}");
     }
 
+    private void ScrollToBottom()
+    {
+        try
+        {
+            var logsListBox = this.FindControl<ListBox>("LogsListBox");
+            if (logsListBox != null && _logs.Count > 0)
+            {
+                // Scroller vers le dernier élément
+                logsListBox.ScrollIntoView(_logs[_logs.Count - 1]);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[LogsPage] Erreur lors du scroll: {ex.Message}");
+        }
+    }
+
     // Nettoyer le FileSystemWatcher à la destruction
     ~LogsPage()
     {
         _fileWatcher?.Dispose();
+        _reloadTimer?.Dispose();
     }
 }
