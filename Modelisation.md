@@ -1,10 +1,15 @@
-# Modélisation UML - EasySave
+# UML Modeling - EasySave
 
-Ce document regroupe les diagrammes UML du projet **EasySave**, réalisés avec [Mermaid](https://mermaid.js.org/).
+This document contains the UML diagrams of the **EasySave** project, created with [Mermaid](https://mermaid.js.org/).
 
-## 1. Diagramme de Classes
+## 1. Use Case Diagram
 
-Vue d'ensemble des principales classes du projet et de leurs relations.
+![EasySave Use Case Diagram](./ressources/easysave-use_case_v1.0.0.png)
+
+
+## 2. Class Diagram
+
+Overview of the main classes of the project and their relationships.
 
 ```mermaid
 classDiagram
@@ -115,9 +120,9 @@ classDiagram
   }
 ```
 
-## 2. Diagrammes de Séquence
+## 3. Sequence Diagrams
 
-### 2.1 Ajout d'un Job
+### 3.1 Adding a Job
 
 ```mermaid
 sequenceDiagram
@@ -133,7 +138,7 @@ sequenceDiagram
     CLI->>User: prompt("Type")
     User->>CLI: Type
     CLI->>User: prompt("Source directory")
-    User->>CLI: Source directory"
+    User->>CLI: Source directory
     CLI->>User: prompt("Target directory")
     User->>CLI: Target directory
     CLI->>JobMgr: +createJob(name: string, type: SaveType, sourceDir: string, targetDir: string)
@@ -141,13 +146,13 @@ sequenceDiagram
     Job->>Job:Create instance
     Job->>JobMgr: Return instance
     JobMgr->>JobMgr: Jobs.add(job)
-    JobMgr->>Config: Write job to file
-    Config->>JobMgr: Job written in the file
+    JobMgr->>Config: Save job to configuration
+    Config->>JobMgr: Job saved to configuration
     JobMgr->>CLI: Job created
     CLI->>User: Job created
 ```
 
-### 2.2 Lancement d'un Job
+### 3.2 Starting a Job
 
 ```mermaid
 sequenceDiagram
@@ -184,7 +189,7 @@ sequenceDiagram
     CLI-->>User: Job completed
 ```
 
-### 2.3 Suppression d'un Job
+### 3.3 Deleting a Job
 
 ```mermaid
 sequenceDiagram
@@ -198,13 +203,13 @@ sequenceDiagram
     User->>CLI: Id
     CLI->>JobMgr: +deleteJob(id: int)
     JobMgr->>JobMgr: Jobs.removeAt(Id)
-    JobMgr->>Config: Remove job from the file
-    Config->>JobMgr: Job removed from the file
+    JobMgr->>Config: Remove job from configuration
+    Config->>JobMgr: Job removed from configuration
     JobMgr->>CLI: Job deleted
     CLI->>User: Job deleted
 ```
 
-### 2.4 Logger
+### 3.4 Logger
 
 ```mermaid
 sequenceDiagram
