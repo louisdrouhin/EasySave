@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:EasySave.Models;assembly=EasySave.Models"
+             x:Class="EasySave.GUI.Components.JobCard"
+             x:DataType="models:Job">
+    <StackPanel Spacing="0">
+        <!-- Main Row -->
+        <Border BorderBrush="#E0E0E0"
+                BorderThickness="0,1,0,0"
+                Padding="15"
+                Background="#FFFFFF">
+            <Grid ColumnDefinitions="30,45,*,Auto,38,38" VerticalAlignment="Center">
+                <!-- Toggle Button -->
+                <Button x:Name="ToggleButton"
+                        Grid.Column="0"
+                        Content="▶"
+                        Background="Transparent"
+                        Foreground="#15171D"
+                        FontSize="14"
+                        BorderThickness="0"
+                        Padding="0" />
+
+                <!-- Index Text -->
+                <TextBlock x:Name="IndexText"
+                           Grid.Column="1"
+                           Foreground="#666666"
+                           FontSize="13"
+                           VerticalAlignment="Center" />
+
+                <!-- Job Name -->
+                <TextBlock Grid.Column="2"
+                           Text="{Binding Name}"
+                           FontSize="15"
+                           FontWeight="Bold"
+                           Foreground="#15171D"
+                           VerticalAlignment="Center"
+                           Margin="10,0,0,0" />
+
+                <!-- Tag -->
+                <Border Grid.Column="3"
+                        CornerRadius="6"
+                        Padding="8,4"
+                        Background="{Binding Type, Converter={StaticResource JobTypeColorConverter}}"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Type}"
+                               Foreground="White"
+                               FontSize="11"
+                               FontWeight="Bold" />
+                </Border>
+
+                <!-- Play Button -->
+                <Button Grid.Column="4"
+                        x:Name="PlayButton"
+                        Width="30"
+                        Height="30"
+                        Content="▷"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Background="#22C55E"
+                        Foreground="White"
+                        FontSize="14"
+                        BorderThickness="0"
+                        CornerRadius="6"
+                        Padding="0"
+                        Margin="5,0,0,0" />
+
+                <!-- Delete Button -->
+                <Button Grid.Column="5"
+                        x:Name="DeleteButton"
+                        Width="30"
+                        Height="30"
+                        Content="X"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Background="#EF4444"
+                        Foreground="White"
+                        FontSize="16"
+                        BorderThickness="0"
+                        CornerRadius="6"
+                        Padding="0"
+                        Margin="5,0,0,0" />
+            </Grid>
+        </Border>
+
+        <!-- Details Panel -->
+        <Border x:Name="DetailsPanel"
+                IsVisible="False"
+                BorderBrush="#E0E0E0"
+                BorderThickness="0,0,0,1"
+                Padding="15"
+                Background="#FAFAFA">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="100,*">
+                <!-- Source Label -->
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Text="Source:"
+                           Foreground="#666666"
+                           FontSize="12"
+                           FontWeight="Bold" />
+                <!-- Source Value -->
+                <TextBlock Grid.Row="0"
+                           Grid.Column="1"
+                           Text="{Binding SourcePath}"
+                           Foreground="#15171D"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="10,0,0,0" />
+
+                <!-- Destination Label -->
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
+                           Text="Destination:"
+                           Foreground="#666666"
+                           FontSize="12"
+                           FontWeight="Bold"
+                           Margin="0,8,0,0" />
+                <!-- Destination Value -->
+                <TextBlock Grid.Row="1"
+                           Grid.Column="1"
+                           Text="{Binding DestinationPath}"
+                           Foreground="#15171D"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="10,8,0,0" />
+            </Grid>
+        </Border>
+    </StackPanel>
+</UserControl>

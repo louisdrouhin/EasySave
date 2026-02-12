@@ -8,5 +8,12 @@
     },
     "businessApplications": ["notepad"]
   },
-  "jobs": []
+  "jobs": [
+    {
+      "name": "test",
+      "type": "Full",
+      "sourceDir": "/path/source",
+      "targetDir": "/path/destination"
+    }
+  ]
 }

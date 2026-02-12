@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:EasySave.GUI.Converters"
+             x:Class="EasySave.GUI.App"
+             RequestedThemeVariant="Default">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    <Application.Resources>
+        <converters:JobTypeColorConverter x:Key="JobTypeColorConverter" />
+    </Application.Resources>
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="Window">
+            <Setter Property="FontFamily"
+                    Value="avares://EasySave.GUI/font/FleuronRegular.otf#Fleuron Regular" />
+        </Style>
+    </Application.Styles>
+</Application>
