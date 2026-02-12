@@ -30,13 +30,18 @@ public partial class JobsPage : UserControl
         _jobManager = jobManager;
         InitializeComponent();
         LoadJobs();
-        InitializeStateWatcher();
 
         var createJobButton = this.FindControl<Button>("CreateJobButton");
         if (createJobButton != null)
         {
             createJobButton.Click += CreateJobButton_Click;
         }
+    }
+
+    protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        InitializeStateWatcher();
     }
 
     protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -116,7 +121,11 @@ public partial class JobsPage : UserControl
     {
         try
         {
-            if (!File.Exists(_stateFilePath)) return;
+            if (!File.Exists(_stateFilePath)) 
+            {
+                // Console.WriteLine($"[JobsPage] State file not found: {_stateFilePath}");
+                return;
+            }
 
             using (var fs = new FileStream(_stateFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var sr = new StreamReader(fs))
@@ -134,17 +143,26 @@ public partial class JobsPage : UserControl
                 
                 if (states != null)
                 {
+                    // Console.WriteLine($"[JobsPage] Deserialized {states.Count} states.");
                     foreach (var state in states)
                     {
                         if (_jobCards.TryGetValue(state.JobName, out var card))
                         {
+                            // Console.WriteLine($"[JobsPage] Updating card for {state.JobName}");
                             card.UpdateState(state);
+                        }
+                        else
+                        {
+                            // Console.WriteLine($"[JobsPage] Card not found for {state.JobName}");
                         }
                     }
                 }
             }
         }
-        catch (Exception) { }
+        catch (Exception ex) 
+        { 
+            Console.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
+        }
     }
 
     private async void CreateJobButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
