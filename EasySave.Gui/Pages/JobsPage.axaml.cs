@@ -88,7 +88,6 @@ public partial class JobsPage : UserControl
     {
         Console.WriteLine($"Playing job: {job.Name}");
 
-        // Check if business applications are running
         var runningBusinessApp = _jobManager?.CheckBusinessApplications();
         if (runningBusinessApp != null)
         {
