@@ -29,10 +29,12 @@ public partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine("JobManager initialized successfully");
 
             Console.WriteLine("Creating pages...");
+
             _jobsPage = new JobsPage(_jobManager);
             _logsPage = new LogsPage(_jobManager.ConfigParser);
-            _statePage = new StatePage();
+            _statePage = new StatePage(_jobManager);
             _settingsPage = new SettingsPage();
+
             Console.WriteLine("Pages created successfully");
 
             PageHost.Content = _jobsPage;

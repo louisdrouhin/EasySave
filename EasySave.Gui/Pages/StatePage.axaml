@@ -1,10 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:components="clr-namespace:EasySave.GUI.Components"
              x:Class="EasySave.GUI.Pages.StatePage">
-    <Grid>
-        <TextBlock Text="State Page"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
-    </Grid>
+
+    <ScrollViewer>
+        <StackPanel Margin="20" Spacing="20">
+            <TextBlock Text="Real-time Job State" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+            
+            <StackPanel x:Name="StatesStackPanel" Spacing="10"/>
+            
+            <TextBlock x:Name="ErrorMessageTextBlock" 
+                       Foreground="#EF4444" 
+                       IsVisible="False" 
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>
