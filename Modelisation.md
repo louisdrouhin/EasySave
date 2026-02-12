@@ -261,7 +261,7 @@ sequenceDiagram
     CLI->>User: Job deleted
 ```
 
-### 3.4 Logger
+### 3.4 JSON Logger
 
 ```mermaid
 sequenceDiagram
