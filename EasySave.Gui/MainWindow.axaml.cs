@@ -30,7 +30,7 @@ public partial class MainWindow : Window
 
             Console.WriteLine("Creating pages...");
             _jobsPage = new JobsPage(_jobManager);
-            _logsPage = new LogsPage();
+            _logsPage = new LogsPage(_jobManager.ConfigParser);
             _statePage = new StatePage();
             _settingsPage = new SettingsPage();
             Console.WriteLine("Pages created successfully");

@@ -15,11 +15,13 @@ public class JobManager
     private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
 
+    public ConfigParser ConfigParser => _configParser;
+
     public JobManager()
     {
         _configParser = new ConfigParser("config.json");
         _logFormatter = CreateLogFormatter();
-        _logger = new EasyLog(_logFormatter, _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json");
+        _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
         _logger.Write(
             DateTime.Now,
@@ -212,8 +214,7 @@ public class JobManager
 
         _logFormatter = CreateLogFormatter();
 
-        string logsPath = _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json";
-        _logger = new EasyLog(_logFormatter, logsPath);
+        _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
         _logger.Write(
             DateTime.Now,
