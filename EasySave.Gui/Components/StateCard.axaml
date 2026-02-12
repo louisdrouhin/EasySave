@@ -53,9 +53,9 @@
             <!-- Details -->
             <StackPanel Grid.Row="2" Margin="0,15,0,0" Spacing="12">
                 <Grid ColumnDefinitions="*,*" IsVisible="{Binding TotalFiles, Converter={x:Static ObjectConverters.IsNotNull}}">
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="FILES (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF"/>
-                        <TextBlock FontSize="14" Foreground="#1F2937">
+                    <StackPanel Spacing="2" HorizontalAlignment="Right" Margin="0,0,20,0">
+                        <TextBlock Text="FILES (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                        <TextBlock FontSize="14" Foreground="#1F2937" TextAlignment="Right">
                             <TextBlock.Text>
                                 <MultiBinding Converter="{StaticResource ProcessedFilesConverter}">
                                     <Binding Path="RemainingFiles" FallbackValue="0"/>
@@ -64,9 +64,9 @@
                             </TextBlock.Text>
                         </TextBlock>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Spacing="2">
-                        <TextBlock Text="SIZE (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF"/>
-                        <TextBlock FontSize="14" Foreground="#1F2937">
+                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                        <TextBlock Text="SIZE (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                        <TextBlock FontSize="14" Foreground="#1F2937" TextAlignment="Right">
                             <TextBlock.Text>
                                 <MultiBinding Converter="{StaticResource SizeProgressConverter}">
                                     <Binding Path="RemainingSizeToTransfer" FallbackValue="0"/>
