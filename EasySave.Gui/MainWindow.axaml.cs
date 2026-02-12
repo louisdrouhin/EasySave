@@ -11,7 +11,6 @@ public partial class MainWindow : Window
     private readonly JobManager _jobManager = null!;
     private readonly JobsPage _jobsPage = null!;
     private readonly LogsPage _logsPage = null!;
-    private readonly StatePage _statePage = null!;
     private readonly SettingsPage _settingsPage = null!;
 
     public MainWindow()
@@ -29,10 +28,11 @@ public partial class MainWindow : Window
             System.Diagnostics.Debug.WriteLine("JobManager initialized successfully");
 
             Console.WriteLine("Creating pages...");
+
             _jobsPage = new JobsPage(_jobManager);
             _logsPage = new LogsPage(_jobManager.ConfigParser);
-            _statePage = new StatePage();
             _settingsPage = new SettingsPage();
+
             Console.WriteLine("Pages created successfully");
 
             PageHost.Content = _jobsPage;
@@ -63,11 +63,6 @@ public partial class MainWindow : Window
     private void OnLogsClick(object? sender, RoutedEventArgs e)
     {
         PageHost.Content = _logsPage;
-    }
-
-    private void OnStateClick(object? sender, RoutedEventArgs e)
-    {
-        PageHost.Content = _statePage;
     }
 
     private void OnSettingsClick(object? sender, RoutedEventArgs e)

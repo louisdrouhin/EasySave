@@ -4,128 +4,219 @@
              xmlns:models="clr-namespace:EasySave.Models;assembly=EasySave.Models"
              x:Class="EasySave.GUI.Components.JobCard"
              x:DataType="models:Job">
-    <StackPanel Spacing="0">
-        <!-- Main Row -->
-        <Border BorderBrush="#E0E0E0"
-                BorderThickness="0,1,0,0"
-                Padding="15"
-                Background="#FFFFFF">
-            <Grid ColumnDefinitions="30,45,*,Auto,38,38" VerticalAlignment="Center">
-                <!-- Toggle Button -->
-                <Button x:Name="ToggleButton"
-                        Grid.Column="0"
-                        Content="▶"
-                        Background="Transparent"
-                        Foreground="#15171D"
-                        FontSize="14"
-                        BorderThickness="0"
-                        Padding="0" />
+    <UserControl.Resources>
+        <Geometry x:Key="ChevronRightIcon">M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z</Geometry>
+        <Geometry x:Key="ChevronDownIcon">M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z</Geometry>
+        <Geometry x:Key="PlayIcon">M8,5.14V19.14L19,12.14L8,5.14Z</Geometry>
+        <Geometry x:Key="TrashIcon">M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z</Geometry>
+        <Geometry x:Key="CheckIcon">M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z</Geometry>
+        <Geometry x:Key="CancelIcon">M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z</Geometry>
+    </UserControl.Resources>
 
-                <!-- Index Text -->
-                <TextBlock x:Name="IndexText"
-                           Grid.Column="1"
-                           Foreground="#666666"
-                           FontSize="13"
-                           VerticalAlignment="Center" />
+    <Border BorderBrush="#E0E0E0"
+            BorderThickness="1"
+            CornerRadius="10"
+            ClipToBounds="True"
+            Background="#FFFFFF">
+        <StackPanel Spacing="0">
+            <!-- Main Row -->
+            <Border Padding="10,15" Background="Transparent">
+                <Grid ColumnDefinitions="30,45,*,Auto,38,38" VerticalAlignment="Center">
+                    <!-- Toggle Button -->
+                    <Button x:Name="ToggleButton"
+                            Grid.Column="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <PathIcon x:Name="ToggleIcon" 
+                                  Data="{StaticResource ChevronRightIcon}" 
+                                  Width="12" 
+                                  Height="12" 
+                                  Foreground="#6B7280"/>
+                    </Button>
 
-                <!-- Job Name -->
-                <TextBlock Grid.Column="2"
-                           Text="{Binding Name}"
-                           FontSize="15"
-                           FontWeight="Bold"
-                           Foreground="#15171D"
-                           VerticalAlignment="Center"
-                           Margin="10,0,0,0" />
+                    <!-- Index Text -->
+                    <TextBlock x:Name="IndexText"
+                               Grid.Column="1"
+                               Foreground="#666666"
+                               FontSize="13"
+                               VerticalAlignment="Center" />
 
-                <!-- Tag -->
-                <Border Grid.Column="3"
-                        CornerRadius="6"
-                        Padding="8,4"
-                        Background="{Binding Type, Converter={StaticResource JobTypeColorConverter}}"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Type}"
-                               Foreground="White"
-                               FontSize="11"
+                    <!-- Job Name & Type -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="10,0,0,0">
+                        <TextBlock Text="{Binding Name}"
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Foreground="#15171D"
+                                   VerticalAlignment="Center"/>
+                        
+                        <Border CornerRadius="6"
+                                Padding="8,4"
+                                Background="{Binding Type, Converter={StaticResource JobTypeColorConverter}}"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Type}"
+                                       Foreground="White"
+                                       FontSize="11"
+                                       FontWeight="Bold" />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Status Tag -->
+                    <Border x:Name="StatusBadge"
+                            Grid.Column="3"
+                            CornerRadius="6"
+                            Padding="8,4"
+                            Background="#E5E7EB"
+                            VerticalAlignment="Center"
+                            Margin="0,0,10,0">
+                        <TextBlock x:Name="StatusText"
+                                   Text="Inactive"
+                                   Foreground="#374151"
+                                   FontSize="11"
+                                   FontWeight="Bold" />
+                    </Border>
+
+                    <!-- Play Button -->
+                    <Button Grid.Column="4"
+                            x:Name="PlayButton"
+                            Width="30"
+                            Height="30"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="#22C55E"
+                            BorderThickness="0"
+                            CornerRadius="6"
+                            Padding="0"
+                            Margin="0,0,5,0">
+                        <PathIcon Data="{StaticResource PlayIcon}" Width="10" Height="10" Foreground="White" Margin="2,0,0,0"/>
+                    </Button>
+
+                    <!-- Delete Button -->
+                    <Button Grid.Column="5"
+                            x:Name="DeleteButton"
+                            Width="30"
+                            Height="30"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="#EF4444"
+                            BorderThickness="0"
+                            CornerRadius="6"
+                            Padding="0">
+                        <PathIcon Data="{StaticResource TrashIcon}" Width="14" Height="14" Foreground="White"/>
+                    </Button>
+
+                    <!-- Confirm Actions (Hidden by default) -->
+                    <Button Grid.Column="4"
+                            x:Name="CancelDeleteButton"
+                            IsVisible="False"
+                            Width="30"
+                            Height="30"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="#E5E7EB"
+                            BorderThickness="0"
+                            CornerRadius="6"
+                            Padding="0"
+                            Margin="0,0,5,0">
+                        <PathIcon Data="{StaticResource CancelIcon}" Width="12" Height="12" Foreground="#6B7280"/>
+                    </Button>
+
+                    <Button Grid.Column="5"
+                            x:Name="ConfirmDeleteButton"
+                            IsVisible="False"
+                            Width="30"
+                            Height="30"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="#EF4444"
+                            BorderThickness="0"
+                            CornerRadius="6"
+                            Padding="0">
+                        <PathIcon Data="{StaticResource CheckIcon}" Width="14" Height="14" Foreground="White"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Progress Panel -->
+            <Border x:Name="ProgressPanel"
+                    IsVisible="False"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="0,1,0,0"
+                    Padding="15,15,15,15"
+                    Background="#FFFFFF">
+                 <StackPanel Spacing="8">
+                     <Grid ColumnDefinitions="*,Auto">
+                         <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="IN PROGRESS" FontWeight="Bold" FontSize="10" Foreground="#22C55E" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="StateText" Text="" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                         </StackPanel>
+                         <TextBlock x:Name="PercentageText" Text="0%" FontWeight="Bold" FontSize="12" Foreground="#15171D" Grid.Column="1"/>
+                     </Grid>
+                     
+                     <ProgressBar x:Name="JobProgressBar" Minimum="0" Maximum="100" Height="6" Foreground="#22C55E" Background="#E5E7EB"/>
+                     
+                     <Grid ColumnDefinitions="*,*">
+                         <StackPanel Spacing="2" HorizontalAlignment="Right" Margin="0,0,20,0">
+                            <TextBlock Text="FILES (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                            <TextBlock x:Name="FilesText" Text="0 / 0 Files" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
+                         </StackPanel>
+                         
+                         <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                            <TextBlock Text="SIZE (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                            <TextBlock x:Name="SizeText" Text="0 MB / 0 MB" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
+                         </StackPanel>
+                     </Grid>
+                 </StackPanel>
+            </Border>
+
+            <!-- Details Panel -->
+            <Border x:Name="DetailsPanel"
+                    IsVisible="False"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="0,1,0,0"
+                    Padding="15"
+                    Background="#FAFAFA">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="100,*">
+                    <!-- Source Label -->
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Text="Source:"
+                               Foreground="#666666"
+                               FontSize="12"
                                FontWeight="Bold" />
-                </Border>
+                    <!-- Source Value -->
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="1"
+                               Text="{Binding SourcePath}"
+                               Foreground="#15171D"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="10,0,0,0" />
 
-                <!-- Play Button -->
-                <Button Grid.Column="4"
-                        x:Name="PlayButton"
-                        Width="30"
-                        Height="30"
-                        Content="▷"
-                        HorizontalContentAlignment="Center"
-                        VerticalContentAlignment="Center"
-                        Background="#22C55E"
-                        Foreground="White"
-                        FontSize="14"
-                        BorderThickness="0"
-                        CornerRadius="6"
-                        Padding="0"
-                        Margin="5,0,0,0" />
-
-                <!-- Delete Button -->
-                <Button Grid.Column="5"
-                        x:Name="DeleteButton"
-                        Width="30"
-                        Height="30"
-                        Content="X"
-                        HorizontalContentAlignment="Center"
-                        VerticalContentAlignment="Center"
-                        Background="#EF4444"
-                        Foreground="White"
-                        FontSize="16"
-                        BorderThickness="0"
-                        CornerRadius="6"
-                        Padding="0"
-                        Margin="5,0,0,0" />
-            </Grid>
-        </Border>
-
-        <!-- Details Panel -->
-        <Border x:Name="DetailsPanel"
-                IsVisible="False"
-                BorderBrush="#E0E0E0"
-                BorderThickness="0,0,0,1"
-                Padding="15"
-                Background="#FAFAFA">
-            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="100,*">
-                <!-- Source Label -->
-                <TextBlock Grid.Row="0"
-                           Grid.Column="0"
-                           Text="Source:"
-                           Foreground="#666666"
-                           FontSize="12"
-                           FontWeight="Bold" />
-                <!-- Source Value -->
-                <TextBlock Grid.Row="0"
-                           Grid.Column="1"
-                           Text="{Binding SourcePath}"
-                           Foreground="#15171D"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           TextTrimming="CharacterEllipsis"
-                           Margin="10,0,0,0" />
-
-                <!-- Destination Label -->
-                <TextBlock Grid.Row="1"
-                           Grid.Column="0"
-                           Text="Destination:"
-                           Foreground="#666666"
-                           FontSize="12"
-                           FontWeight="Bold"
-                           Margin="0,8,0,0" />
-                <!-- Destination Value -->
-                <TextBlock Grid.Row="1"
-                           Grid.Column="1"
-                           Text="{Binding DestinationPath}"
-                           Foreground="#15171D"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           TextTrimming="CharacterEllipsis"
-                           Margin="10,8,0,0" />
-            </Grid>
-        </Border>
-    </StackPanel>
+                    <!-- Destination Label -->
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Text="Destination:"
+                               Foreground="#666666"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Margin="0,8,0,0" />
+                    <!-- Destination Value -->
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Text="{Binding DestinationPath}"
+                               Foreground="#15171D"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="10,8,0,0" />
+                </Grid>
+            </Border>
+        </StackPanel>
+    </Border>
 </UserControl>
