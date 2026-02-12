@@ -112,7 +112,7 @@ public class ConfigParser
     {
         if (format != "json" && format != "xml")
         {
-            throw new ArgumentException("Le format de log doit être 'json' ou 'xml'", nameof(format));
+            throw new ArgumentException(LocalizationManager.Get("Error_InvalidLogFormat"), nameof(format));
         }
 
         if (Config is JsonObject configObject && configObject["config"] is JsonObject configSection)
@@ -120,5 +120,32 @@ public class ConfigParser
             configSection["logFormat"] = format;
             EditAndSaveConfig(configObject);
         }
+    }
+
+    public List<string> GetBusinessApplications()
+    {
+        var applications = new List<string>();
+        var businessAppsNode = Config?["config"]?["businessApplications"];
+
+        if (businessAppsNode == null)
+        {
+            return applications;
+        }
+
+        var applicationsArray = businessAppsNode.AsArray();
+
+        if (applicationsArray != null)
+        {
+            foreach (var app in applicationsArray)
+            {
+                var appName = app?.GetValue<string>();
+                if (!string.IsNullOrEmpty(appName))
+                {
+                    applications.Add(appName.ToLower());
+                }
+            }
+        }
+
+        return applications;
     }
 }

@@ -309,6 +309,15 @@ namespace EasySave.Cli
 
                 if (jobsToExecute.Count > 0)
                 {
+                    var runningBusinessApp = _jobManager.CheckBusinessApplications();
+                    if (runningBusinessApp != null)
+                    {
+                        var errorMessage = LocalizationManager.GetFormatted("BusinessCheck_ApplicationRunning", runningBusinessApp);
+                        Console.WriteLine(errorMessage);
+                        Console.WriteLine();
+                        return;
+                    }
+
                     Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Executing", jobsToExecute.Count));
                     Console.WriteLine();
 
