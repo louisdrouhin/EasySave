@@ -3,6 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:comp="clr-namespace:EasySave.GUI.Components"
              x:Class="EasySave.GUI.Pages.JobsPage">
+    <UserControl.Styles>
+        <Style Selector="Button#CreateJobButton:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#EA580C" />
+        </Style>
+    </UserControl.Styles>
     <Border Padding="20"
             Background="#FFE6D5">
         <Grid RowDefinitions="Auto,*">
@@ -20,19 +25,20 @@
                 <Button Grid.Column="1"
                         x:Name="CreateJobButton"
                         Content="+ New Job"
-                        Background="#3B82F6"
-                        Foreground="White"
+                        Background="#F97316"
+                        Foreground="#FFF4ED"
                         BorderThickness="0"
-                        CornerRadius="6"
-                        Padding="16,8"
+                        CornerRadius="10"
+                        Padding="16,10"
+                        FontWeight="Bold"
                         FontSize="14"
                         VerticalAlignment="Top" />
             </Grid>
             <!-- Jobs List -->
-            <ScrollViewer Grid.Row="1">
-                <StackPanel x:Name="JobsStackPanel"
-                            Orientation="Vertical" />
-            </ScrollViewer>
-        </Grid>
+                <ScrollViewer Grid.Row="1">
+                                    <StackPanel x:Name="JobsStackPanel"
+                                                Orientation="Vertical" 
+                                                Spacing="15"
+                                                Margin="10"/>                </ScrollViewer>        </Grid>
     </Border>
 </UserControl>

@@ -6,4 +6,5 @@
   <Project Path="EasySave.Gui/EasySave.Gui.csproj" />
   <Project Path="EasySave.Models/EasySave.Models.csproj" />
   <Project Path="EasySave.Models.Tests/EasySave.Models.Tests.csproj" />
+  <Project Path="EasySave.Utils/EasySave.Utils.csproj" />
 </Solution>

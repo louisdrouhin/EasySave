@@ -82,9 +82,6 @@
                     <Button Content="Logs"
                             Classes="menu-button"
                             Click="OnLogsClick" />
-                    <Button Content="State"
-                            Classes="menu-button"
-                            Click="OnStateClick" />
                 </StackPanel>
                 <Button Grid.Row="1"
                         Content="Settings"

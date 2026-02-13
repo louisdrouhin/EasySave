@@ -1,20 +1,21 @@
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using EasySave.Models;
 using System;
 using System.Globalization;
 
-namespace EasySave.GUI.Converters;
+namespace EasySave.Utils.Converters;
 
-public class JobTypeColorConverter : IValueConverter
+public class JobStateColorConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
-        if (value is string jobType)
+        if (value is JobState state)
         {
-            return jobType.ToLower() switch
+            return state switch
             {
-                "full" => new SolidColorBrush(Color.Parse("#3B82F6")),
-                "differential" => new SolidColorBrush(Color.Parse("#8B5CF6")),
+                JobState.Active => new SolidColorBrush(Color.Parse("#22C55E")), // Green
+                JobState.Inactive => new SolidColorBrush(Color.Parse("#6B7280")), // Gray
                 _ => new SolidColorBrush(Color.Parse("#6B7280"))
             };
         }

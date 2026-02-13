@@ -15,6 +15,11 @@ public class StateEntry
     public string? CurrentSourcePath { get; set; }
     public string? CurrentDestinationPath { get; set; }
 
+    public StateEntry()
+    {
+        JobName = string.Empty;
+    }
+
     public StateEntry(string jobName, DateTime lastActionTime, JobState state)
     {
         JobName = jobName;

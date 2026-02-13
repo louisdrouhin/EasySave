@@ -1,5 +1,9 @@
 using Avalonia.Controls;
+using Avalonia.Threading;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using EasySave.Core;
 using EasySave.GUI.Components;
@@ -11,6 +15,9 @@ namespace EasySave.GUI.Pages;
 public partial class JobsPage : UserControl
 {
     private readonly JobManager? _jobManager;
+    private FileSystemWatcher? _watcher;
+    private string _stateFilePath = string.Empty;
+    private Dictionary<string, JobCard> _jobCards = new();
 
     public JobsPage()
     {
@@ -20,10 +27,8 @@ public partial class JobsPage : UserControl
 
     public JobsPage(JobManager jobManager)
     {
-        Console.WriteLine("JobsPage constructor called with JobManager");
         _jobManager = jobManager;
         InitializeComponent();
-        Console.WriteLine("InitializeComponent completed");
         LoadJobs();
 
         var createJobButton = this.FindControl<Button>("CreateJobButton");
@@ -33,17 +38,25 @@ public partial class JobsPage : UserControl
         }
     }
 
+    protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        InitializeStateWatcher();
+    }
+
+    protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        _watcher?.Dispose();
+        _watcher = null;
+    }
+
     private void LoadJobs()
     {
-        if (_jobManager == null)
-        {
-            Console.WriteLine("JobManager is null!");
-            return;
-        }
+        if (_jobManager == null) return;
 
-        Console.WriteLine("Loading jobs from JobManager...");
         var jobs = _jobManager.GetJobs();
-        Console.WriteLine($"Found {jobs.Count} jobs");
+        _jobCards.Clear();
 
         if (JobsStackPanel != null)
         {
@@ -52,19 +65,103 @@ public partial class JobsPage : UserControl
             for (int i = 0; i < jobs.Count; i++)
             {
                 var job = jobs[i];
-                Console.WriteLine($"Job {i + 1}: {job.Name} - {job.Type} - {job.SourcePath} -> {job.DestinationPath}");
-
                 var card = new JobCard(job, i + 1);
                 card.PlayClicked += OnJobPlay;
                 card.DeleteClicked += OnJobDelete;
                 JobsStackPanel.Children.Add(card);
+                _jobCards[job.Name] = card;
+            }
+        }
+        
+        UpdateStateContent();
+    }
+
+    private void InitializeStateWatcher()
+    {
+        try
+        {
+            var configParser = new ConfigParser("config.json");
+            _stateFilePath = configParser.Config?["config"]?["stateFilePath"]?.GetValue<string>() ?? "state.json";
+
+            if (!Path.IsPathRooted(_stateFilePath))
+            {
+                string executionDirState = Path.Combine(AppContext.BaseDirectory, _stateFilePath);
+                string projectRootState = Path.Combine(AppContext.BaseDirectory, "../../../../../", _stateFilePath);
+                
+                if (File.Exists(executionDirState)) _stateFilePath = executionDirState;
+                else if (File.Exists(projectRootState)) _stateFilePath = Path.GetFullPath(projectRootState);
             }
 
-            Console.WriteLine("Jobs added to StackPanel");
+            string directory = Path.GetDirectoryName(_stateFilePath) ?? AppContext.BaseDirectory;
+            if (string.IsNullOrEmpty(directory)) directory = ".";
+            string fileName = Path.GetFileName(_stateFilePath);
+
+            if (Directory.Exists(directory))
+            {
+                _watcher = new FileSystemWatcher(directory)
+                {
+                    Filter = fileName,
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                    EnableRaisingEvents = true
+                };
+                _watcher.Changed += OnStateFileChanged;
+            }
+            
+            UpdateStateContent();
         }
-        else
+        catch (Exception) { }
+    }
+
+    private void OnStateFileChanged(object sender, FileSystemEventArgs e)
+    {
+        Dispatcher.UIThread.Post(UpdateStateContent);
+    }
+
+    private void UpdateStateContent()
+    {
+        try
         {
-            Console.WriteLine("JobsStackPanel is null!");
+            if (!File.Exists(_stateFilePath)) 
+            {
+                // Console.WriteLine($"[JobsPage] State file not found: {_stateFilePath}");
+                return;
+            }
+
+            using (var fs = new FileStream(_stateFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var sr = new StreamReader(fs))
+            {
+                string content = sr.ReadToEnd();
+                if (string.IsNullOrWhiteSpace(content)) return;
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+                };
+                
+                var states = JsonSerializer.Deserialize<List<StateEntry>>(content, options);
+                
+                if (states != null)
+                {
+                    // Console.WriteLine($"[JobsPage] Deserialized {states.Count} states.");
+                    foreach (var state in states)
+                    {
+                        if (_jobCards.TryGetValue(state.JobName, out var card))
+                        {
+                            // Console.WriteLine($"[JobsPage] Updating card for {state.JobName}");
+                            card.UpdateState(state);
+                        }
+                        else
+                        {
+                            // Console.WriteLine($"[JobsPage] Card not found for {state.JobName}");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex) 
+        { 
+            Console.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
         }
     }
 
@@ -77,7 +174,6 @@ public partial class JobsPage : UserControl
             var result = await dialog.ShowDialog<CreateJobDialog.JobResult?>(mainWindow);
             if (result != null)
             {
-                Console.WriteLine($"Creating job: {result.Name}");
                 _jobManager?.CreateJob(result.Name, result.Type, result.SourcePath, result.DestinationPath);
                 LoadJobs();
             }
@@ -86,14 +182,10 @@ public partial class JobsPage : UserControl
 
     private async void OnJobPlay(object? sender, Job job)
     {
-        Console.WriteLine($"Playing job: {job.Name}");
-
         var runningBusinessApp = _jobManager?.CheckBusinessApplications();
         if (runningBusinessApp != null)
         {
             var errorMessage = $"Business application '{runningBusinessApp}' is running. Backup job execution blocked.";
-            Console.WriteLine(errorMessage);
-
             var mainWindow = (Window?)TopLevel.GetTopLevel(this);
             if (mainWindow != null)
             {
@@ -110,15 +202,16 @@ public partial class JobsPage : UserControl
             var password = await passwordDialog.ShowDialog<string?>(mainWindow2);
             if (password != null)
             {
-                try
+                await Task.Run(() =>
                 {
-                    _jobManager?.LaunchJob(job, password);
-                    Console.WriteLine($"Job {job.Name} completed successfully");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error launching job: {ex.Message}");
-                }
+                    try
+                    {
+                        _jobManager?.LaunchJob(job, password);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                });
             }
         }
     }
@@ -126,7 +219,6 @@ public partial class JobsPage : UserControl
     private void OnJobDelete(object? sender, (int index, Job job) data)
     {
         var (index, job) = data;
-        Console.WriteLine($"Deleting job at index {index}: {job.Name}");
         _jobManager?.removeJob(index);
         LoadJobs();
     }
