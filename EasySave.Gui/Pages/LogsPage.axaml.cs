@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using EasySave.Core.Localization;
 using EasySave.Models;
 using System;
 using System.Collections.Generic;
@@ -40,32 +41,29 @@ public partial class LogsPage : UserControl
 
         InitializeComponent();
 
-        // Assigner l'ItemsSource après InitializeComponent
-        var logsListBox = this.FindControl<ListBox>("LogsListBox");
-        if (logsListBox != null)
-        {
-            Console.WriteLine("[LogsPage] ListBox trouvé, assignation de ItemsSource");
-            logsListBox.ItemsSource = _logs;
-        }
-        else
-        {
-            Console.WriteLine("[LogsPage] ERREUR: ListBox non trouvé!");
-        }
+        var titleText = this.FindControl<TextBlock>("TitleText");
+        if (titleText != null) titleText.Text = LocalizationManager.Get("LogsPage_Title");
 
-        // Attacher les gestionnaires d'événements
         var openFolderButton = this.FindControl<Button>("OpenFolderButton");
         if (openFolderButton != null)
         {
+            openFolderButton.Content = LocalizationManager.Get("LogsPage_Button_OpenFolder");
             openFolderButton.Click += OnOpenFolderClick;
         }
 
-        // Charger les logs initiaux
+        var totalLogsLabel = this.FindControl<TextBlock>("TotalLogsLabelText");
+        if (totalLogsLabel != null) totalLogsLabel.Text = LocalizationManager.Get("LogsPage_TotalLogs");
+
+        var logsListBox = this.FindControl<ListBox>("LogsListBox");
+        if (logsListBox != null)
+        {
+            logsListBox.ItemsSource = _logs;
+        }
+
         LoadLogs();
 
-        // Démarrer la surveillance du fichier
         StartFileWatcher();
         
-        // Scroller vers le bas après le chargement initial
         ScrollToBottom();
     }
 
@@ -75,16 +73,13 @@ public partial class LogsPage : UserControl
         {
             string logsPath = _configParser.GetLogsPath();
 
-            // Créer le dossier s'il n'existe pas
             if (!Directory.Exists(logsPath))
             {
                 Directory.CreateDirectory(logsPath);
             }
 
-            // Obtenir le chemin absolu
             string absolutePath = Path.GetFullPath(logsPath);
 
-            // Ouvrir l'explorateur de fichiers
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Process.Start(new ProcessStartInfo
@@ -103,9 +98,8 @@ public partial class LogsPage : UserControl
                 Process.Start("open", absolutePath);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Erreur lors de l'ouverture du dossier: {ex.Message}");
         }
     }
 
@@ -116,31 +110,20 @@ public partial class LogsPage : UserControl
             string logsPath = _configParser.GetLogsPath();
             string logFormat = _configParser.GetLogFormat();
 
-            Console.WriteLine($"[LogsPage] LoadLogs() - logsPath: {logsPath}");
-            Console.WriteLine($"[LogsPage] LoadLogs() - logFormat: {logFormat}");
-
-            // Créer le dossier des logs s'il n'existe pas
             if (!Directory.Exists(logsPath))
             {
-                Console.WriteLine($"[LogsPage] Le dossier de logs n'existe pas: {logsPath}");
                 Directory.CreateDirectory(logsPath);
                 return;
             }
 
-            // Obtenir le nom du fichier de logs du jour
             string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.{logFormat}";
             _currentLogFilePath = Path.Combine(logsPath, todayLogFileName);
 
-            Console.WriteLine($"[LogsPage] Chemin du fichier de logs: {_currentLogFilePath}");
-            Console.WriteLine($"[LogsPage] Le fichier existe: {File.Exists(_currentLogFilePath)}");
-
             if (!File.Exists(_currentLogFilePath))
             {
-                Console.WriteLine($"[LogsPage] Le fichier de logs n'existe pas encore");
                 return;
             }
 
-            // Lire et parser les logs selon le format
             if (logFormat == "json")
             {
                 LoadJsonLogs(_currentLogFilePath);
@@ -151,15 +134,11 @@ public partial class LogsPage : UserControl
             }
 
             UpdateLogsCount();
-            Console.WriteLine($"[LogsPage] Nombre de logs chargés: {_logs.Count}");
             
-            // Scroller vers le bas après le chargement
             ScrollToBottom();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"[LogsPage] Erreur lors du chargement des logs: {ex.Message}");
-            Console.WriteLine($"[LogsPage] StackTrace: {ex.StackTrace}");
         }
     }
 
@@ -167,9 +146,6 @@ public partial class LogsPage : UserControl
     {
         try
         {
-            Console.WriteLine($"[LogsPage] LoadJsonLogs() - Lecture du fichier: {filePath}");
-
-            // IMPORTANT: Utiliser FileShare.ReadWrite car le fichier est ouvert en écriture par EasyLog
             string jsonContent;
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var reader = new StreamReader(fileStream))
@@ -177,26 +153,17 @@ public partial class LogsPage : UserControl
                 jsonContent = reader.ReadToEnd();
             }
 
-            Console.WriteLine($"[LogsPage] Contenu JSON lu, longueur: {jsonContent.Length}");
-
-            // Vérifier si le contenu est vide
             if (string.IsNullOrWhiteSpace(jsonContent))
             {
-                Console.WriteLine($"[LogsPage] Le contenu JSON est vide");
                 return;
             }
 
-            // Diviser les logs individuellement
-            Console.WriteLine($"[LogsPage] Division des logs");
             _logs.Clear();
 
-            // Chercher toutes les entrées de log (entre {"timestamp": et })
             var matches = System.Text.RegularExpressions.Regex.Matches(
                 jsonContent,
                 @"\{""timestamp"":""[^""]+""[^}]*\}",
                 System.Text.RegularExpressions.RegexOptions.None);
-
-            Console.WriteLine($"[LogsPage] Nombre de logs trouvés: {matches.Count}");
 
             foreach (System.Text.RegularExpressions.Match match in matches)
             {
@@ -206,13 +173,9 @@ public partial class LogsPage : UserControl
                     LogText = logEntry
                 });
             }
-
-            Console.WriteLine($"[LogsPage] Total de logs ajoutés: {_logs.Count}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"[LogsPage] Erreur lors de la lecture du fichier JSON: {ex.Message}");
-            Console.WriteLine($"[LogsPage] StackTrace: {ex.StackTrace}");
         }
     }
 
@@ -220,13 +183,9 @@ public partial class LogsPage : UserControl
     {
         try
         {
-            // TODO: Implémenter la lecture des logs XML si nécessaire
-            // Pour l'instant, on se concentre sur JSON
-            Console.WriteLine("La lecture des logs XML n'est pas encore implémentée");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Erreur lors de la lecture du fichier XML: {ex.Message}");
         }
     }
 
@@ -236,26 +195,23 @@ public partial class LogsPage : UserControl
         {
             string logsPath = _configParser.GetLogsPath();
 
-            // Créer le dossier s'il n'existe pas
             if (!Directory.Exists(logsPath))
             {
                 Directory.CreateDirectory(logsPath);
             }
 
-            // Configurer le FileSystemWatcher
             _fileWatcher = new FileSystemWatcher(logsPath)
             {
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
-                Filter = "*.json", // Surveiller principalement les fichiers JSON
+                Filter = "*.json", 
                 EnableRaisingEvents = true
             };
 
             _fileWatcher.Changed += OnLogFileChanged;
             _fileWatcher.Created += OnLogFileChanged;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Erreur lors de la configuration du FileSystemWatcher: {ex.Message}");
         }
     }
 
@@ -263,12 +219,10 @@ public partial class LogsPage : UserControl
     {
         try
         {
-            // Vérifier si c'est le fichier de logs du jour
             string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.json";
 
             if (Path.GetFileName(e.FullPath) == todayLogFileName)
             {
-                // Debounce: relancer le timer à chaque changement pour éviter les multiples recharges
                 lock (_reloadLock)
                 {
                     _reloadTimer?.Dispose();
@@ -280,18 +234,16 @@ public partial class LogsPage : UserControl
                             {
                                 LoadLogs();
                             }
-                            catch (Exception ex2)
+                            catch (Exception)
                             {
-                                Console.WriteLine($"[LogsPage] Erreur lors du rechargement: {ex2.Message}");
                             }
                         });
                     }, null, 200, Timeout.Infinite);
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"[LogsPage] Erreur dans OnLogFileChanged: {ex.Message}");
         }
     }
 
@@ -302,8 +254,6 @@ public partial class LogsPage : UserControl
         {
             logsCountText.Text = _logs.Count.ToString();
         }
-
-        Console.WriteLine($"[LogsPage] UpdateLogsCount - Total: {_logs.Count}");
     }
 
     private void ScrollToBottom()
@@ -313,17 +263,14 @@ public partial class LogsPage : UserControl
             var logsListBox = this.FindControl<ListBox>("LogsListBox");
             if (logsListBox != null && _logs.Count > 0)
             {
-                // Scroller vers le dernier élément
                 logsListBox.ScrollIntoView(_logs[_logs.Count - 1]);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"[LogsPage] Erreur lors du scroll: {ex.Message}");
         }
     }
 
-    // Nettoyer le FileSystemWatcher à la destruction
     ~LogsPage()
     {
         _fileWatcher?.Dispose();

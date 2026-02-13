@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Resources;
 using System.Reflection;
@@ -69,7 +68,7 @@ namespace EasySave.Core.Localization
             }
             catch (CultureNotFoundException)
             {
-                Console.WriteLine($"Culture '{cultureCode}' not found. Keeping current culture.");
+                Console.WriteLine(GetFormatted("Error_CultureNotFound", cultureCode));
             }
         }
 

@@ -6,6 +6,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EasySave.Core;
+using EasySave.Core.Localization;
 using EasySave.GUI.Components;
 using EasySave.GUI.Dialogs;
 using EasySave.Models;
@@ -29,13 +30,21 @@ public partial class JobsPage : UserControl
     {
         _jobManager = jobManager;
         InitializeComponent();
-        LoadJobs();
+        
+        var headerTitle = this.FindControl<TextBlock>("HeaderTitleText");
+        if (headerTitle != null) headerTitle.Text = LocalizationManager.Get("JobsPage_Header_Title");
+
+        var headerSubtitle = this.FindControl<TextBlock>("HeaderSubtitleText");
+        if (headerSubtitle != null) headerSubtitle.Text = LocalizationManager.Get("JobsPage_Header_Subtitle");
 
         var createJobButton = this.FindControl<Button>("CreateJobButton");
         if (createJobButton != null)
         {
+            createJobButton.Content = LocalizationManager.Get("JobsPage_Button_NewJob");
             createJobButton.Click += CreateJobButton_Click;
         }
+        
+        LoadJobs();
     }
 
     protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -123,7 +132,6 @@ public partial class JobsPage : UserControl
         {
             if (!File.Exists(_stateFilePath)) 
             {
-                // Console.WriteLine($"[JobsPage] State file not found: {_stateFilePath}");
                 return;
             }
 
@@ -143,17 +151,11 @@ public partial class JobsPage : UserControl
                 
                 if (states != null)
                 {
-                    // Console.WriteLine($"[JobsPage] Deserialized {states.Count} states.");
                     foreach (var state in states)
                     {
                         if (_jobCards.TryGetValue(state.JobName, out var card))
                         {
-                            // Console.WriteLine($"[JobsPage] Updating card for {state.JobName}");
                             card.UpdateState(state);
-                        }
-                        else
-                        {
-                            // Console.WriteLine($"[JobsPage] Card not found for {state.JobName}");
                         }
                     }
                 }
@@ -185,11 +187,13 @@ public partial class JobsPage : UserControl
         var runningBusinessApp = _jobManager?.CheckBusinessApplications();
         if (runningBusinessApp != null)
         {
-            var errorMessage = $"Business application '{runningBusinessApp}' is running. Backup job execution blocked.";
+            var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
+            var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
+            
             var mainWindow = (Window?)TopLevel.GetTopLevel(this);
             if (mainWindow != null)
             {
-                var errorDialog = new ErrorDialog("Business Application Running", errorMessage);
+                var errorDialog = new ErrorDialog(errorTitle, errorMessage);
                 await errorDialog.ShowDialog(mainWindow);
             }
             return;

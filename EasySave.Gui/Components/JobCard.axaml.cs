@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Media;
+using EasySave.Core.Localization;
 using EasySave.Models;
 using System;
 
@@ -17,6 +18,24 @@ public partial class JobCard : UserControl
     public JobCard()
     {
         InitializeComponent();
+        
+        var statusText = this.FindControl<TextBlock>("StatusText");
+        if (statusText != null) statusText.Text = LocalizationManager.Get("JobCard_Status_Inactive");
+
+        var inProgressText = this.FindControl<TextBlock>("InProgressText");
+        if (inProgressText != null) inProgressText.Text = LocalizationManager.Get("JobCard_Progress_InProgress");
+
+        var filesLabel = this.FindControl<TextBlock>("FilesLabel");
+        if (filesLabel != null) filesLabel.Text = LocalizationManager.Get("JobCard_Label_Files");
+
+        var sizeLabel = this.FindControl<TextBlock>("SizeLabel");
+        if (sizeLabel != null) sizeLabel.Text = LocalizationManager.Get("JobCard_Label_Size");
+
+        var sourceLabel = this.FindControl<TextBlock>("SourceLabel");
+        if (sourceLabel != null) sourceLabel.Text = LocalizationManager.Get("JobCard_Label_Source");
+
+        var destinationLabel = this.FindControl<TextBlock>("DestinationLabel");
+        if (destinationLabel != null) destinationLabel.Text = LocalizationManager.Get("JobCard_Label_Destination");
     }
 
     public JobCard(Job job, int index) : this()
@@ -29,6 +48,14 @@ public partial class JobCard : UserControl
         if (indexText != null)
         {
             indexText.Text = $"#{index}";
+        }
+
+        var jobTypeBadgeText = this.FindControl<TextBlock>("JobTypeBadgeText");
+        if (jobTypeBadgeText != null)
+        {
+            jobTypeBadgeText.Text = job.Type == JobType.Full 
+                ? LocalizationManager.Get("CreateJobDialog_JobType_Full") 
+                : LocalizationManager.Get("CreateJobDialog_JobType_Differential");
         }
 
         var toggleButton = this.FindControl<Button>("ToggleButton");
@@ -123,7 +150,10 @@ public partial class JobCard : UserControl
         
         if (statusBadge != null && statusTextControl != null)
         {
-            statusTextControl.Text = state.State.ToString();
+            statusTextControl.Text = state.State == JobState.Active 
+                ? LocalizationManager.Get("JobCard_Status_Active") 
+                : LocalizationManager.Get("JobCard_Status_Inactive");
+
             if (state.State == JobState.Active)
             {
                 statusBadge.Background = new SolidColorBrush(Color.Parse("#22C55E"));
@@ -150,7 +180,9 @@ public partial class JobCard : UserControl
             if (percentageText != null) percentageText.Text = $"{(state.Progress ?? 0):F1}%";
 
             var stateText = this.FindControl<TextBlock>("StateText");
-            if (stateText != null) stateText.Text = !string.IsNullOrEmpty(state.CurrentSourcePath) ? "Processing..." : "Active";
+            if (stateText != null) stateText.Text = !string.IsNullOrEmpty(state.CurrentSourcePath) 
+                ? LocalizationManager.Get("JobCard_Progress_Processing") 
+                : LocalizationManager.Get("JobCard_Status_Active");
 
             var filesText = this.FindControl<TextBlock>("FilesText");
             if (filesText != null) 
@@ -158,7 +190,7 @@ public partial class JobCard : UserControl
                 long total = state.TotalFiles ?? 0;
                 long remaining = state.RemainingFiles ?? 0;
                 long processed = total - remaining;
-                filesText.Text = $"{processed:N0} / {total:N0} Files";
+                filesText.Text = $"{processed:N0} / {total:N0}";
             }
 
             var sizeText = this.FindControl<TextBlock>("SizeText");

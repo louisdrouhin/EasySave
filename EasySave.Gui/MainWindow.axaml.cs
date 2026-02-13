@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using System;
 using EasySave.GUI.Pages;
 using EasySave.Core;
+using EasySave.Core.Localization;
 
 namespace EasySave.GUI;
 
@@ -16,6 +17,11 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        Title = LocalizationManager.Get("MainWindow_Title");
+        JobsButton.Content = LocalizationManager.Get("MainWindow_Menu_Jobs");
+        LogsButton.Content = LocalizationManager.Get("MainWindow_Menu_Logs");
+        SettingsButton.Content = LocalizationManager.Get("MainWindow_Menu_Settings");
 
         try
         {
@@ -41,11 +47,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            var errorMsg = $"FATAL ERROR in MainWindow:\n{ex.Message}\n\nStack:\n{ex.StackTrace}";
+            var errorMsg = LocalizationManager.GetFormatted("MainWindow_FatalError", ex.Message, ex.StackTrace ?? "");
             Console.WriteLine(errorMsg);
             System.Diagnostics.Debug.WriteLine(errorMsg);
 
-            // Show error in UI
             PageHost.Content = new TextBlock
             {
                 Text = errorMsg,

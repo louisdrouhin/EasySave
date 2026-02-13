@@ -61,13 +61,12 @@
             <ColumnDefinition Width="400" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <!-- Left Menu -->
+        
         <Border Grid.Column="0"
                 Background="#FFF4ED"
                 Padding="15">
             <Grid RowDefinitions="*,Auto">
                 <StackPanel Spacing="15">
-                    <!-- Menu content will go here -->
                     <Border CornerRadius="10"
                             ClipToBounds="True"
                             HorizontalAlignment="Stretch"
@@ -76,21 +75,21 @@
                         <Image Source="avares://EasySave.GUI/images/logo-easysave.png"
                                Stretch="UniformToFill" />
                     </Border>
-                    <Button Content="Jobs"
+                    <Button x:Name="JobsButton"
                             Classes="menu-button"
                             Click="OnJobsClick" />
-                    <Button Content="Logs"
+                    <Button x:Name="LogsButton"
                             Classes="menu-button"
                             Click="OnLogsClick" />
                 </StackPanel>
                 <Button Grid.Row="1"
-                        Content="Settings"
+                        x:Name="SettingsButton"
                         Classes="menu-button"
                         Click="OnSettingsClick"
                         Margin="0,15,0,0" />
             </Grid>
         </Border>
-        <!-- Home Page Content -->
+        
         <Border Grid.Column="1"
                 Background="#FFE6D5">
             <ContentControl x:Name="PageHost" />

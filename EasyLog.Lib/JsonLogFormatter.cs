@@ -35,7 +35,7 @@ public class JsonLogFormatter : ILogFormatter
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Erreur lors de la fermeture du fichier de log JSON : {filePath}",
+                $"Error while closing the JSON log file : {filePath}",
                 ex);
         }
     }
