@@ -38,8 +38,8 @@ public partial class MainWindow : Window
             Console.WriteLine("Creating pages...");
 
             _jobsPage = new JobsPage(_jobManager);
-            _logsPage = new LogsPage(_jobManager.ConfigParser);
-            _settingsPage = new SettingsPage(_jobManager.ConfigParser);
+            _logsPage = new LogsPage(_jobManager.ConfigParser, _jobManager);
+            _settingsPage = new SettingsPage(_jobManager.ConfigParser, _jobManager);
 
             Console.WriteLine("Pages created successfully");
 

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using EasySave.Core;
 using EasySave.Core.Localization;
 using EasySave.Models;
 using System;
@@ -10,17 +11,25 @@ namespace EasySave.GUI.Pages;
 public partial class SettingsPage : UserControl
 {
     private readonly ConfigParser _configParser;
+    private readonly JobManager? _jobManager;
 
-    public SettingsPage() : this(null)
+    public SettingsPage() : this(null, null)
     {
     }
 
-    public SettingsPage(ConfigParser? configParser)
+    public SettingsPage(ConfigParser? configParser, JobManager? jobManager = null)
     {
         _configParser = configParser ?? new ConfigParser("config.json");
+        _jobManager = jobManager;
         InitializeComponent();
 
         LocalizationManager.LanguageChanged += OnLanguageChangedEvent;
+
+        // Subscribe to log format change events
+        if (_jobManager != null)
+        {
+            _jobManager.LogFormatChanged += OnLogFormatChangedEvent;
+        }
 
         var headerTitleText = this.FindControl<TextBlock>("HeaderTitleText");
         if (headerTitleText != null) headerTitleText.Text = LocalizationManager.Get("SettingsPage_Header_Title");
@@ -73,6 +82,13 @@ public partial class SettingsPage : UserControl
         var versionLabel = this.FindControl<TextBlock>("VersionLabel");
         if (versionLabel != null) versionLabel.Text = LocalizationManager.Get("SettingsPage_Section_About_Version");
 
+        // Setup log format buttons
+        var jsonButton = this.FindControl<Button>("JsonFormatButton");
+        if (jsonButton != null) jsonButton.Click += OnJsonFormatClick;
+
+        var xmlButton = this.FindControl<Button>("XmlFormatButton");
+        if (xmlButton != null) xmlButton.Click += OnXmlFormatClick;
+
         PopulateData();
     }
 
@@ -85,6 +101,44 @@ public partial class SettingsPage : UserControl
     {
         ChangeLanguage("en");
     }
+
+    private void OnJsonFormatClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        ChangeLogFormat("json");
+    }
+
+    private void OnXmlFormatClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        ChangeLogFormat("xml");
+    }
+
+    private void ChangeLogFormat(string format)
+    {
+        try
+        {
+            if (_jobManager != null)
+            {
+                _jobManager.SetLogFormat(format);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error changing log format: {ex.Message}");
+        }
+    }
+
+    private void OnLogFormatChangedEvent(object? sender, EasySave.Core.LogFormatChangedEventArgs e)
+    {
+        try
+        {
+            PopulateData();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating log format display: {ex.Message}");
+        }
+    }
+
 
     private void ChangeLanguage(string languageCode)
     {

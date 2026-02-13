@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using EasySave.Core;
 using EasySave.Core.Localization;
 using EasySave.Models;
 using System;
@@ -25,23 +26,31 @@ public partial class LogsPage : UserControl
 {
     private readonly ObservableCollection<SimpleLogEntry> _logs;
     private readonly ConfigParser _configParser;
+    private readonly JobManager? _jobManager;
     private FileSystemWatcher? _fileWatcher;
     private string _currentLogFilePath = string.Empty;
     private Timer? _reloadTimer;
     private readonly object _reloadLock = new object();
 
-    public LogsPage() : this(null)
+    public LogsPage() : this(null, null)
     {
     }
 
-    public LogsPage(ConfigParser? configParser)
+    public LogsPage(ConfigParser? configParser, JobManager? jobManager = null)
     {
         _logs = new ObservableCollection<SimpleLogEntry>();
         _configParser = configParser ?? new ConfigParser("config.json");
+        _jobManager = jobManager;
 
         InitializeComponent();
 
         LocalizationManager.LanguageChanged += OnLanguageChanged;
+
+        // Subscribe to log format change events
+        if (_jobManager != null)
+        {
+            _jobManager.LogFormatChanged += OnLogFormatChangedEvent;
+        }
 
         var titleText = this.FindControl<TextBlock>("TitleText");
         if (titleText != null) titleText.Text = LocalizationManager.Get("LogsPage_Title");
@@ -294,6 +303,18 @@ public partial class LogsPage : UserControl
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error updating language in LogsPage: {ex.Message}");
+        }
+    }
+
+    private void OnLogFormatChangedEvent(object? sender, EasySave.Core.LogFormatChangedEventArgs e)
+    {
+        try
+        {
+            LoadLogs();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error reloading logs on format change: {ex.Message}");
         }
     }
 
