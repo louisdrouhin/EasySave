@@ -14,5 +14,26 @@
             <Setter Property="FontFamily"
                     Value="avares://EasySave.GUI/font/FleuronRegular.otf#Fleuron Regular" />
         </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Inter" />
+        </Style>
+        <Style Selector="TextBlock#HeaderTitleText, TextBlock#TitleText">
+            <Setter Property="FontFamily"
+                    Value="avares://EasySave.GUI/font/FleuronRegular.otf#Fleuron Regular" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="FontFamily"
+                    Value="avares://EasySave.GUI/font/FleuronRegular.otf#Fleuron Regular" />
+        </Style>
+
+        <Style Selector="Button.button-red">
+            <Setter Property="Background" Value="#EF4444" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.button-green">
+            <Setter Property="Background" Value="#22C55E" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
     </Application.Styles>
 </Application>
