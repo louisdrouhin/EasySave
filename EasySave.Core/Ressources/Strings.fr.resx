@@ -328,6 +328,74 @@ Pile :
         xml:space="preserve">
       <value>Page des paramètres</value>
   </data>
+  <data name="SettingsPage_Header_Title"
+        xml:space="preserve">
+      <value>Paramètres</value>
+  </data>
+  <data name="SettingsPage_Header_Subtitle"
+        xml:space="preserve">
+      <value>Vue d'ensemble de la configuration</value>
+  </data>
+  <data name="SettingsPage_Section_Logs"
+        xml:space="preserve">
+      <value>Logs</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_Path"
+        xml:space="preserve">
+      <value>Chemin des logs</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_Format"
+        xml:space="preserve">
+      <value>Format des logs</value>
+  </data>
+  <data name="SettingsPage_Section_State"
+        xml:space="preserve">
+      <value>État</value>
+  </data>
+  <data name="SettingsPage_Section_State_Path"
+        xml:space="preserve">
+      <value>Chemin du fichier d'état</value>
+  </data>
+  <data name="SettingsPage_Section_Encryption"
+        xml:space="preserve">
+      <value>Chiffrement</value>
+  </data>
+  <data name="SettingsPage_Section_Encryption_Extensions"
+        xml:space="preserve">
+      <value>Extensions chiffrées</value>
+  </data>
+  <data name="SettingsPage_Section_BusinessApps"
+        xml:space="preserve">
+      <value>Applications métier</value>
+  </data>
+  <data name="SettingsPage_Section_BusinessApps_List"
+        xml:space="preserve">
+      <value>Applications surveillées</value>
+  </data>
+  <data name="SettingsPage_NoExtensions"
+        xml:space="preserve">
+      <value>Aucune extension configurée</value>
+  </data>
+  <data name="SettingsPage_NoApps"
+        xml:space="preserve">
+      <value>Aucune application configurée</value>
+  </data>
+  <data name="SettingsPage_Section_Language"
+        xml:space="preserve">
+      <value>Langue</value>
+  </data>
+  <data name="SettingsPage_Section_Language_Current"
+        xml:space="preserve">
+      <value>Langue actuelle</value>
+  </data>
+  <data name="SettingsPage_Section_About"
+        xml:space="preserve">
+      <value>À propos</value>
+  </data>
+  <data name="SettingsPage_Section_About_Version"
+        xml:space="preserve">
+      <value>Version</value>
+  </data>
   <!-- Dialogs -->
   <data name="CreateJobDialog_Title" xml:space="preserve"><value>Créer un nouveau travail</value></data>
   <data name="CreateJobDialog_JobName" xml:space="preserve"><value>Nom du travail</value></data>

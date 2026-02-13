@@ -464,6 +464,74 @@ Stack:
           xml:space="preserve">
         <value>Settings Page</value>
     </data>
+    <data name="SettingsPage_Header_Title"
+          xml:space="preserve">
+        <value>Settings</value>
+    </data>
+    <data name="SettingsPage_Header_Subtitle"
+          xml:space="preserve">
+        <value>Application configuration overview</value>
+    </data>
+    <data name="SettingsPage_Section_Logs"
+          xml:space="preserve">
+        <value>Logs</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_Path"
+          xml:space="preserve">
+        <value>Logs path</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_Format"
+          xml:space="preserve">
+        <value>Log format</value>
+    </data>
+    <data name="SettingsPage_Section_State"
+          xml:space="preserve">
+        <value>State</value>
+    </data>
+    <data name="SettingsPage_Section_State_Path"
+          xml:space="preserve">
+        <value>State file path</value>
+    </data>
+    <data name="SettingsPage_Section_Encryption"
+          xml:space="preserve">
+        <value>Encryption</value>
+    </data>
+    <data name="SettingsPage_Section_Encryption_Extensions"
+          xml:space="preserve">
+        <value>Encrypted extensions</value>
+    </data>
+    <data name="SettingsPage_Section_BusinessApps"
+          xml:space="preserve">
+        <value>Business Applications</value>
+    </data>
+    <data name="SettingsPage_Section_BusinessApps_List"
+          xml:space="preserve">
+        <value>Monitored applications</value>
+    </data>
+    <data name="SettingsPage_NoExtensions"
+          xml:space="preserve">
+        <value>No extension configured</value>
+    </data>
+    <data name="SettingsPage_NoApps"
+          xml:space="preserve">
+        <value>No application configured</value>
+    </data>
+    <data name="SettingsPage_Section_Language"
+          xml:space="preserve">
+        <value>Language</value>
+    </data>
+    <data name="SettingsPage_Section_Language_Current"
+          xml:space="preserve">
+        <value>Current language</value>
+    </data>
+    <data name="SettingsPage_Section_About"
+          xml:space="preserve">
+        <value>About</value>
+    </data>
+    <data name="SettingsPage_Section_About_Version"
+          xml:space="preserve">
+        <value>Version</value>
+    </data>
     <!-- Dialogs -->
     <data name="CreateJobDialog_Title" xml:space="preserve"><value>Create New Job</value></data>
     <data name="CreateJobDialog_JobName" xml:space="preserve"><value>Job Name</value></data>
