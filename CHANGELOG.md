@@ -1,3 +1,16 @@
+## v1.5.0 (2026-02-13)
+
+### Feat
+
+- **gui**: implement settings page
+
+### Fix
+
+- **gui**: implement XML log display with dynamic format detection
+- **gui**: implement logs format change with settings
+- **gui**: implement subscribe to language change event
+- **core**: update language
+
 ## v1.4.0 (2026-02-13)
 
 ### Feat
