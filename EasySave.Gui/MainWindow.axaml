@@ -10,7 +10,6 @@
         x:Class="EasySave.GUI.MainWindow"
         Title="EasySave.GUI">
     <Window.Styles>
-        <!-- Style pour les boutons inactifs -->
         <Style Selector="Button.menu-button-inactive">
             <Setter Property="Background"
                     Value="#FB8A3C" />
@@ -44,7 +43,6 @@
                     Value="0" />
         </Style>
 
-        <!-- Style pour le bouton actif -->
         <Style Selector="Button.menu-button-active">
             <Setter Property="Background"
                     Value="#F97316" />

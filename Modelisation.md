@@ -213,6 +213,13 @@ classDiagram
   JobsPage --> ErrorDialog
   JobsPage --> PasswordDialog
 
+  LogsPage --> ConfigParser
+  LogsPage --> JobManager
+  LogsPage *-- "0..*" SimpleLogEntry
+
+  SettingsPage --> ConfigParser
+  SettingsPage --> JobManager
+
   JobCard --> Job
   JobCard --> JobTypeColorConverter
 
@@ -272,6 +279,10 @@ classDiagram
   }
 
   namespace EasySave.GUI.Pages {
+    class SimpleLogEntry {
+      +string LogText
+    }
+
     class JobsPage {
       -JobManager _jobManager
       +JobsPage()
@@ -283,7 +294,25 @@ classDiagram
     }
 
     class LogsPage {
+      -ObservableCollection~SimpleLogEntry~ _logs
+      -ConfigParser _configParser
+      -JobManager? _jobManager
+      -FileSystemWatcher? _fileWatcher
+      -string _currentLogFilePath
+      -Timer? _reloadTimer
+      -object _reloadLock
       +LogsPage()
+      +LogsPage(configParser: ConfigParser, jobManager: JobManager)
+      -LoadLogs() void
+      -LoadJsonLogs(filePath: string) void
+      -LoadXmlLogs(filePath: string) void
+      -StartFileWatcher() void
+      -OnLogFileChanged(sender: object, e: FileSystemEventArgs) void
+      -UpdateLogsCount() void
+      -ScrollToBottom() void
+      -OnLanguageChanged(sender: object?, e: LanguageChangedEventArgs) void
+      -OnLogFormatChangedEvent(sender: object?, e: LogFormatChangedEventArgs) void
+      -OnOpenFolderClick(sender: object?, e: RoutedEventArgs) void
     }
 
     class StatePage {
@@ -291,7 +320,23 @@ classDiagram
     }
 
     class SettingsPage {
+      -ConfigParser _configParser
+      -JobManager? _jobManager
       +SettingsPage()
+      +SettingsPage(configParser: ConfigParser, jobManager: JobManager)
+      -OnFrenchClick(sender: object?, e: RoutedEventArgs) void
+      -OnEnglishClick(sender: object?, e: RoutedEventArgs) void
+      -OnJsonFormatClick(sender: object?, e: RoutedEventArgs) void
+      -OnXmlFormatClick(sender: object?, e: RoutedEventArgs) void
+      -ChangeLanguage(languageCode: string) void
+      -ChangeLogFormat(format: string) void
+      -OnLanguageChangedEvent(sender: object?, e: LanguageChangedEventArgs) void
+      -OnLogFormatChangedEvent(sender: object?, e: LogFormatChangedEventArgs) void
+      -RefreshUI() void
+      -UpdateCurrentLanguageDisplay() void
+      -PopulateData() void
+      -CreateBadge(text: string) Border
+      -GetApplicationVersion() string
     }
   }
 

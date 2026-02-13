@@ -19,10 +19,8 @@ public class StateTracker
     if (stateEntry == null || string.IsNullOrEmpty(stateEntry.JobName))
       return;
 
-    // Mise à jour de l'état en mémoire
     _jobStates[stateEntry.JobName] = stateEntry;
 
-    // Sérialisation et écriture dans le fichier
     var options = new JsonSerializerOptions
     {
       WriteIndented = true,
@@ -30,7 +28,6 @@ public class StateTracker
     };
     var json = JsonSerializer.Serialize(_jobStates.Values, options);
 
-    // S'assurer que le dossier existe
     var directory = Path.GetDirectoryName(_stateFilePath);
     if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
     {

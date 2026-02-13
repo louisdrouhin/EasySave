@@ -6,9 +6,6 @@ using EasySave.Core.Localization;
 using System.Text.Json.Nodes;
 using System.Diagnostics;
 
-/// <summary>
-/// Event arguments for log format change events
-/// </summary>
 public class LogFormatChangedEventArgs : EventArgs
 {
     public string OldFormat { get; set; }
@@ -31,9 +28,6 @@ public class JobManager
 
     public ConfigParser ConfigParser => _configParser;
 
-    /// <summary>
-    /// Event triggered when the log format changes
-    /// </summary>
     public event EventHandler<LogFormatChangedEventArgs>? LogFormatChanged;
 
     public JobManager()
@@ -109,7 +103,7 @@ public class JobManager
         {
             "xml" => new XmlLogFormatter(),
             "json" => new JsonLogFormatter(),
-            _ => new JsonLogFormatter() // Format par défaut
+            _ => new JsonLogFormatter()
         };
     }
 
@@ -919,9 +913,7 @@ public class JobManager
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
-            //TODO: manage password for no-null and no space
 
-            // Remonte depuis bin/Debug/net10.0 jusqu'à la racine du projet
             var appDirectory = AppContext.BaseDirectory;
             var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
             var cryptosoftPath = Path.Combine(projectRootDirectory, "Cryptosoft.exe");
