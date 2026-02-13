@@ -1,3 +1,20 @@
+## v1.4.0 (2026-02-13)
+
+### Feat
+
+- internationalization of code and app
+- **EasySave.Gui**: add confirmation for deletion
+- **EasySave.Gui**: merge jobs and state pagees
+- **EasySave.Gui**: add state page
+- **EasySave.Utils**: add utils project, containing some converters
+
+### Fix
+
+- **EasySave.Gui**: change way to start statefile watcher
+- **EasySave.Gui**: replace icons by svg and fix button colors
+- **EasySave.Gui**: fix size and file remaining count size
+- **EasySave.Gui**: launching a job doesn't block UI anymore
+
 ## v1.3.0 (2026-02-12)
 
 ### Feat
