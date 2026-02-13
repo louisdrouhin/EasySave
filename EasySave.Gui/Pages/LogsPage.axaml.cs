@@ -12,8 +12,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Xml;
 
 namespace EasySave.GUI.Pages;
 
@@ -196,9 +198,64 @@ public partial class LogsPage : UserControl
     {
         try
         {
+            string xmlContent;
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(fileStream))
+            {
+                xmlContent = reader.ReadToEnd();
+            }
+
+            if (string.IsNullOrWhiteSpace(xmlContent))
+            {
+                return;
+            }
+
+            _logs.Clear();
+
+            xmlContent = xmlContent.Trim();
+            if (!xmlContent.EndsWith("</logs>"))
+            {
+                xmlContent += "</logs>";
+            }
+
+            var doc = new XmlDocument();
+            doc.LoadXml(xmlContent);
+
+            var logEntries = doc.GetElementsByTagName("logEntry");
+
+            foreach (XmlElement entry in logEntries)
+            {
+                var timestamp = entry.SelectSingleNode("timestamp")?.InnerText ?? "";
+                var name = entry.SelectSingleNode("name")?.InnerText ?? "";
+                var content = entry.SelectSingleNode("content");
+
+                var logDict = new Dictionary<string, object>
+                {
+                    { "timestamp", timestamp },
+                    { "name", name },
+                    { "content", new Dictionary<string, object>() }
+                };
+
+                if (content != null && content.ChildNodes.Count > 0)
+                {
+                    var contentDict = (Dictionary<string, object>)logDict["content"];
+                    foreach (XmlElement child in content.ChildNodes)
+                    {
+                        contentDict[child.Name] = child.InnerText;
+                    }
+                }
+
+                string logJson = JsonSerializer.Serialize(logDict);
+
+                _logs.Add(new SimpleLogEntry
+                {
+                    LogText = logJson
+                });
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error loading XML logs: {ex.Message}");
         }
     }
 
@@ -216,7 +273,7 @@ public partial class LogsPage : UserControl
             _fileWatcher = new FileSystemWatcher(logsPath)
             {
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
-                Filter = "*.json", 
+                Filter = "*_logs.*",
                 EnableRaisingEvents = true
             };
 
@@ -232,7 +289,8 @@ public partial class LogsPage : UserControl
     {
         try
         {
-            string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.json";
+            string currentFormat = _configParser.GetLogFormat();
+            string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.{currentFormat}";
 
             if (Path.GetFileName(e.FullPath) == todayLogFileName)
             {
