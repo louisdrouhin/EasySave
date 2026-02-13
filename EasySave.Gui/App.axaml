@@ -29,11 +29,53 @@
         <Style Selector="Button.button-red">
             <Setter Property="Background" Value="#EF4444" />
             <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.button-red:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="TextBlock.Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.button-red:pointerover">
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style Selector="Button.button-green">
             <Setter Property="Background" Value="#22C55E" />
             <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.button-green:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#16A34A" />
+        </Style>
+        <Style Selector="Button.button-green:pointerover">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.button-gray-cancel">
+            <Setter Property="Background" Value="#E5E7EB" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.button-gray-cancel:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#D1D5DB" />
+        </Style>
+
+        <Style Selector="Button.button-primary-orange">
+            <Setter Property="Background" Value="#F97316" />
+            <Setter Property="Foreground" Value="#FFF4ED" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="Button.button-primary-orange:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#EA580C" />
+        </Style>
+        <Style Selector="Button.button-primary-orange:pointerover">
+            <Setter Property="Foreground" Value="#FFF4ED" />
         </Style>
     </Application.Styles>
 </Application>

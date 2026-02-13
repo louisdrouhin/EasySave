@@ -5,9 +5,6 @@
              x:Class="EasySave.GUI.Pages.LogsPage"
              x:CompileBindings="False">
     <UserControl.Styles>
-        <Style Selector="Button#OpenFolderButton:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#EA580C" />
-        </Style>
     </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
         
@@ -31,13 +28,8 @@
             </StackPanel>
             <Button Grid.Column="1"
                     x:Name="OpenFolderButton"
-                    Background="#F97316"
-                    Foreground="#FFF4ED"
-                    BorderThickness="0"
-                    CornerRadius="10"
+                    Classes="button-primary-orange"
                     Padding="16,10"
-                    FontWeight="Bold"
-                    FontSize="14"
                     VerticalAlignment="Top" />
         </Grid>
         
