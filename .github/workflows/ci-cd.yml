@@ -91,20 +91,19 @@ jobs:
           -p:Version=${{ steps.version.outputs.VERSION }} `
           --output ./publish/CLI
 
-      - name: Prepare Artifacts
-        shell: pwsh
+      - name: Publish GUI
         run: |
-          New-Item -ItemType Directory -Force -Path ./artifacts
-          Move-Item -Path ./publish/CLI/*.exe -Destination ./artifacts/
-          Move-Item -Path ./publish/CLI/*.dll -Destination ./artifacts/
-
-          Copy-Item -Path ./config.example.json -Destination ./artifacts/config.json
-
-          if (Test-Path ./publish/CLI/fr) { Copy-Item -Path ./publish/CLI/fr -Destination ./artifacts/ -Recurse }
-          if (Test-Path ./publish/CLI/en) { Copy-Item -Path ./publish/CLI/en -Destination ./artifacts/ -Recurse }
+          dotnet publish EasySave.Gui/EasySave.Gui.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained true `
+          -p:PublishSingleFile=true `
+          -p:DebugType=None `
+          -p:Version=${{ steps.version.outputs.VERSION }} `
+          --output ./publish/GUI
 
       - name: Create ZIP archive
-        run: Compress-Archive -Path ./artifacts/* -DestinationPath ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
         shell: pwsh
 
       - name: Create GitHub Release
@@ -117,27 +116,3 @@ jobs:
           make_latest: ${{ steps.version.outputs.IS_RELEASE == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  code-quality:
-    name: Code Quality Analysis
-    runs-on: windows-latest
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Run code analysis
-        run: dotnet format --verify-no-changes --verbosity diagnostic
-        continue-on-error: true

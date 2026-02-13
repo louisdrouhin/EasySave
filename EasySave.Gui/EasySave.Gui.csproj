@@ -28,6 +28,14 @@
         <ProjectReference Include="../EasySave.Core/EasySave.Core.csproj" />
         <ProjectReference Include="../EasySave.Models/EasySave.Models.csproj" />
         <ProjectReference Include="..\EasySave.Utils\EasySave.Utils.csproj" />
+  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\config.example.json"
+              CopyToOutputDirectory="PreserveNewest" />
+        <None Include="..\config.json"
+              CopyToOutputDirectory="Always" />
+        <None Include="..\Cryptosoft.exe"
+              CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     <ItemGroup>
         <AvaloniaResource Include="font\**\*" />
