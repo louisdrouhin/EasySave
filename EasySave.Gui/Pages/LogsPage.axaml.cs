@@ -41,6 +41,8 @@ public partial class LogsPage : UserControl
 
         InitializeComponent();
 
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
+
         var titleText = this.FindControl<TextBlock>("TitleText");
         if (titleText != null) titleText.Text = LocalizationManager.Get("LogsPage_Title");
 
@@ -273,6 +275,25 @@ public partial class LogsPage : UserControl
         }
         catch (Exception)
         {
+        }
+    }
+
+    private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
+    {
+        try
+        {
+            var titleText = this.FindControl<TextBlock>("TitleText");
+            if (titleText != null) titleText.Text = LocalizationManager.Get("LogsPage_Title");
+
+            var openFolderButton = this.FindControl<Button>("OpenFolderButton");
+            if (openFolderButton != null) openFolderButton.Content = LocalizationManager.Get("LogsPage_Button_OpenFolder");
+
+            var totalLogsLabel = this.FindControl<TextBlock>("TotalLogsLabelText");
+            if (totalLogsLabel != null) totalLogsLabel.Text = LocalizationManager.Get("LogsPage_TotalLogs");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating language in LogsPage: {ex.Message}");
         }
     }
 

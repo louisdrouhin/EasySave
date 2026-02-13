@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
+
         Title = LocalizationManager.Get("MainWindow_Title");
         JobsButton.Content = LocalizationManager.Get("MainWindow_Menu_Jobs");
         LogsButton.Content = LocalizationManager.Get("MainWindow_Menu_Logs");
@@ -37,7 +39,7 @@ public partial class MainWindow : Window
 
             _jobsPage = new JobsPage(_jobManager);
             _logsPage = new LogsPage(_jobManager.ConfigParser);
-            _settingsPage = new SettingsPage();
+            _settingsPage = new SettingsPage(_jobManager.ConfigParser);
 
             Console.WriteLine("Pages created successfully");
 
@@ -104,6 +106,22 @@ public partial class MainWindow : Window
                 SettingsButton.Classes.Remove("menu-button-inactive");
                 SettingsButton.Classes.Add("menu-button-active");
                 break;
+        }
+    }
+
+    private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
+    {
+        try
+        {
+            // Update MainWindow menu buttons
+            Title = LocalizationManager.Get("MainWindow_Title");
+            JobsButton.Content = LocalizationManager.Get("MainWindow_Menu_Jobs");
+            LogsButton.Content = LocalizationManager.Get("MainWindow_Menu_Logs");
+            SettingsButton.Content = LocalizationManager.Get("MainWindow_Menu_Settings");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating language in MainWindow: {ex.Message}");
         }
     }
 }

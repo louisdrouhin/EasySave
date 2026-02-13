@@ -30,7 +30,9 @@ public partial class JobsPage : UserControl
     {
         _jobManager = jobManager;
         InitializeComponent();
-        
+
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
+
         var headerTitle = this.FindControl<TextBlock>("HeaderTitleText");
         if (headerTitle != null) headerTitle.Text = LocalizationManager.Get("JobsPage_Header_Title");
 
@@ -43,7 +45,7 @@ public partial class JobsPage : UserControl
             createJobButton.Content = LocalizationManager.Get("JobsPage_Button_NewJob");
             createJobButton.Click += CreateJobButton_Click;
         }
-        
+
         LoadJobs();
     }
 
@@ -225,5 +227,24 @@ public partial class JobsPage : UserControl
         var (index, job) = data;
         _jobManager?.removeJob(index);
         LoadJobs();
+    }
+
+    private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
+    {
+        try
+        {
+            var headerTitle = this.FindControl<TextBlock>("HeaderTitleText");
+            if (headerTitle != null) headerTitle.Text = LocalizationManager.Get("JobsPage_Header_Title");
+
+            var headerSubtitle = this.FindControl<TextBlock>("HeaderSubtitleText");
+            if (headerSubtitle != null) headerSubtitle.Text = LocalizationManager.Get("JobsPage_Header_Subtitle");
+
+            var createJobButton = this.FindControl<Button>("CreateJobButton");
+            if (createJobButton != null) createJobButton.Content = LocalizationManager.Get("JobsPage_Button_NewJob");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating language in JobsPage: {ex.Message}");
+        }
     }
 }
