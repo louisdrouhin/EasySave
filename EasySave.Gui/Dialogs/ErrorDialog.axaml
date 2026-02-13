@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EasySave.GUI.Dialogs.ErrorDialog"
+        Width="400"
+        Height="200"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        RequestedThemeVariant="Light">
+    <StackPanel Spacing="15" Margin="20">
+        <TextBlock x:Name="TitleBlock"
+                   FontSize="14"
+                   FontWeight="Bold"
+                   Foreground="#DC2626" />
+        <TextBlock x:Name="MessageBlock"
+                   FontSize="13"
+                   Foreground="#15171D"
+                   TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+            <Button x:Name="OkButton"
+                    Classes="button-green"
+                    Padding="20,8"
+                    Width="80" />
+        </StackPanel>
+    </StackPanel>
+</Window>

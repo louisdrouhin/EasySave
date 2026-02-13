@@ -19,10 +19,8 @@ public class StateTracker
     if (stateEntry == null || string.IsNullOrEmpty(stateEntry.JobName))
       return;
 
-    // Mise à jour de l'état en mémoire
     _jobStates[stateEntry.JobName] = stateEntry;
 
-    // Sérialisation et écriture dans le fichier
     var options = new JsonSerializerOptions
     {
       WriteIndented = true,
@@ -30,7 +28,6 @@ public class StateTracker
     };
     var json = JsonSerializer.Serialize(_jobStates.Values, options);
 
-    // S'assurer que le dossier existe
     var directory = Path.GetDirectoryName(_stateFilePath);
     if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
     {
@@ -40,21 +37,22 @@ public class StateTracker
     File.WriteAllText(_stateFilePath, json);
   }
 
-  public void RemoveJobState(string jobName)
+  public void RemoveJobState(int index)
   {
-    if (string.IsNullOrEmpty(jobName))
-      return;
-    // Suppression de l'état en mémoire
-    if (_jobStates.Remove(jobName))
+    if (index < 0 || index >= _jobStates.Count)
+        return;
+
+    var jobStateKey = _jobStates.Keys.ElementAt(index);
+
+    if (_jobStates.Remove(jobStateKey))
     {
-      // Mise à jour du fichier après suppression
-      var options = new JsonSerializerOptions
-      {
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
-      };
-      var json = JsonSerializer.Serialize(_jobStates.Values, options);
-      File.WriteAllText(_stateFilePath, json);
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var json = JsonSerializer.Serialize(_jobStates.Values, options);
+        File.WriteAllText(_stateFilePath, json);
     }
   }
 }

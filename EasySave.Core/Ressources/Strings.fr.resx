@@ -105,7 +105,7 @@
     <value>Type de sauvegarde (1=Complète, 2=Différentielle) : </value>
   </data>
   <data name="CreateJob_Success" xml:space="preserve">
-    <value>✓ Travail '{0}' créé avec succès!</value>
+    <value> Travail '{0}' créé avec succès!</value>
   </data>
   <data name="CreateJob_Source" xml:space="preserve">
     <value>  Source: {0}</value>
@@ -131,19 +131,19 @@
     <value>Nom ou numéro du travail : </value>
   </data>
   <data name="ExecuteJob_InProgress" xml:space="preserve">
-    <value>⏳ Exécution du travail '{0}' en cours...</value>
+    <value> Exécution du travail '{0}' en cours...</value>
   </data>
   <data name="ExecuteJob_Success" xml:space="preserve">
-    <value>✓ Sauvegarde terminée avec succès!</value>
+    <value> Sauvegarde terminée avec succès!</value>
   </data>
   <data name="ExecuteAllJobs_Title" xml:space="preserve">
     <value>=== EXÉCUTER TOUS LES TRAVAUX ===</value>
   </data>
   <data name="ExecuteAllJobs_InProgress" xml:space="preserve">
-    <value>⏳ Exécution de tous les travaux en cours...</value>
+    <value> Exécution de tous les travaux en cours...</value>
   </data>
   <data name="ExecuteAllJobs_Success" xml:space="preserve">
-    <value>✓ Toutes les sauvegardes sont terminées!</value>
+    <value> Toutes les sauvegardes sont terminées!</value>
   </data>
   
   <!-- Exécution de jobs -->
@@ -175,10 +175,10 @@
     <value>Utilisez l'option 'Créer un travail' pour commencer.</value>
   </data>
   <data name="ExecuteJobs_Success" xml:space="preserve">
-    <value>✓ Job '{0}' exécuté avec succès!</value>
+    <value> Job '{0}' exécuté avec succès!</value>
   </data>
   <data name="ExecuteJobs_Error" xml:space="preserve">
-    <value>✗ Erreur lors de l'exécution du job '{0}' : {1}</value>
+    <value> Erreur lors de l'exécution du job '{0}' : {1}</value>
   </data>
   
   <!-- Suppression -->
@@ -195,7 +195,7 @@
     <value>Nom du travail à supprimer : </value>
   </data>
   <data name="DeleteJob_Success" xml:space="preserve">
-    <value>✓ Travail '{0}' supprimé avec succès!</value>
+    <value> Travail '{0}' supprimé avec succès!</value>
   </data>
   
   <!-- Liste des travaux -->
@@ -216,8 +216,14 @@
   <data name="ShowState_NoBackup" xml:space="preserve">
     <value>Aucune sauvegarde en cours.</value>
   </data>
-  
-  <!-- Général -->
+	
+ <!-- Général -->
+  <data name="Common_PressKey" xml:space="preserve">
+    <value>Appuyez sur n'importe quelle touche pour revenir au menu...</value>
+  </data>
+  <data name="Common_Closing" xml:space="preserve">
+    <value>Fermeture d'EasySave...</value>
+  </data>
   <data name="General_PressKeyToContinue" xml:space="preserve">
     <value>Appuyez sur une touche pour revenir au menu...</value>
   </data>
@@ -243,4 +249,184 @@
   <data name="Error_ConfigFileNotFound" xml:space="preserve">
     <value>Impossible de démarrer : le fichier de configuration de base est introuvable.</value>
   </data>
+  <!-- Vérification de l'application métier -->
+  <data name="BusinessCheck_ApplicationRunning" xml:space="preserve">
+    <value>L'application '{0}' est lancée. Impossible d'exécuter le job de sauvegarde.</value>
+  </data>
+  <data name="Error_InvalidLogFormat" xml:space="preserve">
+    <value>Format de log invalide. Le format de log doit être 'json' ou 'xml'.</value>
+  </data>
+  <data name="Error_CultureNotFound"
+        xml:space="preserve">
+      <value>Culture '{0}' non trouvée. Culture actuelle conservée.</value>
+  </data>
+  <!-- MainWindow -->
+  <data name="MainWindow_Title"
+        xml:space="preserve">
+      <value>EasySave.GUI</value>
+  </data>
+  <data name="MainWindow_Menu_Jobs"
+        xml:space="preserve">
+      <value>Travaux</value>
+  </data>
+  <data name="MainWindow_Menu_Logs"
+        xml:space="preserve">
+      <value>Journaux</value>
+  </data>
+  <data name="MainWindow_Menu_Settings"
+        xml:space="preserve">
+      <value>Paramètres</value>
+  </data>
+  <data name="MainWindow_FatalError"
+        xml:space="preserve">
+      <value>ERREUR FATALE dans MainWindow :
+{0}
+
+Pile :
+{1}</value>
+  </data>
+  <!-- JobsPage -->
+  <data name="JobsPage_Header_Title"
+        xml:space="preserve">
+      <value>Travaux enregistrés</value>
+  </data>
+  <data name="JobsPage_Header_Subtitle"
+        xml:space="preserve">
+      <value>Gérer vos travaux de sauvegarde</value>
+  </data>
+  <data name="JobsPage_Button_NewJob"
+        xml:space="preserve">
+      <value>+ Nouveau travail</value>
+  </data>
+  <data name="JobsPage_Error_BusinessAppTitle"
+        xml:space="preserve">
+      <value>Application métier en cours</value>
+  </data>
+  <data name="JobsPage_Error_BusinessAppMessage"
+        xml:space="preserve">
+      <value>L'application métier '{0}' est en cours. Exécution bloquée.</value>
+  </data>
+  <!-- LogsPage -->
+  <data name="LogsPage_Title"
+        xml:space="preserve">
+      <value>Logs des sauvegardes</value>
+  </data>
+  <data name="LogsPage_Button_OpenFolder"
+        xml:space="preserve">
+      <value>Ouvrir le dossier de logs</value>
+  </data>
+  <data name="LogsPage_TotalLogs"
+        xml:space="preserve">
+      <value>Total des logs :</value>
+  </data>
+  <data name="LogsPage_Error_LogFolder"
+        xml:space="preserve">
+      <value>Erreur lors de l'ouverture du dossier : {0}</value>
+  </data>
+  <!-- SettingsPage -->
+  <data name="SettingsPage_Title"
+        xml:space="preserve">
+      <value>Page des paramètres</value>
+  </data>
+  <data name="SettingsPage_Header_Title"
+        xml:space="preserve">
+      <value>Paramètres</value>
+  </data>
+  <data name="SettingsPage_Header_Subtitle"
+        xml:space="preserve">
+      <value>Vue d'ensemble de la configuration</value>
+  </data>
+  <data name="SettingsPage_Section_Logs"
+        xml:space="preserve">
+      <value>Logs</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_Path"
+        xml:space="preserve">
+      <value>Chemin des logs</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_Format"
+        xml:space="preserve">
+      <value>Format des logs</value>
+  </data>
+  <data name="SettingsPage_Section_State"
+        xml:space="preserve">
+      <value>État</value>
+  </data>
+  <data name="SettingsPage_Section_State_Path"
+        xml:space="preserve">
+      <value>Chemin du fichier d'état</value>
+  </data>
+  <data name="SettingsPage_Section_Encryption"
+        xml:space="preserve">
+      <value>Chiffrement</value>
+  </data>
+  <data name="SettingsPage_Section_Encryption_Extensions"
+        xml:space="preserve">
+      <value>Extensions chiffrées</value>
+  </data>
+  <data name="SettingsPage_Section_BusinessApps"
+        xml:space="preserve">
+      <value>Applications métier</value>
+  </data>
+  <data name="SettingsPage_Section_BusinessApps_List"
+        xml:space="preserve">
+      <value>Applications surveillées</value>
+  </data>
+  <data name="SettingsPage_NoExtensions"
+        xml:space="preserve">
+      <value>Aucune extension configurée</value>
+  </data>
+  <data name="SettingsPage_NoApps"
+        xml:space="preserve">
+      <value>Aucune application configurée</value>
+  </data>
+  <data name="SettingsPage_Section_Language"
+        xml:space="preserve">
+      <value>Langue</value>
+  </data>
+  <data name="SettingsPage_Section_Language_Current"
+        xml:space="preserve">
+      <value>Langue actuelle</value>
+  </data>
+  <data name="SettingsPage_Section_About"
+        xml:space="preserve">
+      <value>À propos</value>
+  </data>
+  <data name="SettingsPage_Section_About_Version"
+        xml:space="preserve">
+      <value>Version</value>
+  </data>
+  <!-- Dialogs -->
+  <data name="CreateJobDialog_Title" xml:space="preserve"><value>Créer un nouveau travail</value></data>
+  <data name="CreateJobDialog_JobName" xml:space="preserve"><value>Nom du travail</value></data>
+  <data name="CreateJobDialog_JobName_Placeholder" xml:space="preserve"><value>Entrez le nom du travail</value></data>
+  <data name="CreateJobDialog_JobType" xml:space="preserve"><value>Type de travail</value></data>
+  <data name="CreateJobDialog_JobType_Full" xml:space="preserve"><value>Complète</value></data>
+  <data name="CreateJobDialog_JobType_Differential" xml:space="preserve"><value>Différentielle</value></data>
+  <data name="CreateJobDialog_SourcePath" xml:space="preserve"><value>Chemin source</value></data>
+  <data name="CreateJobDialog_SourcePath_Placeholder" xml:space="preserve"><value>Entrez le chemin du dossier source</value></data>
+  <data name="CreateJobDialog_DestPath" xml:space="preserve"><value>Chemin de destination</value></data>
+  <data name="CreateJobDialog_DestPath_Placeholder" xml:space="preserve"><value>Entrez le chemin du dossier de destination</value></data>
+  <data name="CreateJobDialog_Button_Create" xml:space="preserve"><value>Créer</value></data>
+  <data name="CreateJobDialog_Button_Cancel" xml:space="preserve"><value>Annuler</value></data>
+  <data name="CreateJobDialog_SelectSource" xml:space="preserve"><value>Sélectionner le dossier source</value></data>
+  <data name="CreateJobDialog_SelectDest" xml:space="preserve"><value>Sélectionner le dossier de destination</value></data>
+  <data name="CreateJobDialog_Error_FillFields" xml:space="preserve"><value>Veuillez remplir tous les champs</value></data>
+  
+  <data name="ErrorDialog_Title" xml:space="preserve"><value>Erreur</value></data>
+  <data name="ErrorDialog_Button_OK" xml:space="preserve"><value>OK</value></data>
+  
+  <data name="PasswordDialog_Title" xml:space="preserve"><value>Entrez le mot de passe de chiffrement</value></data>
+  <data name="PasswordDialog_Label" xml:space="preserve"><value>Entrez le mot de passe pour le chiffrement (optionnel)</value></data>
+  <data name="PasswordDialog_Placeholder" xml:space="preserve"><value>Laisser vide pour sans chiffrement</value></data>
+  
+  <!-- JobCard -->
+  <data name="JobCard_Label_Source" xml:space="preserve"><value>Source :</value></data>
+  <data name="JobCard_Label_Destination" xml:space="preserve"><value>Destination :</value></data>
+  <data name="JobCard_Label_Files" xml:space="preserve"><value>FICHIERS (TRAITÉS / TOTAL)</value></data>
+  <data name="JobCard_Label_Size" xml:space="preserve"><value>TAILLE (TRAITÉE / TOTAL)</value></data>
+  <data name="JobCard_Status_Inactive" xml:space="preserve"><value>Inactif</value></data>
+  <data name="JobCard_Status_Active" xml:space="preserve"><value>Actif</value></data>
+  <data name="JobCard_Progress_InProgress" xml:space="preserve"><value>EN COURS</value></data>
+  <data name="JobCard_Progress_Processing" xml:space="preserve"><value>Traitement...</value></data>
 </root>

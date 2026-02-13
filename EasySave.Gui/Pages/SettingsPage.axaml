@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EasySave.GUI.Pages.SettingsPage">
+    <Border Padding="20" Background="#FFE6D5">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header Section -->
+            <Grid Grid.Row="0" ColumnDefinitions="*" Margin="0,0,0,20">
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="HeaderTitleText"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="#15171D"/>
+                    <TextBlock x:Name="HeaderSubtitleText"
+                               FontSize="14"
+                               Foreground="#666666" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Content Section -->
+            <ScrollViewer Grid.Row="1">
+                <StackPanel Spacing="20" Margin="10">
+                    <!-- Logs Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="LogsSectionTitle"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Logs Path -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"
+                                           x:Name="LogsPathLabel"/>
+                                <TextBlock Grid.Column="1"
+                                           FontSize="12"
+                                           Foreground="#15171D"
+                                           x:Name="LogsPathText"
+                                           TextWrapping="Wrap"/>
+                            </Grid>
+
+                            <!-- Logs Format -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"
+                                           x:Name="LogsFormatLabel"/>
+                                <TextBlock Grid.Column="1"
+                                           FontSize="12"
+                                           Foreground="#15171D"
+                                           x:Name="LogsFormatText"/>
+                            </Grid>
+
+                            <!-- Format Buttons -->
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                                <Button x:Name="JsonFormatButton"
+                                        Content="JSON"
+                                        Padding="12,8"
+                                        FontSize="12"/>
+                                <Button x:Name="XmlFormatButton"
+                                        Content="XML"
+                                        Padding="12,8"
+                                        FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- State Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="StateSectionTitle"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- State Path -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"
+                                           x:Name="StatePathLabel"/>
+                                <TextBlock Grid.Column="1"
+                                           FontSize="12"
+                                           Foreground="#15171D"
+                                           x:Name="StatePathText"
+                                           TextWrapping="Wrap"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Encryption Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="EncryptionSectionTitle"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Extensions Label -->
+                            <TextBlock FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="#666666"
+                                       x:Name="ExtensionsLabel"/>
+
+                            <!-- Extensions Panel -->
+                            <WrapPanel x:Name="ExtensionsPanel"
+                                       Orientation="Horizontal" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Business Applications Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="BusinessAppsSectionTitle"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Apps Label -->
+                            <TextBlock FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="#666666"
+                                       x:Name="AppsLabel"/>
+
+                            <!-- Apps Panel -->
+                            <WrapPanel x:Name="AppsPanel"
+                                       Orientation="Horizontal" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Language Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="LanguageSectionTitle"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Current Language Display -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"
+                                           x:Name="CurrentLanguageLabel"/>
+                                <TextBlock Grid.Column="1"
+                                           FontSize="12"
+                                           Foreground="#15171D"
+                                           x:Name="CurrentLanguageText"/>
+                            </Grid>
+
+                            <!-- Language Buttons -->
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                                <Button x:Name="FrenchButton"
+                                        Content="Français"
+                                        Classes="language-button"
+                                        Padding="12,8"
+                                        FontSize="12"/>
+                                <Button x:Name="EnglishButton"
+                                        Content="English"
+                                        Classes="language-button"
+                                        Padding="12,8"
+                                        FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- About Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="AboutSectionTitle"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Version Display -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"
+                                           x:Name="VersionLabel"/>
+                                <TextBlock Grid.Column="1"
+                                           FontSize="12"
+                                           Foreground="#15171D"
+                                           x:Name="VersionText"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

@@ -75,4 +75,84 @@ public class ConfigParser
             EditAndSaveConfig(configObject);
         }
     }
+
+    public List<string> GetEncryptionExtensions()
+    {
+        var extensions = new List<string>();
+        var encryptionNode = Config?["config"]?["encryption"];
+
+        if (encryptionNode == null)
+        {
+            return extensions;
+        }
+
+        var extensionsArray = encryptionNode["extensions"]?.AsArray();
+
+        if (extensionsArray != null)
+        {
+            foreach (var ext in extensionsArray)
+            {
+                var extension = ext?.GetValue<string>();
+                if (!string.IsNullOrEmpty(extension))
+                {
+                    extensions.Add(extension.ToLower());
+                }
+            }
+        }
+
+        return extensions;
+    }
+
+    public string GetLogsPath()
+    {
+        string logsPath = Config?["config"]?["logsPath"]?.GetValue<string>() ?? "./logs/";
+        string appDirectory = AppContext.BaseDirectory;
+        return Path.IsPathRooted(logsPath) ? logsPath : Path.Combine(appDirectory, logsPath);
+    }
+
+    public string GetLogFormat()
+    {
+        return Config?["config"]?["logFormat"]?.GetValue<string>() ?? "json";
+    }
+
+    public void SetLogFormat(string format)
+    {
+        if (format != "json" && format != "xml")
+        {
+            throw new ArgumentException(LocalizationManager.Get("Error_InvalidLogFormat"), nameof(format));
+        }
+
+        if (Config is JsonObject configObject && configObject["config"] is JsonObject configSection)
+        {
+            configSection["logFormat"] = format;
+            EditAndSaveConfig(configObject);
+        }
+    }
+
+    public List<string> GetBusinessApplications()
+    {
+        var applications = new List<string>();
+        var businessAppsNode = Config?["config"]?["businessApplications"];
+
+        if (businessAppsNode == null)
+        {
+            return applications;
+        }
+
+        var applicationsArray = businessAppsNode.AsArray();
+
+        if (applicationsArray != null)
+        {
+            foreach (var app in applicationsArray)
+            {
+                var appName = app?.GetValue<string>();
+                if (!string.IsNullOrEmpty(appName))
+                {
+                    applications.Add(appName.ToLower());
+                }
+            }
+        }
+
+        return applications;
+    }
 }

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EasySave.GUI.Dialogs.CreateJobDialog"
+        Width="500"
+        Height="400"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        RequestedThemeVariant="Light">
+    <StackPanel Spacing="15" Margin="20">
+        
+        <StackPanel Spacing="8">
+            <TextBlock x:Name="JobNameLabel"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#15171D" />
+            <TextBox x:Name="JobNameInput"
+                     Foreground="#15171D"
+                     Background="White"
+                     BorderBrush="#E0E0E0"
+                     BorderThickness="1"
+                     CornerRadius="6"
+                     Padding="12"
+                     Height="40" />
+        </StackPanel>
+
+        
+        <StackPanel Spacing="8">
+            <TextBlock x:Name="JobTypeLabel"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#15171D" />
+            <ComboBox x:Name="JobTypeInput"
+                      Foreground="#15171D"
+                      Background="White"
+                      BorderBrush="#E0E0E0"
+                      BorderThickness="1"
+                      CornerRadius="6"
+                      Padding="12"
+                      Height="40">
+            </ComboBox>
+        </StackPanel>
+
+        
+        <StackPanel Spacing="8">
+            <TextBlock x:Name="SourcePathLabel"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#15171D" />
+            <Grid ColumnDefinitions="*,40">
+                <TextBox Grid.Column="0"
+                         x:Name="SourcePathInput"
+                         Foreground="#15171D"
+                         Background="White"
+                         BorderBrush="#E0E0E0"
+                         BorderThickness="1"
+                         CornerRadius="6"
+                         Padding="12"
+                         Height="40" />
+                <Button Grid.Column="1"
+                        x:Name="BrowseSourceButton"
+                        Width="40"
+                        Height="40"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        Content="..."
+                        Background="#F0F0F0"
+                        Foreground="#15171D"
+                        BorderThickness="1"
+                        BorderBrush="#E0E0E0"
+                        CornerRadius="6"
+                        Margin="5,0,0,0"
+                        Padding="0" />
+            </Grid>
+        </StackPanel>
+
+        
+        <StackPanel Spacing="8">
+            <TextBlock x:Name="DestPathLabel"
+                       FontSize="13"
+                       FontWeight="Bold"
+                       Foreground="#15171D" />
+            <Grid ColumnDefinitions="*,40">
+                <TextBox Grid.Column="0"
+                         x:Name="DestinationPathInput"
+                         Foreground="#15171D"
+                         Background="White"
+                         BorderBrush="#E0E0E0"
+                         BorderThickness="1"
+                         CornerRadius="6"
+                         Padding="12"
+                         Height="40" />
+                <Button Grid.Column="1"
+                        x:Name="BrowseDestinationButton"
+                        Width="40"
+                        Height="40"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        Content="..."
+                        Background="#F0F0F0"
+                        Foreground="#15171D"
+                        BorderThickness="1"
+                        BorderBrush="#E0E0E0"
+                        CornerRadius="6"
+                        Margin="5,0,0,0"
+                        Padding="0" />
+            </Grid>
+        </StackPanel>
+
+        
+        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="CreateButton"
+                    Classes="button-gray-cancel"
+                    Padding="20,8"
+                    Width="100" />
+            <Button x:Name="CancelButton"
+                    Classes="button-red"
+                    Padding="20,8"
+                    Width="100" />
+        </StackPanel>
+    </StackPanel>
+</Window>

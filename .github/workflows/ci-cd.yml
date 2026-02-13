@@ -1,0 +1,118 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - "v?[0-9]+.[0-9]+.[0-9]+"
+  pull_request:
+    branches:
+      - main
+      - dev
+
+env:
+  DOTNET_VERSION: "10.0.102"
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          directory: ./coverage
+          fail_ci_if_error: false
+
+  build-and-release:
+    name: Build and Create Release
+    runs-on: windows-latest
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Extract Version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag -replace '^v', ''
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+
+          if ($version -match '^\d+\.0\.0$') { 
+              echo "IS_RELEASE=true" >> $env:GITHUB_OUTPUT 
+          } else { 
+              echo "IS_RELEASE=false" >> $env:GITHUB_OUTPUT 
+          }
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Publish CLI
+        run: |
+          dotnet publish EasySave.Cli/EasySave.Cli.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained true `
+          -p:PublishSingleFile=true `
+          -p:DebugType=None `
+          -p:Version=${{ steps.version.outputs.VERSION }} `
+          --output ./publish/CLI
+
+      - name: Publish GUI
+        run: |
+          dotnet publish EasySave.Gui/EasySave.Gui.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained true `
+          -p:PublishSingleFile=true `
+          -p:DebugType=None `
+          -p:Version=${{ steps.version.outputs.VERSION }} `
+          --output ./publish/GUI
+
+      - name: Create ZIP archive
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
+        shell: pwsh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: EasySave v${{ steps.version.outputs.VERSION }}
+          files: ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: ${{ steps.version.outputs.IS_RELEASE == 'false' }}
+          make_latest: ${{ steps.version.outputs.IS_RELEASE == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

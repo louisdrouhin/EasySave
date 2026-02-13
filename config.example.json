@@ -2,7 +2,18 @@
   "config": {
     "logsPath": "./logs/",
     "stateFilePath": "./state.json",
-    "logFormat": "json"
+    "logFormat": "json",
+    "encryption": {
+      "extensions": [".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".txt"]
+    },
+    "businessApplications": ["notepad"]
   },
-  "jobs": []
+  "jobs": [
+    {
+      "name": "test",
+      "type": "Full",
+      "sourceDir": "/path/source",
+      "targetDir": "/path/destination"
+    }
+  ]
 }

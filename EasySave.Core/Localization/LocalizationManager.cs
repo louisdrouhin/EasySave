@@ -1,16 +1,30 @@
-using System;
 using System.Globalization;
 using System.Resources;
 using System.Reflection;
 
 namespace EasySave.Core.Localization
 {
+    public class LanguageChangedEventArgs : EventArgs
+    {
+        public string LanguageCode { get; set; }
+        public CultureInfo Culture { get; set; }
+
+        public LanguageChangedEventArgs(string languageCode, CultureInfo culture)
+        {
+            LanguageCode = languageCode;
+            Culture = culture;
+        }
+    }
+
+
     public static class LocalizationManager
     {
         private static ResourceManager? _resourceManager;
         private static CultureInfo _currentCulture;
 
         public static CultureInfo CurrentCulture => _currentCulture;
+
+        public static event EventHandler<LanguageChangedEventArgs>? LanguageChanged;
 
         static LocalizationManager()
         {
@@ -66,16 +80,23 @@ namespace EasySave.Core.Localization
             try
             {
                 _currentCulture = new CultureInfo(cultureCode);
+                OnLanguageChanged(cultureCode, _currentCulture);
             }
             catch (CultureNotFoundException)
             {
-                Console.WriteLine($"Culture '{cultureCode}' not found. Keeping current culture.");
+                Console.WriteLine(GetFormatted("Error_CultureNotFound", cultureCode));
             }
         }
 
         public static void SetLanguage(CultureInfo culture)
         {
             _currentCulture = culture ?? new CultureInfo("fr");
+            OnLanguageChanged(_currentCulture.TwoLetterISOLanguageName, _currentCulture);
+        }
+
+        private static void OnLanguageChanged(string languageCode, CultureInfo culture)
+        {
+            LanguageChanged?.Invoke(null, new LanguageChangedEventArgs(languageCode, culture));
         }
 
         public static string[] GetAvailableLanguages()

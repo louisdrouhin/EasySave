@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="clr-namespace:EasySave.GUI.Pages"
+             x:Class="EasySave.GUI.Pages.LogsPage"
+             x:CompileBindings="False">
+    <UserControl.Styles>
+    </UserControl.Styles>
+    <Grid RowDefinitions="Auto,*">
+        
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,20,20,20">
+            <StackPanel Grid.Column="0" Spacing="10">
+                <TextBlock x:Name="TitleText"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="Black"/>
+                <StackPanel Orientation="Horizontal"
+                            Spacing="10">
+                    <TextBlock x:Name="TotalLogsLabelText"
+                               VerticalAlignment="Center"
+                               Foreground="Black" />
+                    <TextBlock x:Name="LogsCountText"
+                               Text="0"
+                               VerticalAlignment="Center"
+                               FontWeight="Bold"
+                               Foreground="Black" />
+                </StackPanel>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    x:Name="OpenFolderButton"
+                    Classes="button-primary-orange"
+                    Padding="16,10"
+                    VerticalAlignment="Top" />
+        </Grid>
+        
+        <Border Grid.Row="1"
+                Margin="20,0,20,20"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="5"
+                Background="White">
+            <ListBox x:Name="LogsListBox"
+                     Background="White"
+                     Foreground="Black"
+                     Padding="10">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                        <Setter Property="Background"
+                                Value="#FB8A3C" />
+                    </Style>
+                    <Style Selector="ListBoxItem:selected">
+                        <Setter Property="Background"
+                                Value="#FB8A3C" />
+                        <Setter Property="Foreground"
+                                Value="White" />
+                    </Style>
+                </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding LogText}"
+                                   Foreground="Black"
+                                   TextWrapping="Wrap"
+                                   Margin="0,5" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+    </Grid>
+</UserControl>

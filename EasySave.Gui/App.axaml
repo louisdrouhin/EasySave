@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:EasySave.Utils.Converters;assembly=EasySave.Utils"
+             x:Class="EasySave.GUI.App"
+             RequestedThemeVariant="Default">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    <Application.Resources>
+        <converters:JobTypeColorConverter x:Key="JobTypeColorConverter" />
+    </Application.Resources>
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="Window">
+            <Setter Property="FontFamily"
+                    Value="avares://EasySave.GUI/font/FleuronRegular.otf#Fleuron Regular" />
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Inter" />
+        </Style>
+        <Style Selector="TextBlock#HeaderTitleText, TextBlock#TitleText">
+            <Setter Property="FontFamily"
+                    Value="avares://EasySave.GUI/font/FleuronRegular.otf#Fleuron Regular" />
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="FontFamily"
+                    Value="avares://EasySave.GUI/font/FleuronRegular.otf#Fleuron Regular" />
+        </Style>
+
+        <Style Selector="Button.button-red">
+            <Setter Property="Background" Value="#EF4444" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.button-red:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="TextBlock.Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.button-red:pointerover">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.button-green">
+            <Setter Property="Background" Value="#22C55E" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.button-green:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#16A34A" />
+        </Style>
+        <Style Selector="Button.button-green:pointerover">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="Button.button-gray-cancel">
+            <Setter Property="Background" Value="#E5E7EB" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.button-gray-cancel:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#D1D5DB" />
+        </Style>
+
+        <Style Selector="Button.button-primary-orange">
+            <Setter Property="Background" Value="#F97316" />
+            <Setter Property="Foreground" Value="#FFF4ED" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="Button.button-primary-orange:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#EA580C" />
+        </Style>
+        <Style Selector="Button.button-primary-orange:pointerover">
+            <Setter Property="Foreground" Value="#FFF4ED" />
+        </Style>
+    </Application.Styles>
+</Application>

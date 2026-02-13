@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:comp="clr-namespace:EasySave.GUI.Components"
+             x:Class="EasySave.GUI.Pages.JobsPage">
+    <UserControl.Styles>
+    </UserControl.Styles>
+    <Border Padding="20"
+            Background="#FFE6D5">
+        <Grid RowDefinitions="Auto,*">
+            
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
+                <StackPanel Grid.Column="0" Spacing="8">
+                    <TextBlock x:Name="HeaderTitleText"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="#15171D"/>
+                    <TextBlock x:Name="HeaderSubtitleText"
+                               FontSize="14"
+                               Foreground="#666666" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        x:Name="CreateJobButton"
+                        Classes="button-primary-orange"
+                        Padding="16,10"
+                        VerticalAlignment="Top" />
+            </Grid>
+            
+                <ScrollViewer Grid.Row="1">
+                                    <StackPanel x:Name="JobsStackPanel"
+                                                Orientation="Vertical" 
+                                                Spacing="15"
+                                                Margin="10"/>                </ScrollViewer>        </Grid>
+    </Border>
+</UserControl>

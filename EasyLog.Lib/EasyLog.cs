@@ -161,17 +161,21 @@ public class EasyLog
 
         try
         {
+            // Si c'est déjà un chemin UNC, ne rien faire
             if (path.StartsWith("\\\\", StringComparison.OrdinalIgnoreCase))
                 return path;
 
+            // Résoudre le chemin complet (relatif ou absolu)
             var fullPath = Path.GetFullPath(path);
 
+            // Convertir en format UNC si c'est un chemin local avec lettre de lecteur
             if (fullPath.Length >= 2 && fullPath[1] == ':')
             {
                 var drive = fullPath[0];
                 var pathWithoutDrive = fullPath.Substring(2);
                 return $"\\\\localhost\\{drive}$\\{pathWithoutDrive}";
             }
+            
             return fullPath;
         }
         catch

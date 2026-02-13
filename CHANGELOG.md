@@ -1,7 +1,89 @@
-## v1.1.0 (2026-02-09)
+## v1.5.0 (2026-02-13)
 
 ### Feat
 
+- **gui**: implement settings page
+
+### Fix
+
+- **gui**: implement XML log display with dynamic format detection
+- **gui**: implement logs format change with settings
+- **gui**: implement subscribe to language change event
+- **core**: update language
+
+## v1.4.0 (2026-02-13)
+
+### Feat
+
+- internationalization of code and app
+- **EasySave.Gui**: add confirmation for deletion
+- **EasySave.Gui**: merge jobs and state pagees
+- **EasySave.Gui**: add state page
+- **EasySave.Utils**: add utils project, containing some converters
+
+### Fix
+
+- **EasySave.Gui**: change way to start statefile watcher
+- **EasySave.Gui**: replace icons by svg and fix button colors
+- **EasySave.Gui**: fix size and file remaining count size
+- **EasySave.Gui**: launching a job doesn't block UI anymore
+
+## v1.3.0 (2026-02-12)
+
+### Feat
+
+- **logs-page**: add logs in the GUI
+
+### Fix
+
+- **gui-logs**: fix log display
+- **gui-log**: add stage edit on the repo
+- **UML**: fix typo
+- **gui**: create errorDialog for error popup
+- **gui**: implement business app check for gui
+
+## v1.2.0 (2026-02-12)
+
+### Feat
+
+- **gui**: implement create, execute and delete jobs + change grid for job list
+- **gui**: add joblist card
+- **gui**: add style on the gui
+- **gui**: add menu + buttons
+- **EasySave.GUI**: add Avalonia based GUI
+- **core**: add logic for app check. Curent use hardcoded app name
+
+### Fix
+
+- **EasySave.GUI**: fix buttons size and fix dialogs theme
+- **ci**: fix ci build error
+- **core**: change the hardcoded name of business app to a json key into the config file
+- **cryptosoft.exe**: add new version of cryptosoft.exe
+- **core**: fix deduplicate method
+- **language**: fix strings
+- **global**: fix conflicts
+- **jobmanager**: change language of error descriptions and logs for english
+- **cryptosoft**: fix error intergration cryptosoft
+- **global**: fix conflicts
+
+### Refactor
+
+- **GUI**: refacto code
+- **jobmanager**: add encryption time into logs
+- **jobmanager**: refacto executeCryptosoft method to avoid code duplication
+
+## v1.1.1 (2026-02-10)
+
+### Fix
+
+- fix todo and change default language to english
+
+## v1.1.0 (2026-02-10)
+
+### Feat
+
+- **logs**: add change logs-mod features
+- **cryptosoft**: add cryptosoft.exe in the project
 - **XmlLogFormatter.cs**: Added the function to write logs in XML format
 
 ### Fix

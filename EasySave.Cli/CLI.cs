@@ -1,4 +1,3 @@
-using System;
 using EasySave.Core;
 using EasySave.Core.Localization;
 using EasySave.Models;
@@ -21,10 +20,10 @@ namespace EasySave.Cli
 
         public void start()
         {
-            int indexSelectionne = 0;
-            bool continuer = true;
+            int selectedIndex = 0;
+            bool isFinished = false;
 
-            while (continuer)
+            while (!isFinished)
             {
                 string[] options = {
                     LocalizationManager.Get("Menu_CreateJob"),
@@ -32,6 +31,7 @@ namespace EasySave.Cli
                     LocalizationManager.Get("Menu_DeleteJob"),
                     LocalizationManager.Get("Menu_ShowJobs"),
                     LocalizationManager.Get("Menu_ChangeLanguage"),
+                    LocalizationManager.Get("Menu_ChangeLogFormat"),
                     LocalizationManager.Get("Menu_Quit")
                 };
 
@@ -40,7 +40,7 @@ namespace EasySave.Cli
 
                 for (int i = 0; i < options.Length; i++)
                 {
-                    if (i == indexSelectionne)
+                    if (i == selectedIndex)
                     {
                         Console.BackgroundColor = ConsoleColor.Gray;
                         Console.ForegroundColor = ConsoleColor.Black;
@@ -58,16 +58,16 @@ namespace EasySave.Cli
 
                 if (touche == ConsoleKey.UpArrow)
                 {
-                    indexSelectionne = (indexSelectionne == 0) ? options.Length - 1 : indexSelectionne - 1;
+                    selectedIndex = (selectedIndex == 0) ? options.Length - 1 : selectedIndex - 1;
                 }
                 else if (touche == ConsoleKey.DownArrow)
                 {
-                    indexSelectionne = (indexSelectionne == options.Length - 1) ? 0 : indexSelectionne + 1;
+                    selectedIndex = (selectedIndex == options.Length - 1) ? 0 : selectedIndex + 1;
                 }
                 else if (touche == ConsoleKey.Enter)
                 {
                     Console.Clear();
-                    switch (indexSelectionne)
+                    switch (selectedIndex)
                     {
                         case 0:
                             CreateJob();
@@ -85,13 +85,16 @@ namespace EasySave.Cli
                             ChangeLanguage();
                             break;
                         case 5:
-                            continuer = false;
+                            ChangeLogFormat();
+                            break;
+                        case 6:
+                            isFinished = true;
                             _jobManager.Close();
                             Console.WriteLine(LocalizationManager.Get("Common_Closing"));
                             continue;
                     }
 
-                    if (continuer)
+                    if (!isFinished)
                     {
                         Console.WriteLine($"\n{LocalizationManager.Get("Common_PressKey")}");
                         Console.ReadKey(true);
@@ -170,12 +173,12 @@ namespace EasySave.Cli
             }
 
             Console.Write(LocalizationManager.Get("DeleteJob_JobName"));
-            string nom = Console.ReadLine() ?? "";
+            string index = Console.ReadLine() ?? "";
 
-            _jobManager.removeJob(nom);
+            _jobManager.removeJob(int.Parse(index) - 1);
 
             Console.WriteLine();
-            Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", nom));
+            Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", index));
         }
 
         private void ShowJobs()
@@ -211,13 +214,45 @@ namespace EasySave.Cli
             Console.WriteLine();
 
             Console.Write(LocalizationManager.Get("Language_Selection"));
-            string choix = Console.ReadLine() ?? "1";
+            string choice = Console.ReadLine() ?? "1";
 
-            string nouvelleLangue = choix == "2" ? "en" : "fr";
-            LocalizationManager.SetLanguage(nouvelleLangue);
+            string newLanguage = choice == "2" ? "en" : "fr";
+            LocalizationManager.SetLanguage(newLanguage);
 
             Console.WriteLine();
-            Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", nouvelleLangue));
+            Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", newLanguage));
+        }
+
+        private void ChangeLogFormat()
+        {
+            Console.WriteLine(LocalizationManager.Get("LogFormat_Title"));
+            Console.WriteLine();
+
+            string currentFormat = _jobManager.GetLogFormat();
+            Console.WriteLine(LocalizationManager.GetFormatted("LogFormat_CurrentFormat", currentFormat.ToUpper()));
+            Console.WriteLine();
+
+            Console.WriteLine(LocalizationManager.Get("LogFormat_SelectFormat"));
+            Console.WriteLine("1. " + LocalizationManager.Get("LogFormat_JSON"));
+            Console.WriteLine("2. " + LocalizationManager.Get("LogFormat_XML"));
+            Console.WriteLine();
+
+            Console.Write("> ");
+            string choice = Console.ReadLine() ?? "1";
+
+            string newFormat = choice == "2" ? "xml" : "json";
+
+            try
+            {
+                _jobManager.SetLogFormat(newFormat);
+                Console.WriteLine();
+                Console.WriteLine(LocalizationManager.GetFormatted("LogFormat_Changed", newFormat.ToUpper()));
+            }
+            catch (ArgumentException ex)
+            {
+                Console.WriteLine(ex);
+                Console.WriteLine(LocalizationManager.Get("LogFormat_InvalidFormat"));
+            }
         }
 
         private void ExecuteJobs()
@@ -274,15 +309,50 @@ namespace EasySave.Cli
 
                 if (jobsToExecute.Count > 0)
                 {
+                    var runningBusinessApp = _jobManager.CheckBusinessApplications();
+                    if (runningBusinessApp != null)
+                    {
+                        var errorMessage = LocalizationManager.GetFormatted("BusinessCheck_ApplicationRunning", runningBusinessApp);
+                        Console.WriteLine(errorMessage);
+                        Console.WriteLine();
+                        return;
+                    }
+
                     Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Executing", jobsToExecute.Count));
                     Console.WriteLine();
+
+                    string password = string.Empty;
+                    bool validPassword = false;
+
+                    while (!validPassword)
+                    {
+                        Console.Write(LocalizationManager.Get("ExecuteJobs_PasswordPrompt"));
+                        password = Console.ReadLine() ?? string.Empty;
+                        Console.WriteLine();
+
+                        if (string.IsNullOrEmpty(password))
+                        {
+                            Console.WriteLine(LocalizationManager.Get("ExecuteJobs_PasswordEmpty"));
+                            Console.WriteLine();
+                            continue;
+                        }
+
+                        if (password.Contains(" "))
+                        {
+                            Console.WriteLine(LocalizationManager.Get("ExecuteJobs_PasswordWithSpaces"));
+                            Console.WriteLine();
+                            continue;
+                        }
+
+                        validPassword = true;
+                    }
 
                     foreach (var job in jobsToExecute)
                     {
                         try
                         {
                             Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_ExecutingJob", job.Name));
-                            _jobManager.LaunchJob(job);
+                            _jobManager.LaunchJob(job, password);
                             Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Success", job.Name));
                         }
                         catch (Exception ex)
