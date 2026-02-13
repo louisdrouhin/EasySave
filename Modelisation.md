@@ -484,6 +484,7 @@ sequenceDiagram
     participant Job as EasySave.Models.Job
 
     User->>CLI: Add Job
+    activate CLI
     CLI->>User: prompt("Name")
     User->>CLI: Name
     CLI->>User: prompt("Type")
@@ -492,15 +493,27 @@ sequenceDiagram
     User->>CLI: Source directory
     CLI->>User: prompt("Target directory")
     User->>CLI: Target directory
+
     CLI->>JobMgr: +createJob(name: string, type: SaveType, sourceDir: string, targetDir: string)
+    activate JobMgr
     JobMgr->>Job: new() Job(name: string, type: SaveType, sourceDir: string, targetDir: string)
-    Job->>Job:Create instance
-    Job->>JobMgr: Return instance
+    activate Job
+    Job->>Job: Create instance
+    Job-->>JobMgr: Return instance
+    deactivate Job
+
     JobMgr->>JobMgr: Jobs.add(job)
+
     JobMgr->>Config: Save job to configuration
-    Config->>JobMgr: Job saved to configuration
-    JobMgr->>CLI: Job created
-    CLI->>User: Job created
+    activate Config
+    Config-->>JobMgr: Job saved to configuration
+    deactivate Config
+
+    JobMgr-->>CLI: Job created
+    deactivate JobMgr
+
+    CLI-->>User: Job created
+    deactivate CLI
 ```
 
 ### 3.2 Starting a Job
@@ -514,30 +527,55 @@ sequenceDiagram
     participant Log as EasyLog.Lib.Logger
 
     User->>CLI: Start Job
+    activate CLI
     CLI->>User: prompt("Id")
     User->>CLI: Id
+
     CLI->>JobMgr: +launchJob(id: int)
+    activate JobMgr
 
     JobMgr->>State: setState(ACTIVE)
+    activate State
+    State-->>JobMgr:
+    deactivate State
 
     alt SaveType == Full
         loop for each source file
             JobMgr->>JobMgr: copyFile(file)
             JobMgr->>State: updateProgress(file)
+            activate State
+            State-->>JobMgr:
+            deactivate State
             JobMgr->>Log: writeLog(fileInfo)
+            activate Log
+            Log-->>JobMgr:
+            deactivate Log
         end
     else SaveType == Differential
         loop for each source file
             JobMgr->>JobMgr: computeHash(file)
             JobMgr->>JobMgr: copyFile(file) if different
             JobMgr->>State: updateProgress(file)
+            activate State
+            State-->>JobMgr:
+            deactivate State
             JobMgr->>Log: writeLog(fileInfo)
+            activate Log
+            Log-->>JobMgr:
+            deactivate Log
         end
     end
 
     JobMgr->>State: setState(INACTIVE)
+    activate State
+    State-->>JobMgr:
+    deactivate State
+
     JobMgr-->>CLI: Job completed
+    deactivate JobMgr
+
     CLI-->>User: Job completed
+    deactivate CLI
 ```
 
 ### 3.3 Deleting a Job
@@ -550,14 +588,25 @@ sequenceDiagram
     participant Config as EasySave.Core.ConfigParser
 
     User->>CLI: Delete Job
+    activate CLI
     CLI->>User: prompt("Id")
     User->>CLI: Id
+
     CLI->>JobMgr: +deleteJob(id: int)
+    activate JobMgr
+
     JobMgr->>JobMgr: Jobs.removeAt(Id)
+
     JobMgr->>Config: Remove job from configuration
-    Config->>JobMgr: Job removed from configuration
-    JobMgr->>CLI: Job deleted
-    CLI->>User: Job deleted
+    activate Config
+    Config-->>JobMgr: Job removed from configuration
+    deactivate Config
+
+    JobMgr-->>CLI: Job deleted
+    deactivate JobMgr
+
+    CLI-->>User: Job deleted
+    deactivate CLI
 ```
 
 ### 3.4 JSON Logger
