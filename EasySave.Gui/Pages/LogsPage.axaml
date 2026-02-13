@@ -4,30 +4,43 @@
              xmlns:pages="clr-namespace:EasySave.GUI.Pages"
              x:Class="EasySave.GUI.Pages.LogsPage"
              x:CompileBindings="False">
+    <UserControl.Styles>
+        <Style Selector="Button#OpenFolderButton:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#EA580C" />
+        </Style>
+    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
         
-        <StackPanel Grid.Row="0"
-                    Margin="20"
-                    Spacing="10">
-            <TextBlock x:Name="TitleText"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Foreground="Black"
-                       Margin="0,0,0,10" />
-            <StackPanel Orientation="Horizontal"
-                        Spacing="10">
-                <Button x:Name="OpenFolderButton" />
-                <TextBlock x:Name="TotalLogsLabelText"
-                           VerticalAlignment="Center"
-                           Margin="20,0,5,0"
-                           Foreground="Black" />
-                <TextBlock x:Name="LogsCountText"
-                           Text="0"
-                           VerticalAlignment="Center"
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,20,20,20">
+            <StackPanel Grid.Column="0" Spacing="10">
+                <TextBlock x:Name="TitleText"
+                           FontSize="24"
                            FontWeight="Bold"
-                           Foreground="Black" />
+                           Foreground="Black"
+                           Margin="0,0,0,10" />
+                <StackPanel Orientation="Horizontal"
+                            Spacing="10">
+                    <TextBlock x:Name="TotalLogsLabelText"
+                               VerticalAlignment="Center"
+                               Foreground="Black" />
+                    <TextBlock x:Name="LogsCountText"
+                               Text="0"
+                               VerticalAlignment="Center"
+                               FontWeight="Bold"
+                               Foreground="Black" />
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+            <Button Grid.Column="1"
+                    x:Name="OpenFolderButton"
+                    Background="#F97316"
+                    Foreground="#FFF4ED"
+                    BorderThickness="0"
+                    CornerRadius="10"
+                    Padding="16,10"
+                    FontWeight="Bold"
+                    FontSize="14"
+                    VerticalAlignment="Top" />
+        </Grid>
         
         <Border Grid.Row="1"
                 Margin="20,0,20,20"

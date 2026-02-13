@@ -63,8 +63,10 @@ public partial class LogsPage : UserControl
         LoadLogs();
 
         StartFileWatcher();
-        
+
         ScrollToBottom();
+
+        this.Loaded += (s, e) => ScrollToBottom();
     }
 
     private void OnOpenFolderClick(object? sender, RoutedEventArgs e)
@@ -263,6 +265,9 @@ public partial class LogsPage : UserControl
             var logsListBox = this.FindControl<ListBox>("LogsListBox");
             if (logsListBox != null && _logs.Count > 0)
             {
+                Thread.Sleep(50);
+
+                logsListBox.SelectedIndex = _logs.Count - 1;
                 logsListBox.ScrollIntoView(_logs[_logs.Count - 1]);
             }
         }
