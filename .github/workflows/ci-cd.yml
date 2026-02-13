@@ -106,17 +106,17 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path ./artifacts
-          Move-Item -Path ./publish/CLI/*.exe -Destination ./artifacts/
-          Move-Item -Path ./publish/CLI/*.dll -Destination ./artifacts/
-          Move-Item -Path ./publish/GUI/*.exe -Destination ./artifacts/
-          Move-Item -Path ./publish/GUI/*.dll -Destination ./artifacts/
+          Move-Item -Path ./publish/CLI/*.exe -Destination ./artifacts/CLI
+          Move-Item -Path ./publish/CLI/*.dll -Destination ./artifacts/CLI
+          Move-Item -Path ./publish/GUI/*.exe -Destination ./artifacts/GUI
+          Move-Item -Path ./publish/GUI/*.dll -Destination ./artifacts/GUI
 
           Copy-Item -Path ./config.example.json -Destination ./artifacts/config.json
 
-          if (Test-Path ./publish/CLI/fr) { Copy-Item -Path ./publish/CLI/fr -Destination ./artifacts/ -Recurse }
-          if (Test-Path ./publish/CLI/en) { Copy-Item -Path ./publish/CLI/en -Destination ./artifacts/ -Recurse }
-          if (Test-Path ./publish/GUI/fr) { Copy-Item -Path ./publish/CLI/fr -Destination ./artifacts/ -Recurse }
-          if (Test-Path ./publish/GUI/en) { Copy-Item -Path ./publish/CLI/en -Destination ./artifacts/ -Recurse }
+          if (Test-Path ./publish/CLI/fr) { Copy-Item -Path ./publish/CLI/fr -Destination ./artifacts/CLI -Recurse }
+          if (Test-Path ./publish/CLI/en) { Copy-Item -Path ./publish/CLI/en -Destination ./artifacts/CLI -Recurse }
+          if (Test-Path ./publish/GUI/fr) { Copy-Item -Path ./publish/GUI/fr -Destination ./artifacts/GUI -Recurse }
+          if (Test-Path ./publish/GUI/en) { Copy-Item -Path ./publish/GUI/en -Destination ./artifacts/GUI -Recurse }
 
       - name: Create ZIP archive
         run: Compress-Archive -Path ./artifacts/* -DestinationPath ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
