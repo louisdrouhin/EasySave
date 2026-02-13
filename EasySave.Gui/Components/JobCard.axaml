@@ -13,6 +13,17 @@
         <Geometry x:Key="CancelIcon">M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z</Geometry>
     </UserControl.Resources>
 
+    <UserControl.Styles>
+        <Style Selector="Button#ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
+        <Style Selector="Button#ToggleButton:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
+
     <Border BorderBrush="#E0E0E0"
             BorderThickness="1"
             CornerRadius="10"
@@ -44,7 +55,8 @@
                                Grid.Column="1"
                                Foreground="#666666"
                                FontSize="13"
-                               VerticalAlignment="Center" />
+                               VerticalAlignment="Center"
+                               IsVisible="False" />
 
                     <!-- Job Name & Type -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="10,0,0,0">
