@@ -20,10 +20,10 @@ namespace EasySave.Cli
 
         public void start()
         {
-            int indexSelectionne = 0;
-            bool continuer = true;
+            int selectedIndex = 0;
+            bool isFinished = false;
 
-            while (continuer)
+            while (!isFinished)
             {
                 string[] options = {
                     LocalizationManager.Get("Menu_CreateJob"),
@@ -40,7 +40,7 @@ namespace EasySave.Cli
 
                 for (int i = 0; i < options.Length; i++)
                 {
-                    if (i == indexSelectionne)
+                    if (i == selectedIndex)
                     {
                         Console.BackgroundColor = ConsoleColor.Gray;
                         Console.ForegroundColor = ConsoleColor.Black;
@@ -58,16 +58,16 @@ namespace EasySave.Cli
 
                 if (touche == ConsoleKey.UpArrow)
                 {
-                    indexSelectionne = (indexSelectionne == 0) ? options.Length - 1 : indexSelectionne - 1;
+                    selectedIndex = (selectedIndex == 0) ? options.Length - 1 : selectedIndex - 1;
                 }
                 else if (touche == ConsoleKey.DownArrow)
                 {
-                    indexSelectionne = (indexSelectionne == options.Length - 1) ? 0 : indexSelectionne + 1;
+                    selectedIndex = (selectedIndex == options.Length - 1) ? 0 : selectedIndex + 1;
                 }
                 else if (touche == ConsoleKey.Enter)
                 {
                     Console.Clear();
-                    switch (indexSelectionne)
+                    switch (selectedIndex)
                     {
                         case 0:
                             CreateJob();
@@ -88,13 +88,13 @@ namespace EasySave.Cli
                             ChangeLogFormat();
                             break;
                         case 6:
-                            continuer = false;
+                            isFinished = true;
                             _jobManager.Close();
                             Console.WriteLine(LocalizationManager.Get("Common_Closing"));
                             continue;
                     }
 
-                    if (continuer)
+                    if (!isFinished)
                     {
                         Console.WriteLine($"\n{LocalizationManager.Get("Common_PressKey")}");
                         Console.ReadKey(true);
@@ -214,13 +214,13 @@ namespace EasySave.Cli
             Console.WriteLine();
 
             Console.Write(LocalizationManager.Get("Language_Selection"));
-            string choix = Console.ReadLine() ?? "1";
+            string choice = Console.ReadLine() ?? "1";
 
-            string nouvelleLangue = choix == "2" ? "en" : "fr";
-            LocalizationManager.SetLanguage(nouvelleLangue);
+            string newLanguage = choice == "2" ? "en" : "fr";
+            LocalizationManager.SetLanguage(newLanguage);
 
             Console.WriteLine();
-            Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", nouvelleLangue));
+            Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", newLanguage));
         }
 
         private void ChangeLogFormat()
@@ -238,15 +238,15 @@ namespace EasySave.Cli
             Console.WriteLine();
 
             Console.Write("> ");
-            string choix = Console.ReadLine() ?? "1";
+            string choice = Console.ReadLine() ?? "1";
 
-            string nouveauFormat = choix == "2" ? "xml" : "json";
+            string newFormat = choice == "2" ? "xml" : "json";
 
             try
             {
-                _jobManager.SetLogFormat(nouveauFormat);
+                _jobManager.SetLogFormat(newFormat);
                 Console.WriteLine();
-                Console.WriteLine(LocalizationManager.GetFormatted("LogFormat_Changed", nouveauFormat.ToUpper()));
+                Console.WriteLine(LocalizationManager.GetFormatted("LogFormat_Changed", newFormat.ToUpper()));
             }
             catch (ArgumentException ex)
             {

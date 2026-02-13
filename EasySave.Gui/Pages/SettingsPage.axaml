@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="EasySave.GUI.Pages.SettingsPage">
     <Grid>
-        <TextBlock Text="Settings Page"
+        <TextBlock x:Name="TitleText"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" />
     </Grid>

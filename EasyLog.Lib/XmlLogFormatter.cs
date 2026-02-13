@@ -54,7 +54,7 @@ public class XmlLogFormatter : ILogFormatter
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Erreur lors de la fermeture du fichier de log XML : {filePath}",
+                $"Error while closing the XML log file : {filePath}",
                 ex);
         }
     }

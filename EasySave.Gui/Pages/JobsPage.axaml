@@ -11,20 +11,19 @@
     <Border Padding="20"
             Background="#FFE6D5">
         <Grid RowDefinitions="Auto,*">
-            <!-- Header -->
+            
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
                 <StackPanel Grid.Column="0" Spacing="8">
-                    <TextBlock Text="Saved Jobs"
+                    <TextBlock x:Name="HeaderTitleText"
                                FontSize="28"
                                FontWeight="Bold"
                                Foreground="#15171D" />
-                    <TextBlock Text="Manage your backup jobs"
+                    <TextBlock x:Name="HeaderSubtitleText"
                                FontSize="14"
                                Foreground="#666666" />
                 </StackPanel>
                 <Button Grid.Column="1"
                         x:Name="CreateJobButton"
-                        Content="+ New Job"
                         Background="#F97316"
                         Foreground="#FFF4ED"
                         BorderThickness="0"
@@ -34,7 +33,7 @@
                         FontSize="14"
                         VerticalAlignment="Top" />
             </Grid>
-            <!-- Jobs List -->
+            
                 <ScrollViewer Grid.Row="1">
                                     <StackPanel x:Name="JobsStackPanel"
                                                 Orientation="Vertical" 

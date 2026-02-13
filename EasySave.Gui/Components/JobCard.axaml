@@ -19,7 +19,7 @@
             ClipToBounds="True"
             Background="#FFFFFF">
         <StackPanel Spacing="0">
-            <!-- Main Row -->
+            
             <Border Padding="10,15" Background="Transparent">
                 <Grid ColumnDefinitions="30,45,*,Auto,38,38" VerticalAlignment="Center">
                     <!-- Toggle Button -->
@@ -58,7 +58,7 @@
                                 Padding="8,4"
                                 Background="{Binding Type, Converter={StaticResource JobTypeColorConverter}}"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Type}"
+                            <TextBlock x:Name="JobTypeBadgeText"
                                        Foreground="White"
                                        FontSize="11"
                                        FontWeight="Bold" />
@@ -74,7 +74,6 @@
                             VerticalAlignment="Center"
                             Margin="0,0,10,0">
                         <TextBlock x:Name="StatusText"
-                                   Text="Inactive"
                                    Foreground="#374151"
                                    FontSize="11"
                                    FontWeight="Bold" />
@@ -151,23 +150,23 @@
                  <StackPanel Spacing="8">
                      <Grid ColumnDefinitions="*,Auto">
                          <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="IN PROGRESS" FontWeight="Bold" FontSize="10" Foreground="#22C55E" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="StateText" Text="" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="InProgressText" FontWeight="Bold" FontSize="10" Foreground="#22C55E" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="StateText" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
                          </StackPanel>
-                         <TextBlock x:Name="PercentageText" Text="0%" FontWeight="Bold" FontSize="12" Foreground="#15171D" Grid.Column="1"/>
+                         <TextBlock x:Name="PercentageText" FontWeight="Bold" FontSize="12" Foreground="#15171D" Grid.Column="1"/>
                      </Grid>
                      
                      <ProgressBar x:Name="JobProgressBar" Minimum="0" Maximum="100" Height="6" Foreground="#22C55E" Background="#E5E7EB"/>
                      
                      <Grid ColumnDefinitions="*,*">
                          <StackPanel Spacing="2" HorizontalAlignment="Right" Margin="0,0,20,0">
-                            <TextBlock Text="FILES (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
-                            <TextBlock x:Name="FilesText" Text="0 / 0 Files" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
+                            <TextBlock x:Name="FilesLabel" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                            <TextBlock x:Name="FilesText" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
                          </StackPanel>
                          
                          <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
-                            <TextBlock Text="SIZE (PROCESSED / TOTAL)" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
-                            <TextBlock x:Name="SizeText" Text="0 MB / 0 MB" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
+                            <TextBlock x:Name="SizeLabel" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                            <TextBlock x:Name="SizeText" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
                          </StackPanel>
                      </Grid>
                  </StackPanel>
@@ -184,7 +183,7 @@
                     <!-- Source Label -->
                     <TextBlock Grid.Row="0"
                                Grid.Column="0"
-                               Text="Source:"
+                               x:Name="SourceLabel"
                                Foreground="#666666"
                                FontSize="12"
                                FontWeight="Bold" />
@@ -201,7 +200,7 @@
                     <!-- Destination Label -->
                     <TextBlock Grid.Row="1"
                                Grid.Column="0"
-                               Text="Destination:"
+                               x:Name="DestinationLabel"
                                Foreground="#666666"
                                FontSize="12"
                                FontWeight="Bold"
