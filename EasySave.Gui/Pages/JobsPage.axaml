@@ -4,9 +4,6 @@
              xmlns:comp="clr-namespace:EasySave.GUI.Components"
              x:Class="EasySave.GUI.Pages.JobsPage">
     <UserControl.Styles>
-        <Style Selector="Button#CreateJobButton:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#EA580C" />
-        </Style>
     </UserControl.Styles>
     <Border Padding="20"
             Background="#FFE6D5">
@@ -15,22 +12,17 @@
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
                 <StackPanel Grid.Column="0" Spacing="8">
                     <TextBlock x:Name="HeaderTitleText"
-                               FontSize="28"
+                               FontSize="22"
                                FontWeight="Bold"
-                               Foreground="#15171D" />
+                               Foreground="#15171D"/>
                     <TextBlock x:Name="HeaderSubtitleText"
                                FontSize="14"
                                Foreground="#666666" />
                 </StackPanel>
                 <Button Grid.Column="1"
                         x:Name="CreateJobButton"
-                        Background="#F97316"
-                        Foreground="#FFF4ED"
-                        BorderThickness="0"
-                        CornerRadius="10"
+                        Classes="button-primary-orange"
                         Padding="16,10"
-                        FontWeight="Bold"
-                        FontSize="14"
                         VerticalAlignment="Top" />
             </Grid>
             

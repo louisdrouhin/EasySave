@@ -18,10 +18,7 @@
                    TextWrapping="Wrap" />
         <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
             <Button x:Name="OkButton"
-                    Background="#3B82F6"
-                    Foreground="White"
-                    BorderThickness="0"
-                    CornerRadius="6"
+                    Classes="button-green"
                     Padding="20,8"
                     Width="80" />
         </StackPanel>

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 using EasySave.Core.Localization;
 using EasySave.Models;
@@ -62,6 +63,15 @@ public partial class JobCard : UserControl
         if (toggleButton != null)
         {
             toggleButton.Click += (s, e) => OnToggleExpanded();
+            // Désactiver le hover orange
+            toggleButton.PointerEntered += (s, e) =>
+            {
+                toggleButton.Background = Brushes.Transparent;
+            };
+            toggleButton.PointerExited += (s, e) =>
+            {
+                toggleButton.Background = Brushes.Transparent;
+            };
         }
 
         var playButton = this.FindControl<Button>("PlayButton");

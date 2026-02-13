@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
+
         Title = LocalizationManager.Get("MainWindow_Title");
         JobsButton.Content = LocalizationManager.Get("MainWindow_Menu_Jobs");
         LogsButton.Content = LocalizationManager.Get("MainWindow_Menu_Logs");
@@ -36,8 +38,8 @@ public partial class MainWindow : Window
             Console.WriteLine("Creating pages...");
 
             _jobsPage = new JobsPage(_jobManager);
-            _logsPage = new LogsPage(_jobManager.ConfigParser);
-            _settingsPage = new SettingsPage();
+            _logsPage = new LogsPage(_jobManager.ConfigParser, _jobManager);
+            _settingsPage = new SettingsPage(_jobManager.ConfigParser, _jobManager);
 
             Console.WriteLine("Pages created successfully");
 
@@ -63,15 +65,63 @@ public partial class MainWindow : Window
     private void OnJobsClick(object? sender, RoutedEventArgs e)
     {
         PageHost.Content = _jobsPage;
+        UpdateMenuButtonStyles("Jobs");
     }
 
     private void OnLogsClick(object? sender, RoutedEventArgs e)
     {
         PageHost.Content = _logsPage;
+        UpdateMenuButtonStyles("Logs");
     }
 
     private void OnSettingsClick(object? sender, RoutedEventArgs e)
     {
         PageHost.Content = _settingsPage;
+        UpdateMenuButtonStyles("Settings");
+    }
+
+    private void UpdateMenuButtonStyles(string activePage)
+    {
+        // Réinitialiser tous les boutons en inactif
+        JobsButton.Classes.Remove("menu-button-active");
+        LogsButton.Classes.Remove("menu-button-active");
+        SettingsButton.Classes.Remove("menu-button-active");
+
+        JobsButton.Classes.Add("menu-button-inactive");
+        LogsButton.Classes.Add("menu-button-inactive");
+        SettingsButton.Classes.Add("menu-button-inactive");
+
+        // Activer le bouton sélectionné
+        switch (activePage)
+        {
+            case "Jobs":
+                JobsButton.Classes.Remove("menu-button-inactive");
+                JobsButton.Classes.Add("menu-button-active");
+                break;
+            case "Logs":
+                LogsButton.Classes.Remove("menu-button-inactive");
+                LogsButton.Classes.Add("menu-button-active");
+                break;
+            case "Settings":
+                SettingsButton.Classes.Remove("menu-button-inactive");
+                SettingsButton.Classes.Add("menu-button-active");
+                break;
+        }
+    }
+
+    private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
+    {
+        try
+        {
+            // Update MainWindow menu buttons
+            Title = LocalizationManager.Get("MainWindow_Title");
+            JobsButton.Content = LocalizationManager.Get("MainWindow_Menu_Jobs");
+            LogsButton.Content = LocalizationManager.Get("MainWindow_Menu_Logs");
+            SettingsButton.Content = LocalizationManager.Get("MainWindow_Menu_Settings");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating language in MainWindow: {ex.Message}");
+        }
     }
 }

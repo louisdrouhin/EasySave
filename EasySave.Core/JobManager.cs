@@ -6,6 +6,20 @@ using EasySave.Core.Localization;
 using System.Text.Json.Nodes;
 using System.Diagnostics;
 
+/// <summary>
+/// Event arguments for log format change events
+/// </summary>
+public class LogFormatChangedEventArgs : EventArgs
+{
+    public string OldFormat { get; set; }
+    public string NewFormat { get; set; }
+
+    public LogFormatChangedEventArgs(string oldFormat, string newFormat)
+    {
+        OldFormat = oldFormat;
+        NewFormat = newFormat;
+    }
+}
 
 public class JobManager
 {
@@ -16,6 +30,11 @@ public class JobManager
     private readonly StateTracker _stateTracker;
 
     public ConfigParser ConfigParser => _configParser;
+
+    /// <summary>
+    /// Event triggered when the log format changes
+    /// </summary>
+    public event EventHandler<LogFormatChangedEventArgs>? LogFormatChanged;
 
     public JobManager()
     {
@@ -226,6 +245,13 @@ public class JobManager
                 { "newFormatterType", _logFormatter.GetType().Name }
             }
         );
+
+        OnLogFormatChanged(oldFormat, format);
+    }
+
+    private void OnLogFormatChanged(string oldFormat, string newFormat)
+    {
+        LogFormatChanged?.Invoke(this, new LogFormatChangedEventArgs(oldFormat, newFormat));
     }
 
     public string GetLogFormat()

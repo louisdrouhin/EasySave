@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using EasySave.Core;
 using EasySave.Core.Localization;
 using EasySave.Models;
 using System;
@@ -11,8 +12,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Xml;
 
 namespace EasySave.GUI.Pages;
 
@@ -25,21 +28,31 @@ public partial class LogsPage : UserControl
 {
     private readonly ObservableCollection<SimpleLogEntry> _logs;
     private readonly ConfigParser _configParser;
+    private readonly JobManager? _jobManager;
     private FileSystemWatcher? _fileWatcher;
     private string _currentLogFilePath = string.Empty;
     private Timer? _reloadTimer;
     private readonly object _reloadLock = new object();
 
-    public LogsPage() : this(null)
+    public LogsPage() : this(null, null)
     {
     }
 
-    public LogsPage(ConfigParser? configParser)
+    public LogsPage(ConfigParser? configParser, JobManager? jobManager = null)
     {
         _logs = new ObservableCollection<SimpleLogEntry>();
         _configParser = configParser ?? new ConfigParser("config.json");
+        _jobManager = jobManager;
 
         InitializeComponent();
+
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
+
+        // Subscribe to log format change events
+        if (_jobManager != null)
+        {
+            _jobManager.LogFormatChanged += OnLogFormatChangedEvent;
+        }
 
         var titleText = this.FindControl<TextBlock>("TitleText");
         if (titleText != null) titleText.Text = LocalizationManager.Get("LogsPage_Title");
@@ -63,8 +76,10 @@ public partial class LogsPage : UserControl
         LoadLogs();
 
         StartFileWatcher();
-        
+
         ScrollToBottom();
+
+        this.Loaded += (s, e) => ScrollToBottom();
     }
 
     private void OnOpenFolderClick(object? sender, RoutedEventArgs e)
@@ -183,9 +198,64 @@ public partial class LogsPage : UserControl
     {
         try
         {
+            string xmlContent;
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(fileStream))
+            {
+                xmlContent = reader.ReadToEnd();
+            }
+
+            if (string.IsNullOrWhiteSpace(xmlContent))
+            {
+                return;
+            }
+
+            _logs.Clear();
+
+            xmlContent = xmlContent.Trim();
+            if (!xmlContent.EndsWith("</logs>"))
+            {
+                xmlContent += "</logs>";
+            }
+
+            var doc = new XmlDocument();
+            doc.LoadXml(xmlContent);
+
+            var logEntries = doc.GetElementsByTagName("logEntry");
+
+            foreach (XmlElement entry in logEntries)
+            {
+                var timestamp = entry.SelectSingleNode("timestamp")?.InnerText ?? "";
+                var name = entry.SelectSingleNode("name")?.InnerText ?? "";
+                var content = entry.SelectSingleNode("content");
+
+                var logDict = new Dictionary<string, object>
+                {
+                    { "timestamp", timestamp },
+                    { "name", name },
+                    { "content", new Dictionary<string, object>() }
+                };
+
+                if (content != null && content.ChildNodes.Count > 0)
+                {
+                    var contentDict = (Dictionary<string, object>)logDict["content"];
+                    foreach (XmlElement child in content.ChildNodes)
+                    {
+                        contentDict[child.Name] = child.InnerText;
+                    }
+                }
+
+                string logJson = JsonSerializer.Serialize(logDict);
+
+                _logs.Add(new SimpleLogEntry
+                {
+                    LogText = logJson
+                });
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Error loading XML logs: {ex.Message}");
         }
     }
 
@@ -203,7 +273,7 @@ public partial class LogsPage : UserControl
             _fileWatcher = new FileSystemWatcher(logsPath)
             {
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
-                Filter = "*.json", 
+                Filter = "*_logs.*",
                 EnableRaisingEvents = true
             };
 
@@ -219,7 +289,8 @@ public partial class LogsPage : UserControl
     {
         try
         {
-            string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.json";
+            string currentFormat = _configParser.GetLogFormat();
+            string todayLogFileName = $"{DateTime.Now:yyyy-MM-dd}_logs.{currentFormat}";
 
             if (Path.GetFileName(e.FullPath) == todayLogFileName)
             {
@@ -263,11 +334,45 @@ public partial class LogsPage : UserControl
             var logsListBox = this.FindControl<ListBox>("LogsListBox");
             if (logsListBox != null && _logs.Count > 0)
             {
+                Thread.Sleep(50);
+
+                logsListBox.SelectedIndex = _logs.Count - 1;
                 logsListBox.ScrollIntoView(_logs[_logs.Count - 1]);
             }
         }
         catch (Exception)
         {
+        }
+    }
+
+    private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
+    {
+        try
+        {
+            var titleText = this.FindControl<TextBlock>("TitleText");
+            if (titleText != null) titleText.Text = LocalizationManager.Get("LogsPage_Title");
+
+            var openFolderButton = this.FindControl<Button>("OpenFolderButton");
+            if (openFolderButton != null) openFolderButton.Content = LocalizationManager.Get("LogsPage_Button_OpenFolder");
+
+            var totalLogsLabel = this.FindControl<TextBlock>("TotalLogsLabelText");
+            if (totalLogsLabel != null) totalLogsLabel.Text = LocalizationManager.Get("LogsPage_TotalLogs");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating language in LogsPage: {ex.Message}");
+        }
+    }
+
+    private void OnLogFormatChangedEvent(object? sender, EasySave.Core.LogFormatChangedEventArgs e)
+    {
+        try
+        {
+            LoadLogs();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error reloading logs on format change: {ex.Message}");
         }
     }
 
