@@ -63,15 +63,47 @@ public partial class MainWindow : Window
     private void OnJobsClick(object? sender, RoutedEventArgs e)
     {
         PageHost.Content = _jobsPage;
+        UpdateMenuButtonStyles("Jobs");
     }
 
     private void OnLogsClick(object? sender, RoutedEventArgs e)
     {
         PageHost.Content = _logsPage;
+        UpdateMenuButtonStyles("Logs");
     }
 
     private void OnSettingsClick(object? sender, RoutedEventArgs e)
     {
         PageHost.Content = _settingsPage;
+        UpdateMenuButtonStyles("Settings");
+    }
+
+    private void UpdateMenuButtonStyles(string activePage)
+    {
+        // Réinitialiser tous les boutons en inactif
+        JobsButton.Classes.Remove("menu-button-active");
+        LogsButton.Classes.Remove("menu-button-active");
+        SettingsButton.Classes.Remove("menu-button-active");
+
+        JobsButton.Classes.Add("menu-button-inactive");
+        LogsButton.Classes.Add("menu-button-inactive");
+        SettingsButton.Classes.Add("menu-button-inactive");
+
+        // Activer le bouton sélectionné
+        switch (activePage)
+        {
+            case "Jobs":
+                JobsButton.Classes.Remove("menu-button-inactive");
+                JobsButton.Classes.Add("menu-button-active");
+                break;
+            case "Logs":
+                LogsButton.Classes.Remove("menu-button-inactive");
+                LogsButton.Classes.Add("menu-button-active");
+                break;
+            case "Settings":
+                SettingsButton.Classes.Remove("menu-button-inactive");
+                SettingsButton.Classes.Add("menu-button-active");
+                break;
+        }
     }
 }
