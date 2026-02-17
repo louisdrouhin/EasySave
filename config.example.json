@@ -2,6 +2,7 @@
   "config": {
     "logsPath": "./logs/",
     "stateFilePath": "./state.json",
+    "cryptosoftPath": "./Cryptosoft.exe",
     "logFormat": "json",
     "encryption": {
       "extensions": [".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".txt"]
