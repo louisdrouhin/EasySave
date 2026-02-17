@@ -916,7 +916,7 @@ public class JobManager
 
             var appDirectory = AppContext.BaseDirectory;
             var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
-            var cryptosoftPath = Path.Combine(projectRootDirectory, "Cryptosoft.exe");
+            var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cyptosoft.exe";
 
             if (!File.Exists(cryptosoftPath))
             {
