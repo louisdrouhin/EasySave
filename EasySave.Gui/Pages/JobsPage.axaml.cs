@@ -83,7 +83,7 @@ public partial class JobsPage : UserControl
                 _jobCards[job.Name] = card;
             }
         }
-        
+
         UpdateStateContent();
     }
 
@@ -98,7 +98,7 @@ public partial class JobsPage : UserControl
             {
                 string executionDirState = Path.Combine(AppContext.BaseDirectory, _stateFilePath);
                 string projectRootState = Path.Combine(AppContext.BaseDirectory, "../../../../../", _stateFilePath);
-                
+
                 if (File.Exists(executionDirState)) _stateFilePath = executionDirState;
                 else if (File.Exists(projectRootState)) _stateFilePath = Path.GetFullPath(projectRootState);
             }
@@ -117,7 +117,7 @@ public partial class JobsPage : UserControl
                 };
                 _watcher.Changed += OnStateFileChanged;
             }
-            
+
             UpdateStateContent();
         }
         catch (Exception) { }
@@ -132,7 +132,7 @@ public partial class JobsPage : UserControl
     {
         try
         {
-            if (!File.Exists(_stateFilePath)) 
+            if (!File.Exists(_stateFilePath))
             {
                 return;
             }
@@ -148,9 +148,9 @@ public partial class JobsPage : UserControl
                     PropertyNameCaseInsensitive = true,
                     Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
                 };
-                
+
                 var states = JsonSerializer.Deserialize<List<StateEntry>>(content, options);
-                
+
                 if (states != null)
                 {
                     foreach (var state in states)
@@ -163,8 +163,8 @@ public partial class JobsPage : UserControl
                 }
             }
         }
-        catch (Exception ex) 
-        { 
+        catch (Exception ex)
+        {
             Console.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
         }
     }
@@ -191,7 +191,7 @@ public partial class JobsPage : UserControl
         {
             var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
             var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
-            
+
             var mainWindow = (Window?)TopLevel.GetTopLevel(this);
             if (mainWindow != null)
             {
@@ -206,18 +206,19 @@ public partial class JobsPage : UserControl
         if (mainWindow2 != null)
         {
             var password = await passwordDialog.ShowDialog<string?>(mainWindow2);
-            if (password != null)
+            if (password != null && _jobManager != null)
             {
-                await Task.Run(() =>
+                try
                 {
-                    try
-                    {
-                        _jobManager?.LaunchJob(job, password);
-                    }
-                    catch (Exception)
-                    {
-                    }
-                });
+                    await _jobManager.LaunchJobAsync(job, password);
+                }
+                catch (Exception ex)
+                {
+                    var errorDialog = new ErrorDialog(
+                        LocalizationManager.Get("JobsPage_Error_JobFailedTitle"),
+                        LocalizationManager.GetFormatted("JobsPage_Error_JobFailedMessage", job.Name, ex.Message));
+                    await errorDialog.ShowDialog(mainWindow2);
+                }
             }
         }
     }

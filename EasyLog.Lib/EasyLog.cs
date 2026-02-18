@@ -9,6 +9,7 @@ public class EasyLog
     private DateTime _currentDate;
     private readonly string _fileExtension;
     private readonly string _entrySeparator;
+    private readonly object _lock = new object();
 
     public EasyLog(ILogFormatter formatter, string logDirectory)
     {
@@ -175,7 +176,7 @@ public class EasyLog
                 var pathWithoutDrive = fullPath.Substring(2);
                 return $"\\\\localhost\\{drive}$\\{pathWithoutDrive}";
             }
-            
+
             return fullPath;
         }
         catch
@@ -189,29 +190,32 @@ public class EasyLog
         if (content == null)
             throw new ArgumentNullException(nameof(content));
 
-        CheckAndRotateIfNeeded();
-        EnsureFileIsOpen();
-        NormalizePathsInContent(content);
-
-        try
+        lock (_lock)
         {
-            string formattedLog = _formatter.Format(timestamp, name, content);
+            CheckAndRotateIfNeeded();
+            EnsureFileIsOpen();
+            NormalizePathsInContent(content);
 
-            if (_isFirstEntry)
+            try
             {
-                File.AppendAllText(_logPath, formattedLog);
-                _isFirstEntry = false;
+                string formattedLog = _formatter.Format(timestamp, name, content);
+
+                if (_isFirstEntry)
+                {
+                    File.AppendAllText(_logPath, formattedLog);
+                    _isFirstEntry = false;
+                }
+                else
+                {
+                    File.AppendAllText(_logPath, _entrySeparator + formattedLog);
+                }
             }
-            else
+            catch (IOException ex)
             {
-                File.AppendAllText(_logPath, _entrySeparator + formattedLog);
+                throw new InvalidOperationException(
+                    $"Error while writing to the log file: {_logPath}",
+                    ex);
             }
-        }
-        catch (IOException ex)
-        {
-            throw new InvalidOperationException(
-                $"Error while writing to the log file: {_logPath}",
-                ex);
         }
     }
 
@@ -234,28 +238,45 @@ public class EasyLog
         if (string.IsNullOrWhiteSpace(newLogDirectory))
             throw new ArgumentException("The new path for the log file cannot be null, empty, or whitespace.", nameof(newLogDirectory));
 
-        Close();
+        lock (_lock)
+        {
+            CloseInternal();
 
-        _logDirectory = newLogDirectory;
-        _currentDate = DateTime.Now.Date;
-        _logPath = GetLogPathForDate(_currentDate);
-        _isFirstEntry = true;
+            _logDirectory = newLogDirectory;
+            _currentDate = DateTime.Now.Date;
+            _logPath = GetLogPathForDate(_currentDate);
+            _isFirstEntry = true;
 
-        EnsureDirectoryExists(_logDirectory);
-        InitializeLogStructure();
+            EnsureDirectoryExists(_logDirectory);
+            InitializeLogStructure();
+        }
     }
 
     public string GetCurrentLogPath()
     {
-        return _logPath;
+        lock (_lock)
+        {
+            return _logPath;
+        }
     }
 
     public string GetLogDirectory()
     {
-        return _logDirectory;
+        lock (_lock)
+        {
+            return _logDirectory;
+        }
     }
 
     public void Close()
+    {
+        lock (_lock)
+        {
+            CloseInternal();
+        }
+    }
+
+    private void CloseInternal()
     {
         _formatter.Close(_logPath);
     }

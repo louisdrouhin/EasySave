@@ -8,6 +8,7 @@ public class StateTracker
 {
   private readonly string _stateFilePath;
   private Dictionary<string, StateEntry> _jobStates = new();
+  private readonly object _lock = new object();
 
   public StateTracker(string stateFilePath)
   {
@@ -19,40 +20,46 @@ public class StateTracker
     if (stateEntry == null || string.IsNullOrEmpty(stateEntry.JobName))
       return;
 
-    _jobStates[stateEntry.JobName] = stateEntry;
-
-    var options = new JsonSerializerOptions
+    lock (_lock)
     {
-      WriteIndented = true,
-      Converters = { new JsonStringEnumConverter() }
-    };
-    var json = JsonSerializer.Serialize(_jobStates.Values, options);
+      _jobStates[stateEntry.JobName] = stateEntry;
 
-    var directory = Path.GetDirectoryName(_stateFilePath);
-    if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-    {
-      Directory.CreateDirectory(directory);
+      var options = new JsonSerializerOptions
+      {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+      };
+      var json = JsonSerializer.Serialize(_jobStates.Values, options);
+
+      var directory = Path.GetDirectoryName(_stateFilePath);
+      if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+      {
+        Directory.CreateDirectory(directory);
+      }
+
+      File.WriteAllText(_stateFilePath, json);
     }
-
-    File.WriteAllText(_stateFilePath, json);
   }
 
   public void RemoveJobState(int index)
   {
-    if (index < 0 || index >= _jobStates.Count)
+    lock (_lock)
+    {
+      if (index < 0 || index >= _jobStates.Count)
         return;
 
-    var jobStateKey = _jobStates.Keys.ElementAt(index);
+      var jobStateKey = _jobStates.Keys.ElementAt(index);
 
-    if (_jobStates.Remove(jobStateKey))
-    {
+      if (_jobStates.Remove(jobStateKey))
+      {
         var options = new JsonSerializerOptions
         {
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
+          WriteIndented = true,
+          Converters = { new JsonStringEnumConverter() }
         };
         var json = JsonSerializer.Serialize(_jobStates.Values, options);
         File.WriteAllText(_stateFilePath, json);
+      }
     }
   }
 }

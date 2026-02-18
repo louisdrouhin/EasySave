@@ -25,6 +25,9 @@ public class JobManager
     private readonly ConfigParser _configParser;
     private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
+    private readonly SemaphoreSlim _jobSemaphore;
+    private readonly List<Task> _runningJobs = new List<Task>();
+    private readonly object _runningJobsLock = new object();
 
     public ConfigParser ConfigParser => _configParser;
 
@@ -35,6 +38,9 @@ public class JobManager
         _configParser = new ConfigParser("config.json");
         _logFormatter = CreateLogFormatter();
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
+
+        int maxConcurrentJobs = _configParser.GetMaxConcurrentJobs();
+        _jobSemaphore = new SemaphoreSlim(maxConcurrentJobs, maxConcurrentJobs);
 
         _logger.Write(
             DateTime.Now,
@@ -397,6 +403,42 @@ public class JobManager
             );
             throw;
         }
+    }
+
+    /// <summary>
+    /// Launches a job asynchronously with support for concurrent execution.
+    /// </summary>
+    public async Task LaunchJobAsync(Job job, string password)
+    {
+        await _jobSemaphore.WaitAsync();
+
+        try
+        {
+            await Task.Run(() => LaunchJob(job, password));
+        }
+        finally
+        {
+            _jobSemaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Launches multiple jobs concurrently with respect to the maxConcurrentJobs limit.
+    /// </summary>
+    public async Task LaunchMultipleJobsAsync(IEnumerable<Job> jobs, string password)
+    {
+        var tasks = jobs.Select(job => LaunchJobAsync(job, password));
+        await Task.WhenAll(tasks);
+    }
+
+    /// <summary>
+    /// Gets the current number of running jobs.
+    /// </summary>
+    public int GetRunningJobsCount()
+    {
+        return _jobSemaphore.CurrentCount == _configParser.GetMaxConcurrentJobs()
+            ? 0
+            : _configParser.GetMaxConcurrentJobs() - _jobSemaphore.CurrentCount;
     }
 
     private void ExecuteFullBackup(Job job, string password, bool createHashFile = false)

@@ -155,4 +155,10 @@ public class ConfigParser
 
         return applications;
     }
+
+    public int GetMaxConcurrentJobs()
+    {
+        var maxConcurrentJobs = Config?["config"]?["maxConcurrentJobs"]?.GetValue<int>();
+        return maxConcurrentJobs ?? 3; // Default to 3 concurrent jobs
+    }
 }

@@ -149,7 +149,7 @@ public partial class LogsPage : UserControl
             }
 
             UpdateLogsCount();
-            
+
             ScrollToBottom();
         }
         catch (Exception)

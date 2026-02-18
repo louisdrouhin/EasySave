@@ -73,7 +73,7 @@ namespace EasySave.Cli
                             CreateJob();
                             break;
                         case 1:
-                            ExecuteJobs();
+                            ExecuteJobsAsync().Wait();
                             break;
                         case 2:
                             DeleteJob();
@@ -255,7 +255,7 @@ namespace EasySave.Cli
             }
         }
 
-        private void ExecuteJobs()
+        private async Task ExecuteJobsAsync()
         {
             Console.WriteLine(LocalizationManager.Get("ExecuteJobs_Title"));
             Console.WriteLine();
@@ -347,19 +347,19 @@ namespace EasySave.Cli
                         validPassword = true;
                     }
 
-                    foreach (var job in jobsToExecute)
+                    try
                     {
-                        try
-                        {
-                            Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_ExecutingJob", job.Name));
-                            _jobManager.LaunchJob(job, password);
-                            Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Success", job.Name));
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Error", job.Name, ex.Message));
-                        }
+                        Console.WriteLine(LocalizationManager.Get("ExecuteJobs_ConcurrentExecution"));
                         Console.WriteLine();
+
+                        await _jobManager.LaunchMultipleJobsAsync(jobsToExecute, password);
+
+                        Console.WriteLine();
+                        Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_AllCompleted", jobsToExecute.Count));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(LocalizationManager.GetFormatted("ExecuteJobs_Error", "jobs", ex.Message));
                     }
                 }
                 else
