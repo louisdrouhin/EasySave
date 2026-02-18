@@ -136,7 +136,13 @@ jobs:
           -p:Version=${{ steps.version.outputs.VERSION }} \
           --output ./publish
 
-      - name: Create ZIP archive
+      - name: Archive files for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./EasySave-${{ matrix.PLATFORM_NAME }}-${{ steps.version.outputs.VERSION }}.zip
+
+      - name: Archive files for Linux/macOS
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           cd publish
