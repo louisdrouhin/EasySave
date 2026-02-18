@@ -66,7 +66,7 @@ public class SocketServer
 
     private async Task HandleClientAsync(Socket clientSocket)
     {
-        // Get client identifier (IP:Port)
+        // Get client IP:Port for logging server events
         var clientEndpoint = clientSocket.RemoteEndPoint?.ToString() ?? "Unknown";
 
         try
@@ -88,8 +88,8 @@ public class SocketServer
                         var contentJson = logData.GetProperty("content").GetRawText();
                         var content = JsonSerializer.Deserialize<Dictionary<string, object>>(contentJson) ?? new Dictionary<string, object>();
 
-                        // Add client identifier to the log content
-                        content["clientId"] = clientEndpoint;
+                        // Add client IP to the log content (clientId already sent by client)
+                        content["clientIp"] = clientEndpoint;
 
                         _logger.Write(timestamp, name, content);
                         messageCount++;
