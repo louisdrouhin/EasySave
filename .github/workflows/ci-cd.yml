@@ -60,9 +60,6 @@ jobs:
             RUNTIME_ID: win-x64
             PLATFORM_NAME: Win-x64
           - os: macos-latest
-            RUNTIME_ID: osx-x64
-            PLATFORM_NAME: Mac-x64
-          - os: macos-latest
             RUNTIME_ID: osx-arm64
             PLATFORM_NAME: Mac-arm64
 
@@ -100,39 +97,43 @@ jobs:
           fi
 
       - name: Restore dependencies
+        shell: bash
         run: dotnet restore
 
       - name: Publish Cryptosoft
+        shell: bash
         run: |
-          dotnet publish Cryptosoft/Cryptosoft.csproj `
-          --configuration Release `
-          --runtime ${{ matrix.RUNTIME_ID }} `
-          --self-contained true `
-          -p:PublishSingleFile=true `
-          -p:DebugType=None `
-          -p:Version=${{ steps.version.outputs.VERSION }} `
+          dotnet publish Cryptosoft/Cryptosoft.csproj \
+          --configuration Release \
+          --runtime ${{ matrix.RUNTIME_ID }} \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:DebugType=None \
+          -p:Version=${{ steps.version.outputs.VERSION }} \
           --output ./publish/CLI
 
       - name: Publish CLI
+        shell: bash
         run: |
-          dotnet publish EasySave.Cli/EasySave.Cli.csproj `
-          --configuration Release `
-          --runtime ${{ matrix.RUNTIME_ID }} `
-          --self-contained true `
-          -p:PublishSingleFile=true `
-          -p:DebugType=None `
-          -p:Version=${{ steps.version.outputs.VERSION }} `
+          dotnet publish EasySave.Cli/EasySave.Cli.csproj \
+          --configuration Release \
+          --runtime ${{ matrix.RUNTIME_ID }} \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:DebugType=None \
+          -p:Version=${{ steps.version.outputs.VERSION }} \
           --output ./publish/CLI
 
       - name: Publish GUI
+        shell: bash
         run: |
-          dotnet publish EasySave.Gui/EasySave.Gui.csproj `
-          --configuration Release `
-          --runtime ${{ matrix.RUNTIME_ID }} `
-          --self-contained true `
-          -p:PublishSingleFile=true `
-          -p:DebugType=None `
-          -p:Version=${{ steps.version.outputs.VERSION }} `
+          dotnet publish EasySave.Gui/EasySave.Gui.csproj \
+          --configuration Release \
+          --runtime ${{ matrix.RUNTIME_ID }} \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:DebugType=None \
+          -p:Version=${{ steps.version.outputs.VERSION }} \
           --output ./publish/GUI
 
       - name: Create ZIP archive
