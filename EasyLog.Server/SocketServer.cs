@@ -66,6 +66,9 @@ public class SocketServer
 
     private async Task HandleClientAsync(Socket clientSocket)
     {
+        // Get client identifier (IP:Port)
+        var clientEndpoint = clientSocket.RemoteEndPoint?.ToString() ?? "Unknown";
+
         try
         {
             using (var networkStream = new NetworkStream(clientSocket))
@@ -84,6 +87,9 @@ public class SocketServer
                         var name = logData.GetProperty("name").GetString() ?? "Unknown";
                         var contentJson = logData.GetProperty("content").GetRawText();
                         var content = JsonSerializer.Deserialize<Dictionary<string, object>>(contentJson) ?? new Dictionary<string, object>();
+
+                        // Add client identifier to the log content
+                        content["clientId"] = clientEndpoint;
 
                         _logger.Write(timestamp, name, content);
                         messageCount++;
