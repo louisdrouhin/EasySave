@@ -78,7 +78,7 @@ jobs:
         with:
           repository: louisdrouhin/Cryptosoft
           path: Cryptosoft
-
+          token: ${{ secrets.PAT_CRYPTOSOFT }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
