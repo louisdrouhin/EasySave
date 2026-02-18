@@ -19,7 +19,7 @@ public partial class JobCard : UserControl
     public JobCard()
     {
         InitializeComponent();
-        
+
         var statusText = this.FindControl<TextBlock>("StatusText");
         if (statusText != null) statusText.Text = LocalizationManager.Get("JobCard_Status_Inactive");
 
@@ -54,8 +54,8 @@ public partial class JobCard : UserControl
         var jobTypeBadgeText = this.FindControl<TextBlock>("JobTypeBadgeText");
         if (jobTypeBadgeText != null)
         {
-            jobTypeBadgeText.Text = job.Type == JobType.Full 
-                ? LocalizationManager.Get("CreateJobDialog_JobType_Full") 
+            jobTypeBadgeText.Text = job.Type == JobType.Full
+                ? LocalizationManager.Get("CreateJobDialog_JobType_Full")
                 : LocalizationManager.Get("CreateJobDialog_JobType_Differential");
         }
 
@@ -155,52 +155,74 @@ public partial class JobCard : UserControl
 
     public void UpdateState(StateEntry state)
     {
+        System.Diagnostics.Debug.WriteLine($"[JobCard] UpdateState called for '{state.JobName}': State={state.State}, Progress={state.Progress}");
+
         var statusBadge = this.FindControl<Border>("StatusBadge");
         var statusTextControl = this.FindControl<TextBlock>("StatusText");
-        
+
         if (statusBadge != null && statusTextControl != null)
         {
-            statusTextControl.Text = state.State == JobState.Active 
-                ? LocalizationManager.Get("JobCard_Status_Active") 
+            statusTextControl.Text = state.State == JobState.Active
+                ? LocalizationManager.Get("JobCard_Status_Active")
                 : LocalizationManager.Get("JobCard_Status_Inactive");
 
             if (state.State == JobState.Active)
             {
                 statusBadge.Background = new SolidColorBrush(Color.Parse("#22C55E"));
                 statusTextControl.Foreground = Brushes.White;
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Status badge updated to ACTIVE (green)");
             }
             else
             {
                 statusBadge.Background = new SolidColorBrush(Color.Parse("#E5E7EB"));
                 statusTextControl.Foreground = new SolidColorBrush(Color.Parse("#374151"));
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Status badge updated to INACTIVE (gray)");
             }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("[JobCard] WARNING: StatusBadge or StatusText control not found!");
         }
 
         var progressPanel = this.FindControl<Border>("ProgressPanel");
-        if (progressPanel == null) return;
+        if (progressPanel == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[JobCard] WARNING: ProgressPanel control not found!");
+            return;
+        }
 
         if (state.State == JobState.Active)
         {
             progressPanel.IsVisible = true;
-            
+            System.Diagnostics.Debug.WriteLine($"[JobCard] ProgressPanel made visible");
+
             var progressBar = this.FindControl<ProgressBar>("JobProgressBar");
-            if (progressBar != null) progressBar.Value = state.Progress ?? 0;
+            if (progressBar != null)
+            {
+                progressBar.Value = state.Progress ?? 0;
+                System.Diagnostics.Debug.WriteLine($"[JobCard] ProgressBar value set to {state.Progress ?? 0}");
+            }
 
             var percentageText = this.FindControl<TextBlock>("PercentageText");
-            if (percentageText != null) percentageText.Text = $"{(state.Progress ?? 0):F1}%";
+            if (percentageText != null)
+            {
+                percentageText.Text = $"{(state.Progress ?? 0):F1}%";
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Percentage text set to {(state.Progress ?? 0):F1}%");
+            }
 
             var stateText = this.FindControl<TextBlock>("StateText");
-            if (stateText != null) stateText.Text = !string.IsNullOrEmpty(state.CurrentSourcePath) 
-                ? LocalizationManager.Get("JobCard_Progress_Processing") 
+            if (stateText != null) stateText.Text = !string.IsNullOrEmpty(state.CurrentSourcePath)
+                ? LocalizationManager.Get("JobCard_Progress_Processing")
                 : LocalizationManager.Get("JobCard_Status_Active");
 
             var filesText = this.FindControl<TextBlock>("FilesText");
-            if (filesText != null) 
+            if (filesText != null)
             {
                 long total = state.TotalFiles ?? 0;
                 long remaining = state.RemainingFiles ?? 0;
                 long processed = total - remaining;
                 filesText.Text = $"{processed:N0} / {total:N0}";
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Files text set to {processed} / {total}");
             }
 
             var sizeText = this.FindControl<TextBlock>("SizeText");
@@ -210,11 +232,13 @@ public partial class JobCard : UserControl
                 long remaining = state.RemainingSizeToTransfer ?? 0;
                 long processed = total - remaining;
                 sizeText.Text = $"{FormatSize(processed)} / {FormatSize(total)}";
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Size text set to {FormatSize(processed)} / {FormatSize(total)}");
             }
         }
         else
         {
             progressPanel.IsVisible = false;
+            System.Diagnostics.Debug.WriteLine($"[JobCard] ProgressPanel made hidden");
         }
     }
 

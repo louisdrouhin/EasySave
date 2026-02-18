@@ -12,7 +12,20 @@ public class StateTracker
 
   public StateTracker(string stateFilePath)
   {
-    _stateFilePath = stateFilePath;
+    // Convertir en chemin absolu
+    if (!Path.IsPathRooted(stateFilePath))
+    {
+      _stateFilePath = Path.Combine(AppContext.BaseDirectory, stateFilePath);
+    }
+    else
+    {
+      _stateFilePath = stateFilePath;
+    }
+
+    // Normaliser le chemin
+    _stateFilePath = Path.GetFullPath(_stateFilePath);
+
+    System.Diagnostics.Debug.WriteLine($"[StateTracker] State file path: {_stateFilePath}");
   }
 
   public void UpdateJobState(StateEntry stateEntry)
@@ -24,20 +37,40 @@ public class StateTracker
     {
       _jobStates[stateEntry.JobName] = stateEntry;
 
-      var options = new JsonSerializerOptions
-      {
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
-      };
-      var json = JsonSerializer.Serialize(_jobStates.Values, options);
+      System.Diagnostics.Debug.WriteLine($"[StateTracker] Updating state for '{stateEntry.JobName}': {stateEntry.State}, Progress: {stateEntry.Progress:F1}%");
 
-      var directory = Path.GetDirectoryName(_stateFilePath);
-      if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+      try
       {
-        Directory.CreateDirectory(directory);
+        var options = new JsonSerializerOptions
+        {
+          WriteIndented = true,
+          Converters = { new JsonStringEnumConverter() }
+        };
+        var json = JsonSerializer.Serialize(_jobStates.Values, options);
+
+        var directory = Path.GetDirectoryName(_stateFilePath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+          System.Diagnostics.Debug.WriteLine($"[StateTracker] Creating directory: {directory}");
+          Directory.CreateDirectory(directory);
+        }
+
+        // Écriture atomique avec FileShare pour permettre la lecture simultanée
+        using (var fs = new FileStream(_stateFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+        using (var sw = new StreamWriter(fs))
+        {
+          sw.Write(json);
+          sw.Flush();
+          fs.Flush(true);
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[StateTracker] State written to: {_stateFilePath} ({json.Length} chars)");
       }
-
-      File.WriteAllText(_stateFilePath, json);
+      catch (IOException ex)
+      {
+        // Log l'erreur mais ne bloque pas l'exécution
+        System.Diagnostics.Debug.WriteLine($"[StateTracker] Error writing state: {ex.Message}");
+      }
     }
   }
 
@@ -52,13 +85,29 @@ public class StateTracker
 
       if (_jobStates.Remove(jobStateKey))
       {
-        var options = new JsonSerializerOptions
+        try
         {
-          WriteIndented = true,
-          Converters = { new JsonStringEnumConverter() }
-        };
-        var json = JsonSerializer.Serialize(_jobStates.Values, options);
-        File.WriteAllText(_stateFilePath, json);
+          var options = new JsonSerializerOptions
+          {
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter() }
+          };
+          var json = JsonSerializer.Serialize(_jobStates.Values, options);
+
+          // Écriture atomique avec FileShare pour permettre la lecture simultanée
+          using (var fs = new FileStream(_stateFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+          using (var sw = new StreamWriter(fs))
+          {
+            sw.Write(json);
+            sw.Flush();
+            fs.Flush(true);
+          }
+        }
+        catch (IOException ex)
+        {
+          // Log l'erreur mais ne bloque pas l'exécution
+          System.Diagnostics.Debug.WriteLine($"[StateTracker] Error removing state: {ex.Message}");
+        }
       }
     }
   }
