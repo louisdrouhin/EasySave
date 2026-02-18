@@ -145,6 +145,9 @@ public class JobManager
 
     private void LogEvent(DateTime timestamp, string name, Dictionary<string, object> content)
     {
+        // Add client machine name
+        content["clientId"] = Environment.MachineName;
+
         switch (_logMode)
         {
             case "local_only":
