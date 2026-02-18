@@ -136,6 +136,11 @@ jobs:
           -p:Version=${{ steps.version.outputs.VERSION }} \
           --output ./publish
 
+      - name: Modify config.json for Linux/macOS
+        if: runner.os != 'Windows'
+        shell: bash
+        run: sed -i'' -e 's,"./Cryptosoft.exe","./Cryptosoft",g' ./publish/config.json
+
       - name: Archive files for Windows
         if: runner.os == 'Windows'
         shell: pwsh
