@@ -74,6 +74,21 @@ public class StateTracker
     }
   }
 
+  public StateEntry? GetJobState(string jobName)
+  {
+    if (string.IsNullOrEmpty(jobName))
+      return null;
+
+    lock (_lock)
+    {
+      if (_jobStates.TryGetValue(jobName, out var state))
+      {
+        return state;
+      }
+      return null;
+    }
+  }
+
   public void RemoveJobState(int index)
   {
     lock (_lock)

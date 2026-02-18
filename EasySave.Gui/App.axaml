@@ -53,6 +53,19 @@
             <Setter Property="Foreground" Value="White" />
         </Style>
 
+        <Style Selector="Button.button-orange">
+            <Setter Property="Background" Value="#F97316" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.button-orange:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#EA580C" />
+        </Style>
+        <Style Selector="Button.button-orange:pointerover">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
         <Style Selector="Button.button-gray-cancel">
             <Setter Property="Background" Value="#E5E7EB" />
             <Setter Property="Foreground" Value="#374151" />

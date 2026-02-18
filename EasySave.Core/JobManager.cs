@@ -28,6 +28,9 @@ public class JobManager
     private readonly SemaphoreSlim _jobSemaphore;
     private readonly List<Task> _runningJobs = new List<Task>();
     private readonly object _runningJobsLock = new object();
+    private readonly Dictionary<string, CancellationTokenSource> _jobCancellationTokens = new Dictionary<string, CancellationTokenSource>();
+    private readonly Dictionary<string, ManualResetEventSlim> _jobPauseEvents = new Dictionary<string, ManualResetEventSlim>();
+    private readonly object _jobControlLock = new object();
 
     public ConfigParser ConfigParser => _configParser;
 
@@ -419,12 +422,47 @@ public class JobManager
     {
         await _jobSemaphore.WaitAsync();
 
+        CancellationTokenSource cts;
+        ManualResetEventSlim pauseEvent;
+
+        lock (_jobControlLock)
+        {
+            cts = new CancellationTokenSource();
+            pauseEvent = new ManualResetEventSlim(true);
+            _jobCancellationTokens[job.Name] = cts;
+            _jobPauseEvents[job.Name] = pauseEvent;
+        }
+
         try
         {
-            await Task.Run(() => LaunchJob(job, password));
+            await Task.Run(() =>
+            {
+                try
+                {
+                    LaunchJob(job, password);
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.Write(
+                        DateTime.Now,
+                        "JobCancelled",
+                        new Dictionary<string, object>
+                        {
+                            { "jobName", job.Name }
+                        }
+                    );
+                }
+            }, cts.Token);
         }
         finally
         {
+            lock (_jobControlLock)
+            {
+                _jobCancellationTokens.Remove(job.Name);
+                _jobPauseEvents.Remove(job.Name);
+                pauseEvent.Dispose();
+                cts.Dispose();
+            }
             _jobSemaphore.Release();
         }
     }
@@ -446,6 +484,135 @@ public class JobManager
         return _jobSemaphore.CurrentCount == _configParser.GetMaxConcurrentJobs()
             ? 0
             : _configParser.GetMaxConcurrentJobs() - _jobSemaphore.CurrentCount;
+    }
+
+    /// <summary>
+    /// Pauses a running job.
+    /// </summary>
+    public void PauseJob(string jobName)
+    {
+        lock (_jobControlLock)
+        {
+            if (_jobPauseEvents.ContainsKey(jobName))
+            {
+                _jobPauseEvents[jobName].Reset();
+                
+                var state = _stateTracker.GetJobState(jobName);
+                if (state != null)
+                {
+                    _stateTracker.UpdateJobState(new StateEntry(
+                        jobName,
+                        DateTime.Now,
+                        JobState.Paused,
+                        state.TotalFiles ?? 0,
+                        state.TotalSizeToTransfer ?? 0,
+                        state.Progress ?? 0,
+                        state.RemainingFiles ?? 0,
+                        state.RemainingSizeToTransfer ?? 0,
+                        state.CurrentSourcePath ?? "",
+                        state.CurrentDestinationPath ?? ""
+                    ));
+                }
+
+                _logger.Write(
+                    DateTime.Now,
+                    "JobPaused",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", jobName }
+                    }
+                );
+            }
+        }
+    }
+
+    /// <summary>
+    /// Resumes a paused job.
+    /// </summary>
+    public void ResumeJob(string jobName)
+    {
+        lock (_jobControlLock)
+        {
+            if (_jobPauseEvents.ContainsKey(jobName))
+            {
+                _jobPauseEvents[jobName].Set();
+                
+                var state = _stateTracker.GetJobState(jobName);
+                if (state != null)
+                {
+                    _stateTracker.UpdateJobState(new StateEntry(
+                        jobName,
+                        DateTime.Now,
+                        JobState.Active,
+                        state.TotalFiles ?? 0,
+                        state.TotalSizeToTransfer ?? 0,
+                        state.Progress ?? 0,
+                        state.RemainingFiles ?? 0,
+                        state.RemainingSizeToTransfer ?? 0,
+                        state.CurrentSourcePath ?? "",
+                        state.CurrentDestinationPath ?? ""
+                    ));
+                }
+
+                _logger.Write(
+                    DateTime.Now,
+                    "JobResumed",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", jobName }
+                    }
+                );
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stops a running job.
+    /// </summary>
+    public void StopJob(string jobName)
+    {
+        lock (_jobControlLock)
+        {
+            if (_jobCancellationTokens.ContainsKey(jobName))
+            {
+                _jobCancellationTokens[jobName].Cancel();
+
+                _logger.Write(
+                    DateTime.Now,
+                    "JobStopped",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", jobName }
+                    }
+                );
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks if a job is currently running.
+    /// </summary>
+    public bool IsJobRunning(string jobName)
+    {
+        lock (_jobControlLock)
+        {
+            return _jobCancellationTokens.ContainsKey(jobName);
+        }
+    }
+
+    /// <summary>
+    /// Checks if a job is currently paused.
+    /// </summary>
+    public bool IsJobPaused(string jobName)
+    {
+        lock (_jobControlLock)
+        {
+            if (_jobPauseEvents.ContainsKey(jobName))
+            {
+                return !_jobPauseEvents[jobName].IsSet;
+            }
+            return false;
+        }
     }
 
     private void ExecuteFullBackup(Job job, string password, bool createHashFile = false)
@@ -516,6 +683,35 @@ public class JobManager
         System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Starting file loop");
         foreach (var sourceFile in sourceFiles)
         {
+            // Check for cancellation
+            CancellationTokenSource? cts = null;
+            ManualResetEventSlim? pauseEvent = null;
+            
+            lock (_jobControlLock)
+            {
+                if (_jobCancellationTokens.ContainsKey(job.Name))
+                {
+                    cts = _jobCancellationTokens[job.Name];
+                    pauseEvent = _jobPauseEvents[job.Name];
+                }
+            }
+
+            if (cts != null && cts.Token.IsCancellationRequested)
+            {
+                _stateTracker.UpdateJobState(new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Inactive
+                ));
+                cts.Token.ThrowIfCancellationRequested();
+            }
+
+            // Check for pause
+            if (pauseEvent != null)
+            {
+                pauseEvent.Wait();
+            }
+
             try
             {
                 System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Processing file {filesProcessed + 1}/{totalFiles}: {sourceFile}");

@@ -93,6 +93,9 @@ public partial class JobsPage : UserControl
 
                 var card = new JobCard(job, i + 1);
                 card.PlayClicked += OnJobPlay;
+                card.PauseClicked += OnJobPause;
+                card.ResumeClicked += OnJobResume;
+                card.StopClicked += OnJobStop;
                 card.DeleteClicked += OnJobDelete;
                 JobsStackPanel.Children.Add(card);
                 _jobCards[job.Name] = card;
@@ -351,6 +354,33 @@ public partial class JobsPage : UserControl
         var (index, job) = data;
         _jobManager?.removeJob(index);
         LoadJobs();
+    }
+
+    private void OnJobPause(object? sender, Job job)
+    {
+        if (_jobManager != null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[JobsPage] Pausing job '{job.Name}'");
+            _jobManager.PauseJob(job.Name);
+        }
+    }
+
+    private void OnJobResume(object? sender, Job job)
+    {
+        if (_jobManager != null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[JobsPage] Resuming job '{job.Name}'");
+            _jobManager.ResumeJob(job.Name);
+        }
+    }
+
+    private void OnJobStop(object? sender, Job job)
+    {
+        if (_jobManager != null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[JobsPage] Stopping job '{job.Name}'");
+            _jobManager.StopJob(job.Name);
+        }
     }
 
     private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
