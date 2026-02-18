@@ -1,31 +1,13 @@
-# Multi-stage build
-FROM mcr.microsoft.com/dotnet/sdk:10 AS build
-
-WORKDIR /src
-
-# Copy project files
-COPY ["EasyLog.Lib/EasyLog.Lib.csproj", "EasyLog.Lib/"]
-COPY ["EasyLog.Server/EasyLog.Server.csproj", "EasyLog.Server/"]
-
-# Restore dependencies
-RUN dotnet restore "EasyLog.Server/EasyLog.Server.csproj"
-
-# Copy source code
-COPY . .
-
-# Build and publish
-RUN dotnet publish "EasyLog.Server/EasyLog.Server.csproj" \
-    -c Release \
-    -o /app/publish \
-    --no-restore
-
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/runtime:10
+# Self-contained .NET 10 application (includes runtime)
+FROM alpine:latest
 
 WORKDIR /app
 
-# Copy published binaries
-COPY --from=build /app/publish .
+# Install required dependencies for .NET
+RUN apk add --no-cache libstdc++ libintl libc6-compat icu-libs
+
+# Copy self-contained .NET 10 application
+COPY ./EasyLog.Server/bin/Release/net10.0/publish .
 
 # Create logs directory
 RUN mkdir -p /logs
@@ -40,5 +22,5 @@ ENV LOG_DIR=/logs
 # Volume for logs
 VOLUME ["/logs"]
 
-# Run the server
+# Run the application directly (self-contained)
 ENTRYPOINT ["./EasyLog.Server"]
