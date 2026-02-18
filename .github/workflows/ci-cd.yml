@@ -47,9 +47,24 @@ jobs:
 
   build-and-release:
     name: Build and Create Release
-    runs-on: windows-latest
     needs: test
     if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            RUNTIME_ID: linux-x64
+            PLATFORM_NAME: Linux-x64
+          - os: windows-latest
+            RUNTIME_ID: win-x64
+            PLATFORM_NAME: Win-x64
+          - os: macos-latest
+            RUNTIME_ID: osx-x64
+            PLATFORM_NAME: Mac-x64
+          - os: macos-latest
+            RUNTIME_ID: osx-arm64
+            PLATFORM_NAME: Mac-arm64
 
     permissions:
       contents: write
@@ -58,6 +73,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Checkout Cryptosoft
+        uses: actions/checkout@v4
+        with:
+          repository: louisdrouhin/Cryptosoft
+          path: Cryptosoft
+
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -65,26 +87,37 @@ jobs:
 
       - name: Extract Version
         id: version
-        shell: pwsh
+        shell: bash
         run: |
-          $tag = "${{ github.ref_name }}"
-          $version = $tag -replace '^v', ''
-          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          tag="${{ github.ref_name }}"
+          version=$(echo "$tag" | sed 's/^v//')
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
 
-          if ($version -match '^\d+\.0\.0$') { 
-              echo "IS_RELEASE=true" >> $env:GITHUB_OUTPUT 
-          } else { 
-              echo "IS_RELEASE=false" >> $env:GITHUB_OUTPUT 
-          }
+          if [[ "$version" =~ ^[0-9]+\.0\.0$ ]]; then
+              echo "IS_RELEASE=true" >> $GITHUB_OUTPUT
+          else
+              echo "IS_RELEASE=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Restore dependencies
         run: dotnet restore
+
+      - name: Publish Cryptosoft
+        run: |
+          dotnet publish Cryptosoft/Cryptosoft.csproj `
+          --configuration Release `
+          --runtime ${{ matrix.RUNTIME_ID }} `
+          --self-contained true `
+          -p:PublishSingleFile=true `
+          -p:DebugType=None `
+          -p:Version=${{ steps.version.outputs.VERSION }} `
+          --output ./publish/CLI
 
       - name: Publish CLI
         run: |
           dotnet publish EasySave.Cli/EasySave.Cli.csproj `
           --configuration Release `
-          --runtime win-x64 `
+          --runtime ${{ matrix.RUNTIME_ID }} `
           --self-contained true `
           -p:PublishSingleFile=true `
           -p:DebugType=None `
@@ -95,7 +128,7 @@ jobs:
         run: |
           dotnet publish EasySave.Gui/EasySave.Gui.csproj `
           --configuration Release `
-          --runtime win-x64 `
+          --runtime ${{ matrix.RUNTIME_ID }} `
           --self-contained true `
           -p:PublishSingleFile=true `
           -p:DebugType=None `
@@ -103,14 +136,17 @@ jobs:
           --output ./publish/GUI
 
       - name: Create ZIP archive
-        run: Compress-Archive -Path ./publish/* -DestinationPath ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
-        shell: pwsh
+        shell: bash
+        run: |
+          cd publish
+          zip -r ../EasySave-${{ matrix.PLATFORM_NAME }}-${{ steps.version.outputs.VERSION }}.zip .
+          cd ..
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: EasySave v${{ steps.version.outputs.VERSION }}
-          files: ./EasySave-Win-x64-${{ steps.version.outputs.VERSION }}.zip
+          files: ./EasySave-${{ matrix.PLATFORM_NAME }}-${{ steps.version.outputs.VERSION }}.zip
           draft: false
           prerelease: ${{ steps.version.outputs.IS_RELEASE == 'false' }}
           make_latest: ${{ steps.version.outputs.IS_RELEASE == 'true' }}
