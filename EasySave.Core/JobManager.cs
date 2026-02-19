@@ -25,12 +25,8 @@ public class JobManager
     private readonly ConfigParser _configParser;
     private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
-    private readonly SemaphoreSlim _jobSemaphore;
-    private readonly List<Task> _runningJobs = new List<Task>();
-    private readonly object _runningJobsLock = new object();
-    private readonly Dictionary<string, CancellationTokenSource> _jobCancellationTokens = new Dictionary<string, CancellationTokenSource>();
-    private readonly Dictionary<string, ManualResetEventSlim> _jobPauseEvents = new Dictionary<string, ManualResetEventSlim>();
-    private readonly object _jobControlLock = new object();
+    private EasyLogNetworkClient? _networkClient;
+    private string _logMode = "local_only";  // "local_only", "server_only", "both"
 
     public ConfigParser ConfigParser => _configParser;
 
@@ -40,17 +36,20 @@ public class JobManager
     {
         _configParser = new ConfigParser("config.json");
         _logFormatter = CreateLogFormatter();
+        _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        var logsPath = _configParser.GetLogsPath();
-        System.Diagnostics.Debug.WriteLine($"[JobManager] Logs path: {logsPath}");
-        System.Diagnostics.Debug.WriteLine($"[JobManager] Logs directory exists: {Directory.Exists(logsPath)}");
+        // Initialize network client if server is enabled
+        try
+        {
+            InitializeNetworkClient();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[JobManager] Network initialization error: {ex.Message}");
+            _logMode = "local_only";
+        }
 
-        _logger = new EasyLog(_logFormatter, logsPath);
-
-        int maxConcurrentJobs = _configParser.GetMaxConcurrentJobs();
-        _jobSemaphore = new SemaphoreSlim(maxConcurrentJobs, maxConcurrentJobs);
-
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "ConfigParserInitialized",
             new Dictionary<string, object>
@@ -59,21 +58,20 @@ public class JobManager
             }
         );
 
-        System.Diagnostics.Debug.WriteLine($"[JobManager] Logger initialized, current log path: {_logger.GetCurrentLogPath()}");
-
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "LoggerInitialized",
             new Dictionary<string, object>
             {
                 { "formatterType", _logFormatter.GetType().Name },
-                { "logsPath", _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json" }
+                { "logsPath", _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json" },
+                { "logMode", _logMode }
             }
         );
 
         _jobs = new List<Job>();
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobsListCreated",
             new Dictionary<string, object>()
@@ -81,7 +79,7 @@ public class JobManager
 
         LoadJobsFromConfig();
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobsLoadedFromConfig",
             new Dictionary<string, object>
@@ -104,11 +102,87 @@ public class JobManager
             );
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "StateTrackerCreated",
             new Dictionary<string, object>()
         );
+    }
+
+    private void InitializeNetworkClient()
+    {
+        var serverConfig = _configParser.Config?["easyLogServer"];
+        bool isEnabled = serverConfig?["enabled"]?.GetValue<bool>() ?? false;
+
+        if (!isEnabled)
+        {
+            _logMode = "local_only";
+            return;
+        }
+
+        _logMode = serverConfig?["mode"]?.GetValue<string>()?.ToLower() ?? "local_only";
+
+        if (_logMode == "local_only")
+            return;
+
+        string host = serverConfig?["host"]?.GetValue<string>() ?? "localhost";
+        int port = serverConfig?["port"]?.GetValue<int>() ?? 5000;
+
+        try
+        {
+            _networkClient = new EasyLogNetworkClient(host, port);
+            _networkClient.Connect();
+            Console.WriteLine($"[JobManager] Connected to EasyLog server at {host}:{port}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[JobManager] Failed to connect to EasyLog server: {ex.Message}");
+            // Fallback to local_only if connection fails
+            _logMode = "local_only";
+            _networkClient = null;
+        }
+    }
+
+    private void LogEvent(DateTime timestamp, string name, Dictionary<string, object> content)
+    {
+        // Add client machine name
+        content["clientId"] = Environment.MachineName;
+
+        switch (_logMode)
+        {
+            case "local_only":
+                _logger.Write(timestamp, name, content);
+                break;
+
+            case "server_only":
+                if (_networkClient != null && _networkClient.IsConnected)
+                {
+                    try
+                    {
+                        _networkClient.Send(timestamp, name, content);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[JobManager] Error sending log to server: {ex.Message}");
+                    }
+                }
+                break;
+
+            case "both":
+                _logger.Write(timestamp, name, content);
+                if (_networkClient != null && _networkClient.IsConnected)
+                {
+                    try
+                    {
+                        _networkClient.Send(timestamp, name, content);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[JobManager] Error sending log to server: {ex.Message}");
+                    }
+                }
+                break;
+        }
     }
 
     private ILogFormatter CreateLogFormatter()
@@ -139,7 +213,7 @@ public class JobManager
             )
         );
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobCreated",
             new Dictionary<string, object>
@@ -167,7 +241,7 @@ public class JobManager
 
         _stateTracker.RemoveJobState(index);
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobDeleted",
             new Dictionary<string, object>
@@ -188,6 +262,7 @@ public class JobManager
     public void Close()
     {
         _logger.Close();
+        _networkClient?.Disconnect();
     }
 
     public string? CheckBusinessApplications()
@@ -201,7 +276,7 @@ public class JobManager
                 var processes = Process.GetProcessesByName(appName);
                 if (processes.Length > 0)
                 {
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         "BusinessApplicationDetected",
                         new Dictionary<string, object>
@@ -216,7 +291,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "BusinessApplicationCheckError",
                     new Dictionary<string, object>
@@ -236,6 +311,7 @@ public class JobManager
         string oldFormat = _configParser.GetLogFormat();
 
         _logger.Close();
+        _networkClient?.Disconnect();
 
         _configParser.SetLogFormat(format);
 
@@ -245,7 +321,10 @@ public class JobManager
 
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        _logger.Write(
+        // Reinitialize network client after config reload
+        InitializeNetworkClient();
+
+        LogEvent(
             DateTime.Now,
             "LogFormatChanged",
             new Dictionary<string, object>
@@ -355,7 +434,7 @@ public class JobManager
               )
             );
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobStarted",
             new Dictionary<string, object>
@@ -389,7 +468,7 @@ public class JobManager
                   )
                 );
 
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "JobCompleted",
                 new Dictionary<string, object>
@@ -401,7 +480,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "JobFailed",
                 new Dictionary<string, object>
@@ -412,206 +491,6 @@ public class JobManager
                 }
             );
             throw;
-        }
-    }
-
-    /// <summary>
-    /// Launches a job asynchronously with support for concurrent execution.
-    /// </summary>
-    public async Task LaunchJobAsync(Job job, string password)
-    {
-        await _jobSemaphore.WaitAsync();
-
-        CancellationTokenSource cts;
-        ManualResetEventSlim pauseEvent;
-
-        lock (_jobControlLock)
-        {
-            cts = new CancellationTokenSource();
-            pauseEvent = new ManualResetEventSlim(true);
-            _jobCancellationTokens[job.Name] = cts;
-            _jobPauseEvents[job.Name] = pauseEvent;
-        }
-
-        try
-        {
-            await Task.Run(() =>
-            {
-                try
-                {
-                    LaunchJob(job, password);
-                }
-                catch (OperationCanceledException)
-                {
-                    _logger.Write(
-                        DateTime.Now,
-                        "JobCancelled",
-                        new Dictionary<string, object>
-                        {
-                            { "jobName", job.Name }
-                        }
-                    );
-                }
-            }, cts.Token);
-        }
-        finally
-        {
-            lock (_jobControlLock)
-            {
-                _jobCancellationTokens.Remove(job.Name);
-                _jobPauseEvents.Remove(job.Name);
-                pauseEvent.Dispose();
-                cts.Dispose();
-            }
-            _jobSemaphore.Release();
-        }
-    }
-
-    /// <summary>
-    /// Launches multiple jobs concurrently with respect to the maxConcurrentJobs limit.
-    /// </summary>
-    public async Task LaunchMultipleJobsAsync(IEnumerable<Job> jobs, string password)
-    {
-        var tasks = jobs.Select(job => LaunchJobAsync(job, password));
-        await Task.WhenAll(tasks);
-    }
-
-    /// <summary>
-    /// Gets the current number of running jobs.
-    /// </summary>
-    public int GetRunningJobsCount()
-    {
-        return _jobSemaphore.CurrentCount == _configParser.GetMaxConcurrentJobs()
-            ? 0
-            : _configParser.GetMaxConcurrentJobs() - _jobSemaphore.CurrentCount;
-    }
-
-    /// <summary>
-    /// Pauses a running job.
-    /// </summary>
-    public void PauseJob(string jobName)
-    {
-        lock (_jobControlLock)
-        {
-            if (_jobPauseEvents.ContainsKey(jobName))
-            {
-                _jobPauseEvents[jobName].Reset();
-                
-                var state = _stateTracker.GetJobState(jobName);
-                if (state != null)
-                {
-                    _stateTracker.UpdateJobState(new StateEntry(
-                        jobName,
-                        DateTime.Now,
-                        JobState.Paused,
-                        state.TotalFiles ?? 0,
-                        state.TotalSizeToTransfer ?? 0,
-                        state.Progress ?? 0,
-                        state.RemainingFiles ?? 0,
-                        state.RemainingSizeToTransfer ?? 0,
-                        state.CurrentSourcePath ?? "",
-                        state.CurrentDestinationPath ?? ""
-                    ));
-                }
-
-                _logger.Write(
-                    DateTime.Now,
-                    "JobPaused",
-                    new Dictionary<string, object>
-                    {
-                        { "jobName", jobName }
-                    }
-                );
-            }
-        }
-    }
-
-    /// <summary>
-    /// Resumes a paused job.
-    /// </summary>
-    public void ResumeJob(string jobName)
-    {
-        lock (_jobControlLock)
-        {
-            if (_jobPauseEvents.ContainsKey(jobName))
-            {
-                _jobPauseEvents[jobName].Set();
-                
-                var state = _stateTracker.GetJobState(jobName);
-                if (state != null)
-                {
-                    _stateTracker.UpdateJobState(new StateEntry(
-                        jobName,
-                        DateTime.Now,
-                        JobState.Active,
-                        state.TotalFiles ?? 0,
-                        state.TotalSizeToTransfer ?? 0,
-                        state.Progress ?? 0,
-                        state.RemainingFiles ?? 0,
-                        state.RemainingSizeToTransfer ?? 0,
-                        state.CurrentSourcePath ?? "",
-                        state.CurrentDestinationPath ?? ""
-                    ));
-                }
-
-                _logger.Write(
-                    DateTime.Now,
-                    "JobResumed",
-                    new Dictionary<string, object>
-                    {
-                        { "jobName", jobName }
-                    }
-                );
-            }
-        }
-    }
-
-    /// <summary>
-    /// Stops a running job.
-    /// </summary>
-    public void StopJob(string jobName)
-    {
-        lock (_jobControlLock)
-        {
-            if (_jobCancellationTokens.ContainsKey(jobName))
-            {
-                _jobCancellationTokens[jobName].Cancel();
-
-                _logger.Write(
-                    DateTime.Now,
-                    "JobStopped",
-                    new Dictionary<string, object>
-                    {
-                        { "jobName", jobName }
-                    }
-                );
-            }
-        }
-    }
-
-    /// <summary>
-    /// Checks if a job is currently running.
-    /// </summary>
-    public bool IsJobRunning(string jobName)
-    {
-        lock (_jobControlLock)
-        {
-            return _jobCancellationTokens.ContainsKey(jobName);
-        }
-    }
-
-    /// <summary>
-    /// Checks if a job is currently paused.
-    /// </summary>
-    public bool IsJobPaused(string jobName)
-    {
-        lock (_jobControlLock)
-        {
-            if (_jobPauseEvents.ContainsKey(jobName))
-            {
-                return !_jobPauseEvents[jobName].IsSet;
-            }
-            return false;
         }
     }
 
@@ -634,7 +513,7 @@ public class JobManager
 
         Directory.CreateDirectory(fullBackupPath);
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "BackupFolderCreated",
             new Dictionary<string, object>
@@ -645,11 +524,8 @@ public class JobManager
             }
         );
 
-        System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Getting files from: {job.SourcePath}");
         var sourceFiles = Directory.GetFiles(job.SourcePath, "*", SearchOption.AllDirectories);
         int totalFiles = sourceFiles.Length;
-        System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Found {totalFiles} files");
-
         long totalSize = sourceFiles.Select(f => new FileInfo(f).Length).Sum();
         int filesProcessed = 0;
         long totalBytesTransferred = 0;
@@ -668,7 +544,7 @@ public class JobManager
             ""
         ));
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "FullBackupStarted",
             new Dictionary<string, object>
@@ -680,62 +556,23 @@ public class JobManager
             }
         );
 
-        System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Starting file loop");
         foreach (var sourceFile in sourceFiles)
         {
-            // Check for cancellation
-            CancellationTokenSource? cts = null;
-            ManualResetEventSlim? pauseEvent = null;
-            
-            lock (_jobControlLock)
-            {
-                if (_jobCancellationTokens.ContainsKey(job.Name))
-                {
-                    cts = _jobCancellationTokens[job.Name];
-                    pauseEvent = _jobPauseEvents[job.Name];
-                }
-            }
-
-            if (cts != null && cts.Token.IsCancellationRequested)
-            {
-                _stateTracker.UpdateJobState(new StateEntry(
-                    job.Name,
-                    DateTime.Now,
-                    JobState.Inactive
-                ));
-                cts.Token.ThrowIfCancellationRequested();
-            }
-
-            // Check for pause
-            if (pauseEvent != null)
-            {
-                pauseEvent.Wait();
-            }
-
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Processing file {filesProcessed + 1}/{totalFiles}: {sourceFile}");
-
                 var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
-                System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Relative path: {relativePath}");
-
                 var destinationFile = Path.Combine(fullBackupPath, relativePath);
-                System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Destination: {destinationFile}");
 
                 var destinationDir = Path.GetDirectoryName(destinationFile);
                 if (destinationDir != null && !Directory.Exists(destinationDir))
                 {
-                    System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Creating directory: {destinationDir}");
                     Directory.CreateDirectory(destinationDir);
                 }
 
                 var fileInfo = new FileInfo(sourceFile);
                 var fileSize = fileInfo.Length;
-                System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] File size: {fileSize} bytes");
 
-                System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] Calling CopyOrEncryptFile...");
                 long encryptResult = CopyOrEncryptFile(sourceFile, destinationFile, password, encryptExtensions);
-                System.Diagnostics.Debug.WriteLine($"[JobManager.ExecuteFullBackup] CopyOrEncryptFile returned: {encryptResult}");
 
                 if (createHashFile && hashDictionary != null)
                 {
@@ -751,7 +588,7 @@ public class JobManager
                     }
                     catch (Exception hashEx)
                     {
-                        _logger.Write(
+                        LogEvent(
                             DateTime.Now,
                             "HashCalculationError",
                             new Dictionary<string, object>
@@ -797,13 +634,11 @@ public class JobManager
                         { "progress", $"{filesProcessed}/{totalFiles}" }
                     };
 
-                    Console.WriteLine($"[JobManager] About to log {logType} for file: {Path.GetFileName(sourceFile)} ({filesProcessed}/{totalFiles})");
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         logType,
                         logData
                     );
-                    Console.WriteLine($"[JobManager] Log written successfully");
                 }
                 else
                 {
@@ -818,7 +653,7 @@ public class JobManager
                         { "progress", $"{filesProcessed}/{totalFiles}" }
                     };
 
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         "FileEncryptionError",
                         logData
@@ -827,7 +662,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileCopyError",
                     new Dictionary<string, object>
@@ -851,7 +686,7 @@ public class JobManager
                 });
                 File.WriteAllText(hashFilePath, hashJson);
 
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "HashFileCreated",
                     new Dictionary<string, object>
@@ -864,7 +699,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "HashFileCreationError",
                     new Dictionary<string, object>
@@ -876,7 +711,7 @@ public class JobManager
             }
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "FullBackupCompleted",
             new Dictionary<string, object>
@@ -909,7 +744,7 @@ public class JobManager
         var hashFilePath = Path.Combine(job.DestinationPath, "hash.json");
         if (!File.Exists(hashFilePath))
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "NoHashFileFound",
                 new Dictionary<string, object>
@@ -940,7 +775,7 @@ public class JobManager
         var diffBackupPath = Path.Combine(job.DestinationPath, backupFolderName);
         Directory.CreateDirectory(diffBackupPath);
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DifferentialBackupStarted",
             new Dictionary<string, object>
@@ -980,7 +815,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileProcessError",
                     new Dictionary<string, object>
@@ -1056,13 +891,11 @@ public class JobManager
                         { "hash", fileToCopy.Hash }
                     };
 
-                    Console.WriteLine($"[JobManager] About to log {logType} for file: {Path.GetFileName(fileToCopy.Path)} ({filesProcessed}/{totalFilesToTransfer})");
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         logType,
                         logData
                     );
-                    Console.WriteLine($"[JobManager] Log written successfully");
                 }
                 else
                 {
@@ -1077,7 +910,7 @@ public class JobManager
                         { "hash", fileToCopy.Hash }
                     };
 
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         "FileEncryptionError",
                         logData
@@ -1086,7 +919,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileCopyError",
                     new Dictionary<string, object>
@@ -1107,7 +940,7 @@ public class JobManager
             });
             File.WriteAllText(hashFilePath, newHashJson);
 
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "HashFileUpdated",
                 new Dictionary<string, object>
@@ -1120,7 +953,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "HashFileUpdateError",
                 new Dictionary<string, object>
@@ -1131,7 +964,7 @@ public class JobManager
             );
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DifferentialBackupCompleted",
             new Dictionary<string, object>
@@ -1153,11 +986,9 @@ public class JobManager
     private long CopyOrEncryptFile(string sourceFile, string destinationFile, string password, List<string> encryptExtensions)
     {
         var fileExtension = Path.GetExtension(sourceFile).ToLower();
-        System.Diagnostics.Debug.WriteLine($"[JobManager.CopyOrEncryptFile] File: {Path.GetFileName(sourceFile)}, Extension: {fileExtension}");
 
         if (encryptExtensions.Contains(fileExtension))
         {
-            System.Diagnostics.Debug.WriteLine($"[JobManager.CopyOrEncryptFile] Extension matches encryption list, will encrypt");
             var targetDirectory = Path.GetDirectoryName(destinationFile);
             if (targetDirectory == null)
             {
@@ -1167,11 +998,7 @@ public class JobManager
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine($"[JobManager.CopyOrEncryptFile] Extension not in encryption list, will copy");
-            System.Diagnostics.Debug.WriteLine($"[JobManager.CopyOrEncryptFile] Copying from: {sourceFile}");
-            System.Diagnostics.Debug.WriteLine($"[JobManager.CopyOrEncryptFile] Copying to: {destinationFile}");
             File.Copy(sourceFile, destinationFile, overwrite: true);
-            System.Diagnostics.Debug.WriteLine($"[JobManager.CopyOrEncryptFile] Copy completed successfully");
             return 0;
         }
     }
@@ -1186,20 +1013,8 @@ public class JobManager
             var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
             var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cyptosoft.exe";
 
-            System.Diagnostics.Debug.WriteLine($"[JobManager] Checking Cryptosoft at: {cryptosoftPath}");
-
             if (!File.Exists(cryptosoftPath))
             {
-                System.Diagnostics.Debug.WriteLine($"[JobManager] Cryptosoft not found at: {cryptosoftPath}");
-                _logger.Write(
-                    DateTime.Now,
-                    "CryptosoftNotFoundError",
-                    new Dictionary<string, object>
-                    {
-                        { "cryptosoftPath", cryptosoftPath },
-                        { "sourceFile", sourceFile }
-                    }
-                );
                 return -1;
             }
 
@@ -1215,59 +1030,19 @@ public class JobManager
                 RedirectStandardError = true
             };
 
-            System.Diagnostics.Debug.WriteLine($"[JobManager] Starting Cryptosoft: {cryptosoftPath} {arguments}");
-
             using (var process = Process.Start(processInfo))
             {
                 if (process == null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[JobManager] Failed to start Cryptosoft process");
-                    _logger.Write(
-                        DateTime.Now,
-                        "CryptosoftProcessStartError",
-                        new Dictionary<string, object>
-                        {
-                            { "sourceFile", sourceFile },
-                            { "cryptosoftPath", cryptosoftPath }
-                        }
-                    );
                     return -2;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[JobManager] Waiting for Cryptosoft process to exit (30 second timeout)...");
-
-                // Wait for up to 30 seconds
-                bool exited = process.WaitForExit(30000);
-
-                if (!exited)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[JobManager] Cryptosoft process timed out, killing process");
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch { }
-
-                    _logger.Write(
-                        DateTime.Now,
-                        "CryptosoftTimeoutError",
-                        new Dictionary<string, object>
-                        {
-                            { "sourceFile", sourceFile },
-                            { "targetDirectory", targetDirectory },
-                            { "timeout", "30 seconds" }
-                        }
-                    );
-                    return -3;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"[JobManager] Cryptosoft process exited with code: {process.ExitCode}");
+                process.WaitForExit();
 
                 if (process.ExitCode != 0)
                 {
                     var error = process.StandardError.ReadToEnd();
-                    System.Diagnostics.Debug.WriteLine($"[JobManager] Cryptosoft error: {error}");
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         errorLogType,
                         new Dictionary<string, object>
@@ -1287,7 +1062,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 errorLogType,
                 new Dictionary<string, object>
@@ -1313,7 +1088,7 @@ public class JobManager
             Directory.CreateDirectory(restorePath);
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DecryptBackupStarted",
             new Dictionary<string, object>
@@ -1352,7 +1127,7 @@ public class JobManager
                 filesProcessed++;
                 totalBytesTransferred += fileInfo.Length;
 
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileDecrypted",
                     new Dictionary<string, object>
@@ -1365,7 +1140,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileDecryptError",
                     new Dictionary<string, object>
@@ -1378,7 +1153,7 @@ public class JobManager
             }
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DecryptBackupCompleted",
             new Dictionary<string, object>

@@ -19,7 +19,6 @@ public partial class JobsPage : UserControl
     private FileSystemWatcher? _watcher;
     private string _stateFilePath = string.Empty;
     private Dictionary<string, JobCard> _jobCards = new();
-    private DispatcherTimer? _updateTimer;
 
     public JobsPage()
     {
@@ -48,20 +47,12 @@ public partial class JobsPage : UserControl
         }
 
         LoadJobs();
-
-        // Initialiser le watcher et le timer immédiatement après LoadJobs()
-        InitializeStateWatcher();
     }
 
     protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-
-        // Ne réinitialiser que si pas déjà fait dans le constructeur
-        if (_updateTimer == null || !_updateTimer.IsEnabled)
-        {
-            InitializeStateWatcher();
-        }
+        InitializeStateWatcher();
     }
 
     protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -69,8 +60,6 @@ public partial class JobsPage : UserControl
         base.OnDetachedFromVisualTree(e);
         _watcher?.Dispose();
         _watcher = null;
-        _updateTimer?.Stop();
-        _updateTimer = null;
     }
 
     private void LoadJobs()
@@ -80,8 +69,6 @@ public partial class JobsPage : UserControl
         var jobs = _jobManager.GetJobs();
         _jobCards.Clear();
 
-        System.Diagnostics.Debug.WriteLine($"[JobsPage.LoadJobs] Loading {jobs.Count} jobs");
-
         if (JobsStackPanel != null)
         {
             JobsStackPanel.Children.Clear();
@@ -89,21 +76,13 @@ public partial class JobsPage : UserControl
             for (int i = 0; i < jobs.Count; i++)
             {
                 var job = jobs[i];
-                System.Diagnostics.Debug.WriteLine($"[JobsPage.LoadJobs] Creating card for job '{job.Name}' (#{i + 1})");
-
                 var card = new JobCard(job, i + 1);
                 card.PlayClicked += OnJobPlay;
-                card.PauseClicked += OnJobPause;
-                card.ResumeClicked += OnJobResume;
-                card.StopClicked += OnJobStop;
                 card.DeleteClicked += OnJobDelete;
                 JobsStackPanel.Children.Add(card);
                 _jobCards[job.Name] = card;
             }
         }
-
-        System.Diagnostics.Debug.WriteLine($"[JobsPage.LoadJobs] All cards created, dictionary has {_jobCards.Count} entries");
-        System.Diagnostics.Debug.WriteLine($"[JobsPage.LoadJobs] Dictionary keys: {string.Join(", ", _jobCards.Keys)}");
 
         UpdateStateContent();
     }
@@ -115,170 +94,78 @@ public partial class JobsPage : UserControl
             var configParser = new ConfigParser("config.json");
             _stateFilePath = configParser.Config?["config"]?["stateFilePath"]?.GetValue<string>() ?? "state.json";
 
-            // Convertir en chemin absolu
             if (!Path.IsPathRooted(_stateFilePath))
             {
-                _stateFilePath = Path.Combine(AppContext.BaseDirectory, _stateFilePath);
+                string executionDirState = Path.Combine(AppContext.BaseDirectory, _stateFilePath);
+                string projectRootState = Path.Combine(AppContext.BaseDirectory, "../../../../../", _stateFilePath);
+
+                if (File.Exists(executionDirState)) _stateFilePath = executionDirState;
+                else if (File.Exists(projectRootState)) _stateFilePath = Path.GetFullPath(projectRootState);
             }
-
-            // Normaliser le chemin
-            _stateFilePath = Path.GetFullPath(_stateFilePath);
-
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] State file path: {_stateFilePath}");
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] File exists: {File.Exists(_stateFilePath)}");
 
             string directory = Path.GetDirectoryName(_stateFilePath) ?? AppContext.BaseDirectory;
+            if (string.IsNullOrEmpty(directory)) directory = ".";
             string fileName = Path.GetFileName(_stateFilePath);
 
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] Watching directory: {directory}");
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] Watching file: {fileName}");
-
-            // S'assurer que le répertoire existe et est valide
-            if (Directory.Exists(directory) && !string.IsNullOrEmpty(fileName))
+            if (Directory.Exists(directory))
             {
-                try
+                _watcher = new FileSystemWatcher(directory)
                 {
-                    _watcher = new FileSystemWatcher(directory)
-                    {
-                        Filter = fileName,
-                        NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
-                        EnableRaisingEvents = true
-                    };
-                    _watcher.Changed += OnStateFileChanged;
-                    System.Diagnostics.Debug.WriteLine($"[JobsPage] FileSystemWatcher initialized successfully");
-                }
-                catch (Exception watcherEx)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[JobsPage] FileSystemWatcher creation failed: {watcherEx.Message}");
-                    // Continue sans le watcher, le timer suffira
-                }
+                    Filter = fileName,
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                    EnableRaisingEvents = true
+                };
+                _watcher.Changed += OnStateFileChanged;
             }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] Directory does not exist or invalid filename: {directory}");
-            }
-
-            // Timer de polling pour mise à jour régulière (toutes les 500ms)
-            // Plus fiable que FileSystemWatcher pour jobs simultanés
-            _updateTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(500)
-            };
-            _updateTimer.Tick += (s, e) => UpdateStateContent();
-            _updateTimer.Start();
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] DispatcherTimer started (interval: 500ms)");
 
             UpdateStateContent();
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[JobsPage] Error initializing state watcher: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] Error initializing state watcher: {ex.Message}");
-        }
+        catch (Exception) { }
     }
 
     private void OnStateFileChanged(object sender, FileSystemEventArgs e)
     {
-        // Mise à jour immédiate en plus du polling
         Dispatcher.UIThread.Post(UpdateStateContent);
     }
 
     private void UpdateStateContent()
     {
-        // Debug: Vérifier que la méthode est appelée
-        System.Diagnostics.Debug.WriteLine($"[JobsPage] UpdateStateContent called at {DateTime.Now:HH:mm:ss.fff}");
-
-        // Retry mechanism pour gérer les conflits de lecture/écriture
-        for (int retry = 0; retry < 3; retry++)
+        try
         {
-            try
+            if (!File.Exists(_stateFilePath))
             {
-                if (string.IsNullOrEmpty(_stateFilePath))
+                return;
+            }
+
+            using (var fs = new FileStream(_stateFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var sr = new StreamReader(fs))
+            {
+                string content = sr.ReadToEnd();
+                if (string.IsNullOrWhiteSpace(content)) return;
+
+                var options = new JsonSerializerOptions
                 {
-                    System.Diagnostics.Debug.WriteLine("[JobsPage] State file path is empty or null");
-                    return;
-                }
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+                };
 
-                if (!File.Exists(_stateFilePath))
+                var states = JsonSerializer.Deserialize<List<StateEntry>>(content, options);
+
+                if (states != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[JobsPage] State file not found: {_stateFilePath}");
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] Reading state file: {_stateFilePath}");
-
-                using (var fs = new FileStream(_stateFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var sr = new StreamReader(fs))
-                {
-                    string content = sr.ReadToEnd();
-                    System.Diagnostics.Debug.WriteLine($"[JobsPage] State file content length: {content.Length} chars");
-
-                    if (string.IsNullOrWhiteSpace(content))
+                    foreach (var state in states)
                     {
-                        System.Diagnostics.Debug.WriteLine("[JobsPage] State file is empty");
-                        return;
-                    }
-
-                    System.Diagnostics.Debug.WriteLine($"[JobsPage] State file content: {content.Substring(0, Math.Min(200, content.Length))}...");
-
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true,
-                        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-                    };
-
-                    var states = JsonSerializer.Deserialize<List<StateEntry>>(content, options);
-
-                    if (states != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[JobsPage] Found {states.Count} states, have {_jobCards.Count} cards");
-
-                        // Le DispatcherTimer s'exécute déjà sur le thread UI, pas besoin de Post()
-                        foreach (var state in states)
+                        if (_jobCards.TryGetValue(state.JobName, out var card))
                         {
-                            System.Diagnostics.Debug.WriteLine($"[JobsPage] Processing state for '{state.JobName}': {state.State}, Progress: {state.Progress:F1}%");
-
-                            if (_jobCards.TryGetValue(state.JobName, out var card))
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[JobsPage] Updating card for '{state.JobName}'");
-                                card.UpdateState(state);
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[JobsPage] No card found for job '{state.JobName}'");
-                                System.Diagnostics.Debug.WriteLine($"[JobsPage] Available cards: {string.Join(", ", _jobCards.Keys)}");
-                            }
+                            card.UpdateState(state);
                         }
                     }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("[JobsPage] Deserialization returned null");
-                    }
                 }
-
-                // Si on arrive ici, la lecture a réussi
-                return;
             }
-            catch (IOException ex) when (retry < 2)
-            {
-                // Le fichier est verrouillé, on attend un peu avant de réessayer
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] IO error (retry {retry}): {ex.Message}");
-                Task.Delay(50).Wait();
-            }
-            catch (JsonException ex)
-            {
-                Console.WriteLine($"[JobsPage] JSON parsing error: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] JSON parsing error: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] Stack trace: {ex.StackTrace}");
-                return;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] Stack trace: {ex.StackTrace}");
-                return;
-            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
         }
     }
 
@@ -319,30 +206,16 @@ public partial class JobsPage : UserControl
         if (mainWindow2 != null)
         {
             var password = await passwordDialog.ShowDialog<string?>(mainWindow2);
-            if (password != null && _jobManager != null)
+            if (password != null)
             {
-                System.Diagnostics.Debug.WriteLine($"[JobsPage] Launching job '{job.Name}' in background");
-
-                // Lancer le job en arrière-plan sans bloquer l'UI
-                _ = Task.Run(async () =>
+                await Task.Run(() =>
                 {
                     try
                     {
-                        await _jobManager.LaunchJobAsync(job, password);
-                        System.Diagnostics.Debug.WriteLine($"[JobsPage] Job '{job.Name}' completed successfully");
+                        _jobManager?.LaunchJob(job, password);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[JobsPage] Job '{job.Name}' failed: {ex.Message}");
-
-                        // Afficher l'erreur sur le thread UI
-                        await Dispatcher.UIThread.InvokeAsync(async () =>
-                        {
-                            var errorDialog = new ErrorDialog(
-                                LocalizationManager.Get("JobsPage_Error_JobFailedTitle"),
-                                LocalizationManager.GetFormatted("JobsPage_Error_JobFailedMessage", job.Name, ex.Message));
-                            await errorDialog.ShowDialog(mainWindow2);
-                        });
                     }
                 });
             }
@@ -354,33 +227,6 @@ public partial class JobsPage : UserControl
         var (index, job) = data;
         _jobManager?.removeJob(index);
         LoadJobs();
-    }
-
-    private void OnJobPause(object? sender, Job job)
-    {
-        if (_jobManager != null)
-        {
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] Pausing job '{job.Name}'");
-            _jobManager.PauseJob(job.Name);
-        }
-    }
-
-    private void OnJobResume(object? sender, Job job)
-    {
-        if (_jobManager != null)
-        {
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] Resuming job '{job.Name}'");
-            _jobManager.ResumeJob(job.Name);
-        }
-    }
-
-    private void OnJobStop(object? sender, Job job)
-    {
-        if (_jobManager != null)
-        {
-            System.Diagnostics.Debug.WriteLine($"[JobsPage] Stopping job '{job.Name}'");
-            _jobManager.StopJob(job.Name);
-        }
     }
 
     private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
