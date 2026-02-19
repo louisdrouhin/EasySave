@@ -1,3 +1,11 @@
+## v2.0.1 (2026-02-18)
+
+## v4.0.1 (2026-02-18)
+
+### Fix
+
+- **EasySave.Core**: move Cryptosoft path to config.json
+
 ## v2.0.0 (2026-02-13)
 
 ## v1.5.0 (2026-02-13)

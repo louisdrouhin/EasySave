@@ -31,18 +31,11 @@
   </ItemGroup>
     <ItemGroup>
         <None Include="..\config.example.json"
-              CopyToOutputDirectory="PreserveNewest" />
-        <None Include="..\config.json"
-              CopyToOutputDirectory="Always" />
-        <None Include="..\Cryptosoft.exe"
-              CopyToOutputDirectory="PreserveNewest" />
+              CopyToOutputDirectory="PreserveNewest"
+              Link="config.json" />
     </ItemGroup>
     <ItemGroup>
         <AvaloniaResource Include="font\**\*" />
         <AvaloniaResource Include="images\**\*" />
-    </ItemGroup>
-    <ItemGroup>
-        <None Include="../config.json" CopyToOutputDirectory="PreserveNewest" />
-        <None Include="../config.example.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 </Project>

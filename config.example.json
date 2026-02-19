@@ -10,6 +10,12 @@
     },
     "businessApplications": ["notepad"]
   },
+  "easyLogServer": {
+    "enabled": false,
+    "mode": "local_only",
+    "host": "localhost",
+    "port": 5000
+  },
   "jobs": [
     {
       "name": "test",
