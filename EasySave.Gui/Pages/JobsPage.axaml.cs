@@ -78,12 +78,15 @@ public partial class JobsPage : UserControl
                 var job = jobs[i];
                 var card = new JobCard(job, i + 1);
                 card.PlayClicked += OnJobPlay;
+                card.PauseClicked += OnJobPause;
+                card.ResumeClicked += OnJobResume;
+                card.StopClicked += OnJobStop;
                 card.DeleteClicked += OnJobDelete;
                 JobsStackPanel.Children.Add(card);
                 _jobCards[job.Name] = card;
             }
         }
-        
+
         UpdateStateContent();
     }
 
@@ -98,7 +101,7 @@ public partial class JobsPage : UserControl
             {
                 string executionDirState = Path.Combine(AppContext.BaseDirectory, _stateFilePath);
                 string projectRootState = Path.Combine(AppContext.BaseDirectory, "../../../../../", _stateFilePath);
-                
+
                 if (File.Exists(executionDirState)) _stateFilePath = executionDirState;
                 else if (File.Exists(projectRootState)) _stateFilePath = Path.GetFullPath(projectRootState);
             }
@@ -117,7 +120,7 @@ public partial class JobsPage : UserControl
                 };
                 _watcher.Changed += OnStateFileChanged;
             }
-            
+
             UpdateStateContent();
         }
         catch (Exception) { }
@@ -132,7 +135,7 @@ public partial class JobsPage : UserControl
     {
         try
         {
-            if (!File.Exists(_stateFilePath)) 
+            if (!File.Exists(_stateFilePath))
             {
                 return;
             }
@@ -148,9 +151,9 @@ public partial class JobsPage : UserControl
                     PropertyNameCaseInsensitive = true,
                     Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
                 };
-                
+
                 var states = JsonSerializer.Deserialize<List<StateEntry>>(content, options);
-                
+
                 if (states != null)
                 {
                     foreach (var state in states)
@@ -163,8 +166,8 @@ public partial class JobsPage : UserControl
                 }
             }
         }
-        catch (Exception ex) 
-        { 
+        catch (Exception ex)
+        {
             Console.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
         }
     }
@@ -191,7 +194,7 @@ public partial class JobsPage : UserControl
         {
             var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
             var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
-            
+
             var mainWindow = (Window?)TopLevel.GetTopLevel(this);
             if (mainWindow != null)
             {
@@ -220,6 +223,21 @@ public partial class JobsPage : UserControl
                 });
             }
         }
+    }
+
+    private void OnJobPause(object? sender, Job job)
+    {
+        _jobManager?.PauseJob(job);
+    }
+
+    private void OnJobResume(object? sender, Job job)
+    {
+        _jobManager?.ResumeJob(job);
+    }
+
+    private void OnJobStop(object? sender, Job job)
+    {
+        _jobManager?.StopJob(job);
     }
 
     private void OnJobDelete(object? sender, (int index, Job job) data)

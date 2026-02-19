@@ -40,19 +40,19 @@ public class StateTracker
   public void RemoveJobState(int index)
   {
     if (index < 0 || index >= _jobStates.Count)
-        return;
+      return;
 
     var jobStateKey = _jobStates.Keys.ElementAt(index);
 
     if (_jobStates.Remove(jobStateKey))
     {
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
-        var json = JsonSerializer.Serialize(_jobStates.Values, options);
-        File.WriteAllText(_stateFilePath, json);
+      var options = new JsonSerializerOptions
+      {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+      };
+      var json = JsonSerializer.Serialize(_jobStates.Values, options);
+      File.WriteAllText(_stateFilePath, json);
     }
   }
 }

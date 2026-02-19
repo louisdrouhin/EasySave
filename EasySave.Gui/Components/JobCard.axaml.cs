@@ -12,14 +12,18 @@ public partial class JobCard : UserControl
     private Job _job = null!;
     private int _index = 0;
     private bool _isExpanded = false;
+    private JobState _currentState = JobState.Inactive;
 
     public event EventHandler<Job>? PlayClicked;
+    public event EventHandler<Job>? PauseClicked;
+    public event EventHandler<Job>? ResumeClicked;
+    public event EventHandler<Job>? StopClicked;
     public event EventHandler<(int, Job)>? DeleteClicked;
 
     public JobCard()
     {
         InitializeComponent();
-        
+
         var statusText = this.FindControl<TextBlock>("StatusText");
         if (statusText != null) statusText.Text = LocalizationManager.Get("JobCard_Status_Inactive");
 
@@ -54,8 +58,8 @@ public partial class JobCard : UserControl
         var jobTypeBadgeText = this.FindControl<TextBlock>("JobTypeBadgeText");
         if (jobTypeBadgeText != null)
         {
-            jobTypeBadgeText.Text = job.Type == JobType.Full 
-                ? LocalizationManager.Get("CreateJobDialog_JobType_Full") 
+            jobTypeBadgeText.Text = job.Type == JobType.Full
+                ? LocalizationManager.Get("CreateJobDialog_JobType_Full")
                 : LocalizationManager.Get("CreateJobDialog_JobType_Differential");
         }
 
@@ -121,12 +125,32 @@ public partial class JobCard : UserControl
 
     private void OnPlayClicked()
     {
-        PlayClicked?.Invoke(this, _job);
+        if (_currentState == JobState.Inactive)
+        {
+            PlayClicked?.Invoke(this, _job);
+        }
+        else if (_currentState == JobState.Active)
+        {
+            PauseClicked?.Invoke(this, _job);
+        }
+        else if (_currentState == JobState.Paused)
+        {
+            ResumeClicked?.Invoke(this, _job);
+        }
     }
 
     private void OnDeleteClicked()
     {
-        ToggleDeleteMode(true);
+        if (_currentState == JobState.Active || _currentState == JobState.Paused)
+        {
+            // Stop the job
+            StopClicked?.Invoke(this, _job);
+        }
+        else
+        {
+            // Delete mode
+            ToggleDeleteMode(true);
+        }
     }
 
     private void OnCancelDeleteClicked()
@@ -155,52 +179,143 @@ public partial class JobCard : UserControl
 
     public void UpdateState(StateEntry state)
     {
+        System.Diagnostics.Debug.WriteLine($"[JobCard] UpdateState called for '{state.JobName}': State={state.State}, Progress={state.Progress}");
+
+        _currentState = state.State;
+
         var statusBadge = this.FindControl<Border>("StatusBadge");
         var statusTextControl = this.FindControl<TextBlock>("StatusText");
-        
+
         if (statusBadge != null && statusTextControl != null)
         {
-            statusTextControl.Text = state.State == JobState.Active 
-                ? LocalizationManager.Get("JobCard_Status_Active") 
-                : LocalizationManager.Get("JobCard_Status_Inactive");
-
             if (state.State == JobState.Active)
             {
+                statusTextControl.Text = LocalizationManager.Get("JobCard_Status_Active");
                 statusBadge.Background = new SolidColorBrush(Color.Parse("#22C55E"));
                 statusTextControl.Foreground = Brushes.White;
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Status badge updated to ACTIVE (green)");
+            }
+            else if (state.State == JobState.Paused)
+            {
+                statusTextControl.Text = "PAUSED";
+                statusBadge.Background = new SolidColorBrush(Color.Parse("#F59E0B"));
+                statusTextControl.Foreground = Brushes.White;
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Status badge updated to PAUSED (orange)");
             }
             else
             {
+                statusTextControl.Text = LocalizationManager.Get("JobCard_Status_Inactive");
                 statusBadge.Background = new SolidColorBrush(Color.Parse("#E5E7EB"));
                 statusTextControl.Foreground = new SolidColorBrush(Color.Parse("#374151"));
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Status badge updated to INACTIVE (gray)");
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("[JobCard] WARNING: StatusBadge or StatusText control not found!");
+        }
+
+        // Update Play/Pause button icon
+        var playPauseIcon = this.FindControl<PathIcon>("PlayPauseIcon");
+        var playButton = this.FindControl<Button>("PlayButton");
+        if (playPauseIcon != null && playButton != null)
+        {
+            if (state.State == JobState.Active)
+            {
+                // Show Pause icon
+                if (this.TryGetResource("PauseIcon", out var pauseGeometry))
+                {
+                    playPauseIcon.Data = (Geometry)pauseGeometry!;
+                    playPauseIcon.Margin = new Avalonia.Thickness(0);
+                }
+                playButton.Classes.Remove("button-green");
+                playButton.Classes.Add("button-orange");
+            }
+            else if (state.State == JobState.Paused)
+            {
+                // Show Play icon (to resume)
+                if (this.TryGetResource("PlayIcon", out var playGeometry))
+                {
+                    playPauseIcon.Data = (Geometry)playGeometry!;
+                    playPauseIcon.Margin = new Avalonia.Thickness(2, 0, 0, 0);
+                }
+                playButton.Classes.Remove("button-orange");
+                playButton.Classes.Add("button-green");
+            }
+            else
+            {
+                // Show Play icon
+                if (this.TryGetResource("PlayIcon", out var playGeometry))
+                {
+                    playPauseIcon.Data = (Geometry)playGeometry!;
+                    playPauseIcon.Margin = new Avalonia.Thickness(2, 0, 0, 0);
+                }
+                playButton.Classes.Remove("button-orange");
+                playButton.Classes.Add("button-green");
+            }
+        }
+
+        // Update Delete/Stop button icon
+        var deleteStopIcon = this.FindControl<PathIcon>("DeleteStopIcon");
+        if (deleteStopIcon != null)
+        {
+            if (state.State == JobState.Active || state.State == JobState.Paused)
+            {
+                // Show Stop icon
+                if (this.TryGetResource("StopIcon", out var stopGeometry))
+                {
+                    deleteStopIcon.Data = (Geometry)stopGeometry!;
+                }
+            }
+            else
+            {
+                // Show Trash icon
+                if (this.TryGetResource("TrashIcon", out var trashGeometry))
+                {
+                    deleteStopIcon.Data = (Geometry)trashGeometry!;
+                }
             }
         }
 
         var progressPanel = this.FindControl<Border>("ProgressPanel");
-        if (progressPanel == null) return;
+        if (progressPanel == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[JobCard] WARNING: ProgressPanel control not found!");
+            return;
+        }
 
-        if (state.State == JobState.Active)
+        if (state.State == JobState.Active || state.State == JobState.Paused)
         {
             progressPanel.IsVisible = true;
-            
+            System.Diagnostics.Debug.WriteLine($"[JobCard] ProgressPanel made visible");
+
             var progressBar = this.FindControl<ProgressBar>("JobProgressBar");
-            if (progressBar != null) progressBar.Value = state.Progress ?? 0;
+            if (progressBar != null)
+            {
+                progressBar.Value = state.Progress ?? 0;
+                System.Diagnostics.Debug.WriteLine($"[JobCard] ProgressBar value set to {state.Progress ?? 0}");
+            }
 
             var percentageText = this.FindControl<TextBlock>("PercentageText");
-            if (percentageText != null) percentageText.Text = $"{(state.Progress ?? 0):F1}%";
+            if (percentageText != null)
+            {
+                percentageText.Text = $"{(state.Progress ?? 0):F1}%";
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Percentage text set to {(state.Progress ?? 0):F1}%");
+            }
 
             var stateText = this.FindControl<TextBlock>("StateText");
-            if (stateText != null) stateText.Text = !string.IsNullOrEmpty(state.CurrentSourcePath) 
-                ? LocalizationManager.Get("JobCard_Progress_Processing") 
+            if (stateText != null) stateText.Text = !string.IsNullOrEmpty(state.CurrentSourcePath)
+                ? LocalizationManager.Get("JobCard_Progress_Processing")
                 : LocalizationManager.Get("JobCard_Status_Active");
 
             var filesText = this.FindControl<TextBlock>("FilesText");
-            if (filesText != null) 
+            if (filesText != null)
             {
                 long total = state.TotalFiles ?? 0;
                 long remaining = state.RemainingFiles ?? 0;
                 long processed = total - remaining;
                 filesText.Text = $"{processed:N0} / {total:N0}";
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Files text set to {processed} / {total}");
             }
 
             var sizeText = this.FindControl<TextBlock>("SizeText");
@@ -210,11 +325,13 @@ public partial class JobCard : UserControl
                 long remaining = state.RemainingSizeToTransfer ?? 0;
                 long processed = total - remaining;
                 sizeText.Text = $"{FormatSize(processed)} / {FormatSize(total)}";
+                System.Diagnostics.Debug.WriteLine($"[JobCard] Size text set to {FormatSize(processed)} / {FormatSize(total)}");
             }
         }
         else
         {
             progressPanel.IsVisible = false;
+            System.Diagnostics.Debug.WriteLine($"[JobCard] ProgressPanel made hidden");
         }
     }
 
