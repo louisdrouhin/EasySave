@@ -78,6 +78,9 @@ public partial class JobsPage : UserControl
                 var job = jobs[i];
                 var card = new JobCard(job, i + 1);
                 card.PlayClicked += OnJobPlay;
+                card.PauseClicked += OnJobPause;
+                card.ResumeClicked += OnJobResume;
+                card.StopClicked += OnJobStop;
                 card.DeleteClicked += OnJobDelete;
                 JobsStackPanel.Children.Add(card);
                 _jobCards[job.Name] = card;
@@ -220,6 +223,21 @@ public partial class JobsPage : UserControl
                 });
             }
         }
+    }
+
+    private void OnJobPause(object? sender, Job job)
+    {
+        _jobManager?.PauseJob(job);
+    }
+
+    private void OnJobResume(object? sender, Job job)
+    {
+        _jobManager?.ResumeJob(job);
+    }
+
+    private void OnJobStop(object? sender, Job job)
+    {
+        _jobManager?.StopJob(job);
     }
 
     private void OnJobDelete(object? sender, (int index, Job job) data)

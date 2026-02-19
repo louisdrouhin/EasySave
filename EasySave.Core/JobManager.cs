@@ -27,6 +27,10 @@ public class JobManager
     private readonly StateTracker _stateTracker;
     private EasyLogNetworkClient? _networkClient;
     private string _logMode = "local_only";  // "local_only", "server_only", "both"
+    
+    // Job control mechanisms
+    private readonly Dictionary<string, CancellationTokenSource> _jobCancellationTokens = new();
+    private readonly Dictionary<string, ManualResetEventSlim> _jobPauseEvents = new();
 
     public ConfigParser ConfigParser => _configParser;
 
@@ -424,8 +428,90 @@ public class JobManager
         }
     }
 
+    public void PauseJob(Job job)
+    {
+        if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
+        {
+            pauseEvent.Reset(); // Signal pause
+            
+            _stateTracker.UpdateJobState(
+                new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Paused
+                )
+            );
+
+            LogEvent(
+                DateTime.Now,
+                "JobPaused",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name }
+                }
+            );
+        }
+    }
+
+    public void ResumeJob(Job job)
+    {
+        if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
+        {
+            pauseEvent.Set(); // Signal resume
+            
+            _stateTracker.UpdateJobState(
+                new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Active
+                )
+            );
+
+            LogEvent(
+                DateTime.Now,
+                "JobResumed",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name }
+                }
+            );
+        }
+    }
+
+    public void StopJob(Job job)
+    {
+        if (_jobCancellationTokens.TryGetValue(job.Name, out var cts))
+        {
+            cts.Cancel(); // Signal cancellation
+            
+            _stateTracker.UpdateJobState(
+                new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Inactive
+                )
+            );
+
+            LogEvent(
+                DateTime.Now,
+                "JobStopped",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name }
+                }
+            );
+        }
+    }
+
     public void LaunchJob(Job job, string password)
     {
+        // Create control mechanisms for this job
+        var cts = new CancellationTokenSource();
+        var pauseEvent = new ManualResetEventSlim(true); // Initially not paused
+        
+        _jobCancellationTokens[job.Name] = cts;
+        _jobPauseEvents[job.Name] = pauseEvent;
+        
         _stateTracker.UpdateJobState(
             new StateEntry(
                 job.Name,
@@ -451,10 +537,10 @@ public class JobManager
             switch (job.Type)
             {
                 case JobType.Full:
-                    ExecuteFullBackup(job, password);
+                    ExecuteFullBackup(job, password, cts.Token, pauseEvent);
                     break;
                 case JobType.Differential:
-                    ExecuteDifferentialBackup(job, password);
+                    ExecuteDifferentialBackup(job, password, cts.Token, pauseEvent);
                     break;
                 default:
                     throw new InvalidOperationException($"Job type not supported : {job.Type}");
@@ -478,8 +564,39 @@ public class JobManager
                 }
             );
         }
+        catch (OperationCanceledException)
+        {
+            // Job was cancelled, ensure state is set to Inactive
+            _stateTracker.UpdateJobState(
+                new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Inactive
+                )
+            );
+            
+            LogEvent(
+                DateTime.Now,
+                "JobCancelled",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "jobType", job.Type.ToString() }
+                }
+            );
+            // Don't rethrow - cancellation is expected
+        }
         catch (Exception ex)
         {
+            // Ensure state is set to Inactive on error
+            _stateTracker.UpdateJobState(
+                new StateEntry(
+                    job.Name,
+                    DateTime.Now,
+                    JobState.Inactive
+                )
+            );
+            
             LogEvent(
                 DateTime.Now,
                 "JobFailed",
@@ -492,9 +609,19 @@ public class JobManager
             );
             throw;
         }
+        finally
+        {
+            // Cleanup
+            _jobCancellationTokens.Remove(job.Name);
+            if (_jobPauseEvents.Remove(job.Name, out var pauseEventToDispose))
+            {
+                pauseEventToDispose.Dispose();
+            }
+            cts.Dispose();
+        }
     }
 
-    private void ExecuteFullBackup(Job job, string password, bool createHashFile = false)
+    private void ExecuteFullBackup(Job job, string password, CancellationToken cancellationToken, ManualResetEventSlim pauseEvent, bool createHashFile = false)
     {
         if (!Directory.Exists(job.SourcePath))
         {
@@ -558,6 +685,12 @@ public class JobManager
 
         foreach (var sourceFile in sourceFiles)
         {
+            // Check for cancellation
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            // Wait if paused
+            pauseEvent.Wait(cancellationToken);
+            
             try
             {
                 var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
@@ -725,7 +858,7 @@ public class JobManager
         );
     }
 
-    private void ExecuteDifferentialBackup(Job job, string password)
+    private void ExecuteDifferentialBackup(Job job, string password, CancellationToken cancellationToken, ManualResetEventSlim pauseEvent)
     {
 
         /// TO DO : check if modif else print message and no copy
@@ -754,7 +887,7 @@ public class JobManager
                 }
             );
 
-            ExecuteFullBackup(job, password, createHashFile: true);
+            ExecuteFullBackup(job, password, cancellationToken, pauseEvent, createHashFile: true);
             return;
         }
 
@@ -793,6 +926,12 @@ public class JobManager
 
         foreach (var sourceFile in allSourceFiles)
         {
+            // Check for cancellation
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            // Wait if paused
+            pauseEvent.Wait(cancellationToken);
+            
             try
             {
                 var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
@@ -847,6 +986,12 @@ public class JobManager
 
         foreach (var fileToCopy in filesToCopy)
         {
+            // Check for cancellation
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            // Wait if paused
+            pauseEvent.Wait(cancellationToken);
+            
             try
             {
                 var destinationFile = Path.Combine(diffBackupPath, fileToCopy.RelativePath);
