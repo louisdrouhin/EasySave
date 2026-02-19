@@ -25,6 +25,8 @@ public class JobManager
     private readonly ConfigParser _configParser;
     private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
+    private EasyLogNetworkClient? _networkClient;
+    private string _logMode = "local_only";  // "local_only", "server_only", "both"
 
     public ConfigParser ConfigParser => _configParser;
 
@@ -36,7 +38,18 @@ public class JobManager
         _logFormatter = CreateLogFormatter();
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        _logger.Write(
+        // Initialize network client if server is enabled
+        try
+        {
+            InitializeNetworkClient();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[JobManager] Network initialization error: {ex.Message}");
+            _logMode = "local_only";
+        }
+
+        LogEvent(
             DateTime.Now,
             "ConfigParserInitialized",
             new Dictionary<string, object>
@@ -45,19 +58,20 @@ public class JobManager
             }
         );
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "LoggerInitialized",
             new Dictionary<string, object>
             {
                 { "formatterType", _logFormatter.GetType().Name },
-                { "logsPath", _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json" }
+                { "logsPath", _configParser.Config?["config"]?["logsPath"]?.GetValue<string>() ?? "logs.json" },
+                { "logMode", _logMode }
             }
         );
 
         _jobs = new List<Job>();
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobsListCreated",
             new Dictionary<string, object>()
@@ -65,7 +79,7 @@ public class JobManager
 
         LoadJobsFromConfig();
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobsLoadedFromConfig",
             new Dictionary<string, object>
@@ -88,11 +102,87 @@ public class JobManager
             );
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "StateTrackerCreated",
             new Dictionary<string, object>()
         );
+    }
+
+    private void InitializeNetworkClient()
+    {
+        var serverConfig = _configParser.Config?["easyLogServer"];
+        bool isEnabled = serverConfig?["enabled"]?.GetValue<bool>() ?? false;
+
+        if (!isEnabled)
+        {
+            _logMode = "local_only";
+            return;
+        }
+
+        _logMode = serverConfig?["mode"]?.GetValue<string>()?.ToLower() ?? "local_only";
+
+        if (_logMode == "local_only")
+            return;
+
+        string host = serverConfig?["host"]?.GetValue<string>() ?? "localhost";
+        int port = serverConfig?["port"]?.GetValue<int>() ?? 5000;
+
+        try
+        {
+            _networkClient = new EasyLogNetworkClient(host, port);
+            _networkClient.Connect();
+            Console.WriteLine($"[JobManager] Connected to EasyLog server at {host}:{port}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[JobManager] Failed to connect to EasyLog server: {ex.Message}");
+            // Fallback to local_only if connection fails
+            _logMode = "local_only";
+            _networkClient = null;
+        }
+    }
+
+    private void LogEvent(DateTime timestamp, string name, Dictionary<string, object> content)
+    {
+        // Add client machine name
+        content["clientId"] = Environment.MachineName;
+
+        switch (_logMode)
+        {
+            case "local_only":
+                _logger.Write(timestamp, name, content);
+                break;
+
+            case "server_only":
+                if (_networkClient != null && _networkClient.IsConnected)
+                {
+                    try
+                    {
+                        _networkClient.Send(timestamp, name, content);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[JobManager] Error sending log to server: {ex.Message}");
+                    }
+                }
+                break;
+
+            case "both":
+                _logger.Write(timestamp, name, content);
+                if (_networkClient != null && _networkClient.IsConnected)
+                {
+                    try
+                    {
+                        _networkClient.Send(timestamp, name, content);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[JobManager] Error sending log to server: {ex.Message}");
+                    }
+                }
+                break;
+        }
     }
 
     private ILogFormatter CreateLogFormatter()
@@ -123,7 +213,7 @@ public class JobManager
             )
         );
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobCreated",
             new Dictionary<string, object>
@@ -151,7 +241,7 @@ public class JobManager
 
         _stateTracker.RemoveJobState(index);
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobDeleted",
             new Dictionary<string, object>
@@ -172,6 +262,7 @@ public class JobManager
     public void Close()
     {
         _logger.Close();
+        _networkClient?.Disconnect();
     }
 
     public string? CheckBusinessApplications()
@@ -185,7 +276,7 @@ public class JobManager
                 var processes = Process.GetProcessesByName(appName);
                 if (processes.Length > 0)
                 {
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         "BusinessApplicationDetected",
                         new Dictionary<string, object>
@@ -200,7 +291,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "BusinessApplicationCheckError",
                     new Dictionary<string, object>
@@ -220,6 +311,7 @@ public class JobManager
         string oldFormat = _configParser.GetLogFormat();
 
         _logger.Close();
+        _networkClient?.Disconnect();
 
         _configParser.SetLogFormat(format);
 
@@ -229,7 +321,10 @@ public class JobManager
 
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        _logger.Write(
+        // Reinitialize network client after config reload
+        InitializeNetworkClient();
+
+        LogEvent(
             DateTime.Now,
             "LogFormatChanged",
             new Dictionary<string, object>
@@ -339,7 +434,7 @@ public class JobManager
               )
             );
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "JobStarted",
             new Dictionary<string, object>
@@ -373,7 +468,7 @@ public class JobManager
                   )
                 );
 
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "JobCompleted",
                 new Dictionary<string, object>
@@ -385,7 +480,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "JobFailed",
                 new Dictionary<string, object>
@@ -418,7 +513,7 @@ public class JobManager
 
         Directory.CreateDirectory(fullBackupPath);
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "BackupFolderCreated",
             new Dictionary<string, object>
@@ -449,7 +544,7 @@ public class JobManager
             ""
         ));
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "FullBackupStarted",
             new Dictionary<string, object>
@@ -493,7 +588,7 @@ public class JobManager
                     }
                     catch (Exception hashEx)
                     {
-                        _logger.Write(
+                        LogEvent(
                             DateTime.Now,
                             "HashCalculationError",
                             new Dictionary<string, object>
@@ -539,7 +634,7 @@ public class JobManager
                         { "progress", $"{filesProcessed}/{totalFiles}" }
                     };
 
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         logType,
                         logData
@@ -558,7 +653,7 @@ public class JobManager
                         { "progress", $"{filesProcessed}/{totalFiles}" }
                     };
 
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         "FileEncryptionError",
                         logData
@@ -567,7 +662,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileCopyError",
                     new Dictionary<string, object>
@@ -591,7 +686,7 @@ public class JobManager
                 });
                 File.WriteAllText(hashFilePath, hashJson);
 
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "HashFileCreated",
                     new Dictionary<string, object>
@@ -604,7 +699,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "HashFileCreationError",
                     new Dictionary<string, object>
@@ -616,7 +711,7 @@ public class JobManager
             }
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "FullBackupCompleted",
             new Dictionary<string, object>
@@ -649,7 +744,7 @@ public class JobManager
         var hashFilePath = Path.Combine(job.DestinationPath, "hash.json");
         if (!File.Exists(hashFilePath))
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "NoHashFileFound",
                 new Dictionary<string, object>
@@ -680,7 +775,7 @@ public class JobManager
         var diffBackupPath = Path.Combine(job.DestinationPath, backupFolderName);
         Directory.CreateDirectory(diffBackupPath);
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DifferentialBackupStarted",
             new Dictionary<string, object>
@@ -720,7 +815,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileProcessError",
                     new Dictionary<string, object>
@@ -796,7 +891,7 @@ public class JobManager
                         { "hash", fileToCopy.Hash }
                     };
 
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         logType,
                         logData
@@ -815,7 +910,7 @@ public class JobManager
                         { "hash", fileToCopy.Hash }
                     };
 
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         "FileEncryptionError",
                         logData
@@ -824,7 +919,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileCopyError",
                     new Dictionary<string, object>
@@ -845,7 +940,7 @@ public class JobManager
             });
             File.WriteAllText(hashFilePath, newHashJson);
 
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "HashFileUpdated",
                 new Dictionary<string, object>
@@ -858,7 +953,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 "HashFileUpdateError",
                 new Dictionary<string, object>
@@ -869,7 +964,7 @@ public class JobManager
             );
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DifferentialBackupCompleted",
             new Dictionary<string, object>
@@ -947,7 +1042,7 @@ public class JobManager
                 if (process.ExitCode != 0)
                 {
                     var error = process.StandardError.ReadToEnd();
-                    _logger.Write(
+                    LogEvent(
                         DateTime.Now,
                         errorLogType,
                         new Dictionary<string, object>
@@ -967,7 +1062,7 @@ public class JobManager
         }
         catch (Exception ex)
         {
-            _logger.Write(
+            LogEvent(
                 DateTime.Now,
                 errorLogType,
                 new Dictionary<string, object>
@@ -993,7 +1088,7 @@ public class JobManager
             Directory.CreateDirectory(restorePath);
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DecryptBackupStarted",
             new Dictionary<string, object>
@@ -1032,7 +1127,7 @@ public class JobManager
                 filesProcessed++;
                 totalBytesTransferred += fileInfo.Length;
 
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileDecrypted",
                     new Dictionary<string, object>
@@ -1045,7 +1140,7 @@ public class JobManager
             }
             catch (Exception ex)
             {
-                _logger.Write(
+                LogEvent(
                     DateTime.Now,
                     "FileDecryptError",
                     new Dictionary<string, object>
@@ -1058,7 +1153,7 @@ public class JobManager
             }
         }
 
-        _logger.Write(
+        LogEvent(
             DateTime.Now,
             "DecryptBackupCompleted",
             new Dictionary<string, object>

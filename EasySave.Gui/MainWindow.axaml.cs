@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        Closed += (_, _) => _jobManager?.Close();
         LocalizationManager.LanguageChanged += OnLanguageChanged;
 
         Title = LocalizationManager.Get("MainWindow_Title");

@@ -4,10 +4,10 @@
 1. [Introduction](#introduction)
 2. [Installation](#installation)
 3. [Architecture](#architecture)
-4. [Usage](#usage)
-5. [Examples](#examples)
-6. [Reference](#reference)
-7. [Custom Formatters](#custom-formatters)
+4. [The 3 Logging Modes](#the-3-logging-modes)
+5. [Usage](#usage)
+6. [Examples](#examples)
+7. [Reference](#reference)
 
 ---
 
@@ -41,6 +41,95 @@ Interface for formatting implementations. Any formatter must implement this inte
 
 #### 3. **JsonLogFormatter**
 Default formatter that serializes logs to JSON format.
+
+#### 4. **XmlLogFormatter**
+Optional formatter that serializes logs to XML format.
+
+---
+
+## The 3 Logging Modes
+
+EasyLog.Lib supports **3 logging modes** to adapt to different architectural needs:
+
+### Mode 1: Direct Logging (Local File)
+
+**Description:** Logs are written directly to local files.
+
+**Usage:**
+```csharp
+ILogFormatter formatter = new JsonLogFormatter();
+EasyLog logger = new EasyLog(formatter, "logs");
+
+logger.Write(DateTime.Now, "backup", new Dictionary<string, object>
+{
+    { "status", "started" },
+    { "fileCount", 150 }
+});
+```
+
+**Advantages:**
+- ✅ Simple and performant (no network)
+- ✅ No external dependencies
+- ✅ Full control over files
+
+**Disadvantages:**
+- ❌ Logs limited to local machine
+- ❌ Manual centralization management
+
+**Use cases:**
+- Monolithic applications
+- Local development
+- Non-critical logs
+
+---
+
+### Mode 2: Network Client Logging
+
+**Description:** Logs are sent via TCP to a remote EasyLog.Server which records them.
+
+**Usage:**
+```csharp
+var client = new EasyLogNetworkClient("192.168.1.50", 5000);
+client.Connect();
+
+client.Send(DateTime.Now, "backup", new Dictionary<string, object>
+{
+    { "status", "started" },
+    { "fileCount", 150 }
+});
+
+client.Disconnect();
+```
+
+**Advantages:**
+- ✅ Centralized logs on a single server
+- ✅ Distributed logs from multiple clients
+- ✅ Scalable and flexible
+
+**Disadvantages:**
+- ❌ Depends on remote server
+- ❌ Potential loss on disconnection
+- ❌ Slight network overhead
+
+**Use cases:**
+- Distributed architectures
+- Microservices
+- Centralized logs from multiple machines
+
+---
+
+### Mode 3: Combined
+
+**Description:** Using an EasyLog.Server along with local writing
+
+---
+
+## Comparison of Modes
+
+| Aspect | Mode 1 (Direct) | Mode 2 (Server) | Mode 3 (Combined) |
+|--------|-----------------|-----------------|------------------|
+| **Storage** | Local | Server | Combined |
+| **Performance** | Very fast | Fast | Fast |
 
 ---
 
@@ -220,6 +309,26 @@ public class JsonLogFormatter : ILogFormatter
 **Output format:**
 ```json
 {"timestamp":"yyyy-MM-dd HH:mm:ss","name":"event_name","content":{...}}
+```
+
+### XmlLogFormatter Class
+
+```csharp
+public class XmlLogFormatter : ILogFormatter
+```
+
+**Description:** Formatter that serializes logs to XML format with hierarchical structure.
+
+**Output format:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<logs>
+  <logEntry>
+    <timestamp>2025-02-05 14:30:45</timestamp>
+    <name>event_name</name>
+    <content>...</content>
+  </logEntry>
+</logs>
 ```
 
 ---
