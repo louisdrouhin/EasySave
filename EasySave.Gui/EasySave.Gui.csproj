@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <ApplicationIcon>..\icon-easySave.ico</ApplicationIcon>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Avalonia"
@@ -19,7 +20,8 @@
         <PackageReference Include="Avalonia.Controls.DataGrid"
                           Version="11.3.11" />
         <!-- Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration. -->
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.11">
+        <PackageReference Include="Avalonia.Diagnostics"
+                          Version="11.3.11">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
@@ -28,7 +30,7 @@
         <ProjectReference Include="../EasySave.Core/EasySave.Core.csproj" />
         <ProjectReference Include="../EasySave.Models/EasySave.Models.csproj" />
         <ProjectReference Include="..\EasySave.Utils\EasySave.Utils.csproj" />
-  </ItemGroup>
+    </ItemGroup>
     <ItemGroup>
         <None Include="..\config.example.json"
               CopyToOutputDirectory="PreserveNewest"
@@ -37,5 +39,11 @@
     <ItemGroup>
         <AvaloniaResource Include="font\**\*" />
         <AvaloniaResource Include="images\**\*" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="..\icon-easySave.ico">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>icon-easySave.ico</Link>
+        </Content>
     </ItemGroup>
 </Project>
