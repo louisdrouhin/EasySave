@@ -27,7 +27,7 @@ public class JobManager
     private readonly StateTracker _stateTracker;
     private EasyLogNetworkClient? _networkClient;
     private string _logMode = "local_only";  // "local_only", "server_only", "both"
-    
+
     // Job control mechanisms
     private readonly Dictionary<string, CancellationTokenSource> _jobCancellationTokens = new();
     private readonly Dictionary<string, ManualResetEventSlim> _jobPauseEvents = new();
@@ -278,7 +278,7 @@ public class JobManager
     {
         // Stop business app monitoring
         StopBusinessAppMonitoring();
-        
+
         _logger.Close();
         _networkClient?.Disconnect();
     }
@@ -447,7 +447,7 @@ public class JobManager
         if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
         {
             pauseEvent.Reset(); // Signal pause
-            
+
             _stateTracker.UpdateJobState(
                 new StateEntry(
                     job.Name,
@@ -493,9 +493,9 @@ public class JobManager
             {
                 _jobsPausedByBusinessApp.Remove(job.Name);
             }
-            
+
             pauseEvent.Set(); // Signal resume
-            
+
             _stateTracker.UpdateJobState(
                 new StateEntry(
                     job.Name,
@@ -520,7 +520,7 @@ public class JobManager
         if (_jobCancellationTokens.TryGetValue(job.Name, out var cts))
         {
             cts.Cancel(); // Signal cancellation
-            
+
             _stateTracker.UpdateJobState(
                 new StateEntry(
                     job.Name,
@@ -545,10 +545,10 @@ public class JobManager
         // Create control mechanisms for this job
         var cts = new CancellationTokenSource();
         var pauseEvent = new ManualResetEventSlim(true); // Initially not paused
-        
+
         _jobCancellationTokens[job.Name] = cts;
         _jobPauseEvents[job.Name] = pauseEvent;
-        
+
         _stateTracker.UpdateJobState(
             new StateEntry(
                 job.Name,
@@ -611,7 +611,7 @@ public class JobManager
                     JobState.Inactive
                 )
             );
-            
+
             LogEvent(
                 DateTime.Now,
                 "JobCancelled",
@@ -633,7 +633,7 @@ public class JobManager
                     JobState.Inactive
                 )
             );
-            
+
             LogEvent(
                 DateTime.Now,
                 "JobFailed",
@@ -724,10 +724,10 @@ public class JobManager
         {
             // Check for cancellation
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             // Wait if paused
             pauseEvent.Wait(cancellationToken);
-            
+
             try
             {
                 var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
@@ -965,10 +965,10 @@ public class JobManager
         {
             // Check for cancellation
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             // Wait if paused
             pauseEvent.Wait(cancellationToken);
-            
+
             try
             {
                 var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
@@ -1025,10 +1025,10 @@ public class JobManager
         {
             // Check for cancellation
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             // Wait if paused
             pauseEvent.Wait(cancellationToken);
-            
+
             try
             {
                 var destinationFile = Path.Combine(diffBackupPath, fileToCopy.RelativePath);
@@ -1308,7 +1308,7 @@ public class JobManager
             try
             {
                 var detectedApp = CheckBusinessApplications();
-                
+
                 lock (_businessAppLock)
                 {
                     bool previousState = _isBusinessAppRunning;
@@ -1360,7 +1360,7 @@ public class JobManager
                         { "error", ex.Message }
                     }
                 );
-                
+
                 // Wait a bit before retrying
                 Thread.Sleep(5000);
             }
@@ -1427,7 +1427,7 @@ public class JobManager
                 );
             }
         }
-        
+
         _jobsPausedByBusinessApp.Clear();
     }
 
