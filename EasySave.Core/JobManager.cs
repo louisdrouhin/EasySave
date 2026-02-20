@@ -32,6 +32,14 @@ public class JobManager
     private readonly Dictionary<string, CancellationTokenSource> _jobCancellationTokens = new();
     private readonly Dictionary<string, ManualResetEventSlim> _jobPauseEvents = new();
 
+    // Business application monitoring
+    private Thread? _businessAppMonitorThread;
+    private CancellationTokenSource? _monitorCancellationTokenSource;
+    private volatile bool _isBusinessAppRunning = false;
+    private volatile string? _detectedBusinessApp = null;
+    private readonly object _businessAppLock = new object();
+    private readonly HashSet<string> _jobsPausedByBusinessApp = new();
+
     public ConfigParser ConfigParser => _configParser;
 
     public event EventHandler<LogFormatChangedEventArgs>? LogFormatChanged;
@@ -111,6 +119,9 @@ public class JobManager
             "StateTrackerCreated",
             new Dictionary<string, object>()
         );
+
+        // Start business application monitoring
+        StartBusinessAppMonitoring();
     }
 
     private void InitializeNetworkClient()
@@ -265,6 +276,9 @@ public class JobManager
 
     public void Close()
     {
+        // Stop business app monitoring
+        StopBusinessAppMonitoring();
+        
         _logger.Close();
         _networkClient?.Disconnect();
     }
@@ -455,8 +469,31 @@ public class JobManager
 
     public void ResumeJob(Job job)
     {
+        // Check if business app is running - prevent resume
+        lock (_businessAppLock)
+        {
+            if (_isBusinessAppRunning)
+            {
+                LogEvent(
+                    DateTime.Now,
+                    "JobResumeBlocked",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", job.Name },
+                        { "reason", $"Business application '{_detectedBusinessApp}' is running" }
+                    }
+                );
+                return;
+            }
+        }
+
         if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
         {
+            lock (_businessAppLock)
+            {
+                _jobsPausedByBusinessApp.Remove(job.Name);
+            }
+            
             pauseEvent.Set(); // Signal resume
             
             _stateTracker.UpdateJobState(
@@ -1220,6 +1257,227 @@ public class JobManager
             return -999;
         }
     }
+
+    //================================================//
+    //     BUSINESS APPLICATION MONITORING            //
+    //================================================//
+
+    private void StartBusinessAppMonitoring()
+    {
+        _monitorCancellationTokenSource = new CancellationTokenSource();
+        _businessAppMonitorThread = new Thread(() => MonitorBusinessApplications(_monitorCancellationTokenSource.Token))
+        {
+            IsBackground = true,
+            Name = "BusinessAppMonitor"
+        };
+        _businessAppMonitorThread.Start();
+
+        LogEvent(
+            DateTime.Now,
+            "BusinessAppMonitoringStarted",
+            new Dictionary<string, object>
+            {
+                { "message", "Business application monitoring thread started" }
+            }
+        );
+    }
+
+    private void StopBusinessAppMonitoring()
+    {
+        if (_monitorCancellationTokenSource != null)
+        {
+            _monitorCancellationTokenSource.Cancel();
+            _businessAppMonitorThread?.Join(TimeSpan.FromSeconds(2));
+            _monitorCancellationTokenSource.Dispose();
+
+            LogEvent(
+                DateTime.Now,
+                "BusinessAppMonitoringStopped",
+                new Dictionary<string, object>
+                {
+                    { "message", "Business application monitoring thread stopped" }
+                }
+            );
+        }
+    }
+
+    private void MonitorBusinessApplications(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                var detectedApp = CheckBusinessApplications();
+                
+                lock (_businessAppLock)
+                {
+                    bool previousState = _isBusinessAppRunning;
+                    _isBusinessAppRunning = detectedApp != null;
+                    _detectedBusinessApp = detectedApp;
+
+                    // Business app detected - pause all active jobs
+                    if (_isBusinessAppRunning && !previousState)
+                    {
+                        LogEvent(
+                            DateTime.Now,
+                            "BusinessAppDetected_AutoPause",
+                            new Dictionary<string, object>
+                            {
+                                { "applicationName", _detectedBusinessApp! },
+                                { "action", "Pausing all active jobs" }
+                            }
+                        );
+
+                        PauseAllActiveJobs();
+                    }
+                    // Business app closed - resume jobs that were paused by it
+                    else if (!_isBusinessAppRunning && previousState)
+                    {
+                        LogEvent(
+                            DateTime.Now,
+                            "BusinessAppClosed_AutoResume",
+                            new Dictionary<string, object>
+                            {
+                                { "applicationName", _detectedBusinessApp ?? "unknown" },
+                                { "action", "Resuming paused jobs" }
+                            }
+                        );
+
+                        ResumeJobsPausedByBusinessApp();
+                    }
+                }
+
+                // Check every 2 seconds
+                Thread.Sleep(2000);
+            }
+            catch (Exception ex)
+            {
+                LogEvent(
+                    DateTime.Now,
+                    "BusinessAppMonitoringError",
+                    new Dictionary<string, object>
+                    {
+                        { "error", ex.Message }
+                    }
+                );
+                
+                // Wait a bit before retrying
+                Thread.Sleep(5000);
+            }
+        }
+    }
+
+    private void PauseAllActiveJobs()
+    {
+        foreach (var kvp in _jobPauseEvents.ToList())
+        {
+            var jobName = kvp.Key;
+            var pauseEvent = kvp.Value;
+
+            // Only pause if not already paused
+            if (pauseEvent.IsSet)
+            {
+                pauseEvent.Reset(); // Signal pause
+                _jobsPausedByBusinessApp.Add(jobName);
+
+                _stateTracker.UpdateJobState(
+                    new StateEntry(
+                        jobName,
+                        DateTime.Now,
+                        JobState.Paused
+                    )
+                );
+
+                LogEvent(
+                    DateTime.Now,
+                    "JobAutoPausedByBusinessApp",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", jobName },
+                        { "businessApp", _detectedBusinessApp! }
+                    }
+                );
+            }
+        }
+    }
+
+    private void ResumeJobsPausedByBusinessApp()
+    {
+        foreach (var jobName in _jobsPausedByBusinessApp.ToList())
+        {
+            if (_jobPauseEvents.TryGetValue(jobName, out var pauseEvent))
+            {
+                pauseEvent.Set(); // Signal resume
+
+                _stateTracker.UpdateJobState(
+                    new StateEntry(
+                        jobName,
+                        DateTime.Now,
+                        JobState.Active
+                    )
+                );
+
+                LogEvent(
+                    DateTime.Now,
+                    "JobAutoResumedAfterBusinessApp",
+                    new Dictionary<string, object>
+                    {
+                        { "jobName", jobName }
+                    }
+                );
+            }
+        }
+        
+        _jobsPausedByBusinessApp.Clear();
+    }
+
+    public async Task LaunchMultipleJobsAsync(List<Job> jobs, string password)
+    {
+        // Check if business app is running before starting
+        lock (_businessAppLock)
+        {
+            if (_isBusinessAppRunning)
+            {
+                var message = $"Cannot start jobs: Business application '{_detectedBusinessApp}' is running.";
+                LogEvent(
+                    DateTime.Now,
+                    "JobsLaunchBlocked",
+                    new Dictionary<string, object>
+                    {
+                        { "reason", message },
+                        { "businessApp", _detectedBusinessApp! }
+                    }
+                );
+                throw new InvalidOperationException(message);
+            }
+        }
+
+        var maxConcurrentJobs = _configParser.GetMaxConcurrentJobs();
+        var semaphore = new SemaphoreSlim(maxConcurrentJobs, maxConcurrentJobs);
+        var tasks = new List<Task>();
+
+        foreach (var job in jobs)
+        {
+            tasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    LaunchJob(job, password);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    //================================================//
+    //          DECRYPTION METHODS                    //
+    //================================================//
 
     public void DecryptBackup(string backupPath, string restorePath, string password)
     {

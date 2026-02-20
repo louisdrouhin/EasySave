@@ -230,8 +230,24 @@ public partial class JobsPage : UserControl
         _jobManager?.PauseJob(job);
     }
 
-    private void OnJobResume(object? sender, Job job)
+    private async void OnJobResume(object? sender, Job job)
     {
+        // Check if business app is running before resuming
+        var runningBusinessApp = _jobManager?.CheckBusinessApplications();
+        if (runningBusinessApp != null)
+        {
+            var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
+            var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
+
+            var mainWindow = (Window?)TopLevel.GetTopLevel(this);
+            if (mainWindow != null)
+            {
+                var errorDialog = new ErrorDialog(errorTitle, errorMessage);
+                await errorDialog.ShowDialog(mainWindow);
+            }
+            return;
+        }
+
         _jobManager?.ResumeJob(job);
     }
 
