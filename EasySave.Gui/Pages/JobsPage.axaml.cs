@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EasySave.Core;
@@ -19,6 +20,7 @@ public partial class JobsPage : UserControl
     private FileSystemWatcher? _watcher;
     private string _stateFilePath = string.Empty;
     private Dictionary<string, JobCard> _jobCards = new();
+    private readonly HashSet<Job> _selectedJobs = new();
 
     public JobsPage()
     {
@@ -68,6 +70,7 @@ public partial class JobsPage : UserControl
 
         var jobs = _jobManager.GetJobs();
         _jobCards.Clear();
+        _selectedJobs.Clear();
 
         if (JobsStackPanel != null)
         {
@@ -82,12 +85,14 @@ public partial class JobsPage : UserControl
                 card.ResumeClicked += OnJobResume;
                 card.StopClicked += OnJobStop;
                 card.DeleteClicked += OnJobDelete;
+                card.SelectionChanged += OnJobSelectionChanged;
                 JobsStackPanel.Children.Add(card);
                 _jobCards[job.Name] = card;
             }
         }
 
         UpdateStateContent();
+        UpdateSelectionBar();
     }
 
     private void InitializeStateWatcher()
@@ -263,6 +268,115 @@ public partial class JobsPage : UserControl
         LoadJobs();
     }
 
+    private void OnJobSelectionChanged(object? sender, (Job job, bool isSelected) data)
+    {
+        var (job, isSelected) = data;
+        if (isSelected)
+        {
+            _selectedJobs.Add(job);
+        }
+        else
+        {
+            _selectedJobs.Remove(job);
+        }
+        UpdateSelectionBar();
+    }
+
+    private void UpdateSelectionBar()
+    {
+        var selectionBar = this.FindControl<Border>("SelectionBar");
+        var selectionCountText = this.FindControl<TextBlock>("SelectionCountText");
+        var deselectAllButton = this.FindControl<Button>("DeselectAllButton");
+        var runSelectedButton = this.FindControl<Button>("RunSelectedButton");
+
+        if (selectionBar == null) return;
+
+        if (_selectedJobs.Count == 0)
+        {
+            selectionBar.IsVisible = false;
+            return;
+        }
+
+        selectionBar.IsVisible = true;
+
+        if (selectionCountText != null)
+        {
+            selectionCountText.Text = LocalizationManager.GetFormatted("JobsPage_SelectedCount", _selectedJobs.Count.ToString());
+        }
+
+        if (deselectAllButton != null)
+        {
+            deselectAllButton.Content = LocalizationManager.Get("JobsPage_DeselectAll");
+            deselectAllButton.Click -= DeselectAllButton_Click;
+            deselectAllButton.Click += DeselectAllButton_Click;
+        }
+
+        if (runSelectedButton != null)
+        {
+            runSelectedButton.Content = LocalizationManager.GetFormatted("JobsPage_RunSelected", _selectedJobs.Count.ToString());
+            runSelectedButton.Click -= RunSelectedButton_Click;
+            runSelectedButton.Click += RunSelectedButton_Click;
+        }
+    }
+
+    private void DeselectAllButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        foreach (var card in _jobCards.Values)
+        {
+            card.SetChecked(false);
+        }
+    }
+
+    private async void RunSelectedButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        await OnRunSelectedJobs();
+    }
+
+    private async Task OnRunSelectedJobs()
+    {
+        if (_selectedJobs.Count == 0) return;
+
+        var mainWindow = (Window?)TopLevel.GetTopLevel(this);
+        if (mainWindow == null) return;
+
+        // Check business applications once
+        var runningBusinessApp = _jobManager?.CheckBusinessApplications();
+        if (runningBusinessApp != null)
+        {
+            var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
+            var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
+            var errorDialog = new ErrorDialog(errorTitle, errorMessage);
+            await errorDialog.ShowDialog(mainWindow);
+            return;
+        }
+
+        // Show password dialog once
+        var passwordDialog = new PasswordDialog();
+        var password = await passwordDialog.ShowDialog<string?>(mainWindow);
+        if (password != null)
+        {
+            var jobsToExecute = _selectedJobs.ToList();
+
+            _selectedJobs.Clear();
+            foreach (var card in _jobCards.Values)
+            {
+                card.SetChecked(false);
+            }
+            UpdateSelectionBar();
+
+            try
+            {
+                await _jobManager!.LaunchMultipleJobsAsync(jobsToExecute, password);
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
+                var errorDialog = new ErrorDialog("Erreur d'exécution", $"Une erreur s'est produite: {ex.Message}");
+                await errorDialog.ShowDialog(mainWindow);
+            }
+        }
+    }
+
     private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
     {
         try
@@ -275,6 +389,8 @@ public partial class JobsPage : UserControl
 
             var createJobButton = this.FindControl<Button>("CreateJobButton");
             if (createJobButton != null) createJobButton.Content = LocalizationManager.Get("JobsPage_Button_NewJob");
+
+            UpdateSelectionBar();
         }
         catch (Exception ex)
         {
