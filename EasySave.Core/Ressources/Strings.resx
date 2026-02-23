@@ -524,6 +524,18 @@ Stack:
           xml:space="preserve">
         <value>Current language</value>
     </data>
+    <data name="SettingsPage_Section_Priority"
+          xml:space="preserve">
+        <value>Priority Management</value>
+    </data>
+    <data name="SettingsPage_Section_Priority_Extensions"
+          xml:space="preserve">
+        <value>Priority extensions (Backups of other files will wait for these)</value>
+    </data>
+    <data name="SettingsPage_NoPriorityExtensions"
+          xml:space="preserve">
+        <value>No priority extension configured</value>
+    </data>
     <data name="SettingsPage_Section_About"
           xml:space="preserve">
         <value>About</value>

@@ -26,7 +26,7 @@ public class JobManager
     private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
     private EasyLogNetworkClient? _networkClient;
-    private string _logMode = "local_only";  // "local_only", "server_only", "both"
+    private string _logMode = "local_only";
 
     // Job control mechanisms
     private readonly Dictionary<string, CancellationTokenSource> _jobCancellationTokens = new();
@@ -40,6 +40,12 @@ public class JobManager
     private readonly object _businessAppLock = new object();
     private readonly HashSet<string> _jobsPausedByBusinessApp = new();
 
+    // Priority files management
+    private int _priorityFilesPending = 0;
+    private int _jobsWaitingToScan = 0;
+    private readonly object _priorityLock = new object();
+    private readonly ManualResetEventSlim _priorityWaitHandle = new ManualResetEventSlim(true);
+
     public ConfigParser ConfigParser => _configParser;
 
     public event EventHandler<LogFormatChangedEventArgs>? LogFormatChanged;
@@ -50,7 +56,6 @@ public class JobManager
         _logFormatter = CreateLogFormatter();
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        // Initialize network client if server is enabled
         try
         {
             InitializeNetworkClient();
@@ -120,7 +125,6 @@ public class JobManager
             new Dictionary<string, object>()
         );
 
-        // Start business application monitoring
         StartBusinessAppMonitoring();
     }
 
@@ -152,7 +156,6 @@ public class JobManager
         catch (Exception ex)
         {
             Console.WriteLine($"[JobManager] Failed to connect to EasyLog server: {ex.Message}");
-            // Fallback to local_only if connection fails
             _logMode = "local_only";
             _networkClient = null;
         }
@@ -160,7 +163,6 @@ public class JobManager
 
     private void LogEvent(DateTime timestamp, string name, Dictionary<string, object> content)
     {
-        // Add client machine name
         content["clientId"] = Environment.MachineName;
 
         switch (_logMode)
@@ -276,7 +278,6 @@ public class JobManager
 
     public void Close()
     {
-        // Stop business app monitoring
         StopBusinessAppMonitoring();
 
         _logger.Close();
@@ -339,7 +340,6 @@ public class JobManager
 
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        // Reinitialize network client after config reload
         InitializeNetworkClient();
 
         LogEvent(
@@ -446,7 +446,7 @@ public class JobManager
     {
         if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
         {
-            pauseEvent.Reset(); // Signal pause
+            pauseEvent.Reset();
 
             _stateTracker.UpdateJobState(
                 new StateEntry(
@@ -469,7 +469,6 @@ public class JobManager
 
     public void ResumeJob(Job job)
     {
-        // Check if business app is running - prevent resume
         lock (_businessAppLock)
         {
             if (_isBusinessAppRunning)
@@ -494,7 +493,7 @@ public class JobManager
                 _jobsPausedByBusinessApp.Remove(job.Name);
             }
 
-            pauseEvent.Set(); // Signal resume
+            pauseEvent.Set();
 
             _stateTracker.UpdateJobState(
                 new StateEntry(
@@ -519,7 +518,7 @@ public class JobManager
     {
         if (_jobCancellationTokens.TryGetValue(job.Name, out var cts))
         {
-            cts.Cancel(); // Signal cancellation
+            cts.Cancel();
 
             _stateTracker.UpdateJobState(
                 new StateEntry(
@@ -540,11 +539,10 @@ public class JobManager
         }
     }
 
-    public void LaunchJob(Job job, string password)
+    public void LaunchJob(Job job, string password, bool alreadyRegistered = false)
     {
-        // Create control mechanisms for this job
         var cts = new CancellationTokenSource();
-        var pauseEvent = new ManualResetEventSlim(true); // Initially not paused
+        var pauseEvent = new ManualResetEventSlim(true); 
 
         _jobCancellationTokens[job.Name] = cts;
         _jobPauseEvents[job.Name] = pauseEvent;
@@ -603,7 +601,6 @@ public class JobManager
         }
         catch (OperationCanceledException)
         {
-            // Job was cancelled, ensure state is set to Inactive
             _stateTracker.UpdateJobState(
                 new StateEntry(
                     job.Name,
@@ -621,11 +618,9 @@ public class JobManager
                     { "jobType", job.Type.ToString() }
                 }
             );
-            // Don't rethrow - cancellation is expected
         }
         catch (Exception ex)
         {
-            // Ensure state is set to Inactive on error
             _stateTracker.UpdateJobState(
                 new StateEntry(
                     job.Name,
@@ -648,13 +643,228 @@ public class JobManager
         }
         finally
         {
-            // Cleanup
             _jobCancellationTokens.Remove(job.Name);
             if (_jobPauseEvents.Remove(job.Name, out var pauseEventToDispose))
             {
                 pauseEventToDispose.Dispose();
             }
             cts.Dispose();
+        }
+    }
+
+    private void ProcessDifferentialFile((string Path, string RelativePath, long Size, string Hash) fileToCopy, string diffBackupPath, Job job, string password, List<string> encryptExtensions, ref int filesProcessed, ref long totalBytesTransferred, int totalFilesToTransfer, long totalSizeToTransfer, CancellationToken cancellationToken, ManualResetEventSlim pauseEvent)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        pauseEvent.Wait(cancellationToken);
+
+        try
+        {
+            var destinationFile = Path.Combine(diffBackupPath, fileToCopy.RelativePath);
+            var destinationDir = Path.GetDirectoryName(destinationFile);
+
+            if (destinationDir != null && !Directory.Exists(destinationDir))
+            {
+                Directory.CreateDirectory(destinationDir);
+            }
+
+            long encryptResult = CopyOrEncryptFile(fileToCopy.Path, destinationFile, password, encryptExtensions);
+
+            filesProcessed++;
+            totalBytesTransferred += fileToCopy.Size;
+
+            _stateTracker.UpdateJobState(new StateEntry(
+                job.Name,
+                DateTime.Now,
+                JobState.Active,
+                totalFilesToTransfer,
+                totalSizeToTransfer,
+                (double)filesProcessed / totalFilesToTransfer * 100,
+                totalFilesToTransfer - filesProcessed,
+                totalSizeToTransfer - totalBytesTransferred,
+                fileToCopy.Path,
+                destinationFile
+            ));
+
+            bool hadError = encryptResult < 0;
+
+            if (!hadError)
+            {
+                string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
+                var logData = new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "sourceFile", fileToCopy.Path },
+                    { "destinationFile", destinationFile },
+                    { "fileSize", fileToCopy.Size },
+                    { "operation", encryptResult > 0 ? "encryption" : "copy" },
+                    { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
+                    { "hash", fileToCopy.Hash }
+                };
+
+                LogEvent(
+                    DateTime.Now,
+                    logType,
+                    logData
+                );
+            }
+            else
+            {
+                var logData = new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "sourceFile", fileToCopy.Path },
+                    { "destinationFile", destinationFile },
+                    { "fileSize", fileToCopy.Size },
+                    { "operation", "encryption" },
+                    { "encryptTimeMs", encryptResult },
+                    { "hash", fileToCopy.Hash }
+                };
+
+                LogEvent(
+                    DateTime.Now,
+                    "FileEncryptionError",
+                    logData
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            LogEvent(
+                DateTime.Now,
+                "FileCopyError",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "sourceFile", fileToCopy.Path },
+                    { "error", ex.Message }
+                }
+            );
+        }
+    }
+
+    private void ProcessFile(string sourceFile, string backupPath, Job job, string password, List<string> encryptExtensions, bool createHashFile, Dictionary<string, string>? hashDictionary, ref int filesProcessed, ref long totalBytesTransferred, int totalFiles, long totalSize, CancellationToken cancellationToken, ManualResetEventSlim pauseEvent)
+    {
+        // Check for cancellation
+        cancellationToken.ThrowIfCancellationRequested();
+
+        // Wait if paused
+        pauseEvent.Wait(cancellationToken);
+
+        try
+        {
+            var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
+            var destinationFile = Path.Combine(backupPath, relativePath);
+
+            var destinationDir = Path.GetDirectoryName(destinationFile);
+            if (destinationDir != null && !Directory.Exists(destinationDir))
+            {
+                Directory.CreateDirectory(destinationDir);
+            }
+
+            var fileInfo = new FileInfo(sourceFile);
+            var fileSize = fileInfo.Length;
+
+            long encryptResult = CopyOrEncryptFile(sourceFile, destinationFile, password, encryptExtensions);
+
+            if (createHashFile && hashDictionary != null)
+            {
+                try
+                {
+                    using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                    using (var stream = File.OpenRead(sourceFile))
+                    {
+                        var hashBytes = sha256.ComputeHash(stream);
+                        var fileHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                        hashDictionary[relativePath] = fileHash;
+                    }
+                }
+                catch (Exception hashEx)
+                {
+                    LogEvent(
+                        DateTime.Now,
+                        "HashCalculationError",
+                        new Dictionary<string, object>
+                        {
+                            { "jobName", job.Name },
+                            { "sourceFilePath", sourceFile },
+                            { "error", hashEx.Message }
+                        }
+                    );
+                }
+            }
+
+            filesProcessed++;
+            totalBytesTransferred += fileSize;
+
+            _stateTracker.UpdateJobState(new StateEntry(
+                job.Name,
+                DateTime.Now,
+                JobState.Active,
+                totalFiles,
+                totalSize,
+                (double)filesProcessed / totalFiles * 100,
+                totalFiles - filesProcessed,
+                totalSize - totalBytesTransferred,
+                sourceFile,
+                destinationFile
+            ));
+
+            bool wasEncrypted = encryptResult > 0 || encryptResult == 0;
+            bool hadError = encryptResult < 0;
+
+            if (!hadError)
+            {
+                string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
+                var logData = new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "sourceFilePath", sourceFile },
+                    { "destinationFilePath", destinationFile },
+                    { "fileSize", fileSize },
+                    { "operation", encryptResult > 0 ? "encryption" : "copy" },
+                    { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
+                    { "progress", $"{filesProcessed}/{totalFiles}" }
+                };
+
+                LogEvent(
+                    DateTime.Now,
+                    logType,
+                    logData
+                );
+            }
+            else
+            {
+                var logData = new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "sourceFilePath", sourceFile },
+                    { "destinationFilePath", destinationFile },
+                    { "fileSize", fileSize },
+                    { "operation", "encryption" },
+                    { "encryptTimeMs", encryptResult },
+                    { "progress", $"{filesProcessed}/{totalFiles}" }
+                };
+
+                LogEvent(
+                    DateTime.Now,
+                    "FileEncryptionError",
+                    logData
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            LogEvent(
+                DateTime.Now,
+                "FileCopyError",
+                new Dictionary<string, object>
+                {
+                    { "jobName", job.Name },
+                    { "sourceFilePath", sourceFile },
+                    { "error", ex.Message }
+                }
+            );
         }
     }
 
@@ -720,129 +930,33 @@ public class JobManager
             }
         );
 
+        var priorityExtensions = _configParser.GetPriorityExtensions();
+        var priorityFiles = new List<string>();
+        var nonPriorityFiles = new List<string>();
+
         foreach (var sourceFile in sourceFiles)
         {
-            // Check for cancellation
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Wait if paused
-            pauseEvent.Wait(cancellationToken);
-
-            try
+            var extension = Path.GetExtension(sourceFile).ToLower();
+            if (priorityExtensions.Contains(extension))
             {
-                var relativePath = Path.GetRelativePath(job.SourcePath, sourceFile);
-                var destinationFile = Path.Combine(fullBackupPath, relativePath);
-
-                var destinationDir = Path.GetDirectoryName(destinationFile);
-                if (destinationDir != null && !Directory.Exists(destinationDir))
-                {
-                    Directory.CreateDirectory(destinationDir);
-                }
-
-                var fileInfo = new FileInfo(sourceFile);
-                var fileSize = fileInfo.Length;
-
-                long encryptResult = CopyOrEncryptFile(sourceFile, destinationFile, password, encryptExtensions);
-
-                if (createHashFile && hashDictionary != null)
-                {
-                    try
-                    {
-                        using (var sha256 = System.Security.Cryptography.SHA256.Create())
-                        using (var stream = File.OpenRead(sourceFile))
-                        {
-                            var hashBytes = sha256.ComputeHash(stream);
-                            var fileHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-                            hashDictionary[relativePath] = fileHash;
-                        }
-                    }
-                    catch (Exception hashEx)
-                    {
-                        LogEvent(
-                            DateTime.Now,
-                            "HashCalculationError",
-                            new Dictionary<string, object>
-                            {
-                                { "jobName", job.Name },
-                                { "sourceFilePath", sourceFile },
-                                { "error", hashEx.Message }
-                            }
-                        );
-                    }
-                }
-
-                filesProcessed++;
-                totalBytesTransferred += fileSize;
-
-                _stateTracker.UpdateJobState(new StateEntry(
-                    job.Name,
-                    DateTime.Now,
-                    JobState.Active,
-                    totalFiles,
-                    totalSize,
-                    (double)filesProcessed / totalFiles * 100,
-                    totalFiles - filesProcessed,
-                    totalSize - totalBytesTransferred,
-                    sourceFile,
-                    destinationFile
-                ));
-
-                bool wasEncrypted = encryptResult > 0 || encryptResult == 0;
-                bool hadError = encryptResult < 0;
-
-                if (!hadError)
-                {
-                    string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
-                    var logData = new Dictionary<string, object>
-                    {
-                        { "jobName", job.Name },
-                        { "sourceFilePath", sourceFile },
-                        { "destinationFilePath", destinationFile },
-                        { "fileSize", fileSize },
-                        { "operation", encryptResult > 0 ? "encryption" : "copy" },
-                        { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
-                        { "progress", $"{filesProcessed}/{totalFiles}" }
-                    };
-
-                    LogEvent(
-                        DateTime.Now,
-                        logType,
-                        logData
-                    );
-                }
-                else
-                {
-                    var logData = new Dictionary<string, object>
-                    {
-                        { "jobName", job.Name },
-                        { "sourceFilePath", sourceFile },
-                        { "destinationFilePath", destinationFile },
-                        { "fileSize", fileSize },
-                        { "operation", "encryption" },
-                        { "encryptTimeMs", encryptResult },
-                        { "progress", $"{filesProcessed}/{totalFiles}" }
-                    };
-
-                    LogEvent(
-                        DateTime.Now,
-                        "FileEncryptionError",
-                        logData
-                    );
-                }
+                priorityFiles.Add(sourceFile);
             }
-            catch (Exception ex)
+            else
             {
-                LogEvent(
-                    DateTime.Now,
-                    "FileCopyError",
-                    new Dictionary<string, object>
-                    {
-                        { "jobName", job.Name },
-                        { "sourceFilePath", sourceFile },
-                        { "error", ex.Message }
-                    }
-                );
+                nonPriorityFiles.Add(sourceFile);
             }
+        }
+
+        // Process priority files
+        foreach (var sourceFile in priorityFiles)
+        {
+            ProcessFile(sourceFile, fullBackupPath, job, password, encryptExtensions, createHashFile, hashDictionary, ref filesProcessed, ref totalBytesTransferred, totalFiles, totalSize, cancellationToken, pauseEvent);
+        }
+
+        // Process non-priority files
+        foreach (var sourceFile in nonPriorityFiles)
+        {
+            ProcessFile(sourceFile, fullBackupPath, job, password, encryptExtensions, createHashFile, hashDictionary, ref filesProcessed, ref totalBytesTransferred, totalFiles, totalSize, cancellationToken, pauseEvent);
         }
 
         if (createHashFile && hashDictionary != null)
@@ -963,10 +1077,8 @@ public class JobManager
 
         foreach (var sourceFile in allSourceFiles)
         {
-            // Check for cancellation
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Wait if paused
             pauseEvent.Wait(cancellationToken);
 
             try
@@ -1021,97 +1133,33 @@ public class JobManager
             ""
         ));
 
-        foreach (var fileToCopy in filesToCopy)
+        var priorityExtensions = _configParser.GetPriorityExtensions();
+        var priorityFilesToCopy = new List<(string Path, string RelativePath, long Size, string Hash)>();
+        var nonPriorityFilesToCopy = new List<(string Path, string RelativePath, long Size, string Hash)>();
+
+        foreach (var file in filesToCopy)
         {
-            // Check for cancellation
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Wait if paused
-            pauseEvent.Wait(cancellationToken);
-
-            try
+            var extension = Path.GetExtension(file.Path).ToLower();
+            if (priorityExtensions.Contains(extension))
             {
-                var destinationFile = Path.Combine(diffBackupPath, fileToCopy.RelativePath);
-                var destinationDir = Path.GetDirectoryName(destinationFile);
-
-                if (destinationDir != null && !Directory.Exists(destinationDir))
-                {
-                    Directory.CreateDirectory(destinationDir);
-                }
-
-                long encryptResult = CopyOrEncryptFile(fileToCopy.Path, destinationFile, password, encryptExtensions);
-
-                filesProcessed++;
-                totalBytesTransferred += fileToCopy.Size;
-
-                _stateTracker.UpdateJobState(new StateEntry(
-                    job.Name,
-                    DateTime.Now,
-                    JobState.Active,
-                    totalFilesToTransfer,
-                    totalSizeToTransfer,
-                    (double)filesProcessed / totalFilesToTransfer * 100,
-                    totalFilesToTransfer - filesProcessed,
-                    totalSizeToTransfer - totalBytesTransferred,
-                    fileToCopy.Path,
-                    destinationFile
-                ));
-
-                bool hadError = encryptResult < 0;
-
-                if (!hadError)
-                {
-                    string logType = encryptResult > 0 ? "FileEncrypted" : "FileCopied";
-                    var logData = new Dictionary<string, object>
-                    {
-                        { "jobName", job.Name },
-                        { "sourceFile", fileToCopy.Path },
-                        { "destinationFile", destinationFile },
-                        { "fileSize", fileToCopy.Size },
-                        { "operation", encryptResult > 0 ? "encryption" : "copy" },
-                        { "encryptTimeMs", encryptResult > 0 ? encryptResult : 0L },
-                        { "hash", fileToCopy.Hash }
-                    };
-
-                    LogEvent(
-                        DateTime.Now,
-                        logType,
-                        logData
-                    );
-                }
-                else
-                {
-                    var logData = new Dictionary<string, object>
-                    {
-                        { "jobName", job.Name },
-                        { "sourceFile", fileToCopy.Path },
-                        { "destinationFile", destinationFile },
-                        { "fileSize", fileToCopy.Size },
-                        { "operation", "encryption" },
-                        { "encryptTimeMs", encryptResult },
-                        { "hash", fileToCopy.Hash }
-                    };
-
-                    LogEvent(
-                        DateTime.Now,
-                        "FileEncryptionError",
-                        logData
-                    );
-                }
+                priorityFilesToCopy.Add(file);
             }
-            catch (Exception ex)
+            else
             {
-                LogEvent(
-                    DateTime.Now,
-                    "FileCopyError",
-                    new Dictionary<string, object>
-                    {
-                        { "jobName", job.Name },
-                        { "sourceFile", fileToCopy.Path },
-                        { "error", ex.Message }
-                    }
-                );
+                nonPriorityFilesToCopy.Add(file);
             }
+        }
+
+        // Process priority files
+        foreach (var fileToCopy in priorityFilesToCopy)
+        {
+            ProcessDifferentialFile(fileToCopy, diffBackupPath, job, password, encryptExtensions, ref filesProcessed, ref totalBytesTransferred, totalFilesToTransfer, totalSizeToTransfer, cancellationToken, pauseEvent);
+        }
+
+        // Process non-priority files
+        foreach (var fileToCopy in nonPriorityFilesToCopy)
+        {
+            ProcessDifferentialFile(fileToCopy, diffBackupPath, job, password, encryptExtensions, ref filesProcessed, ref totalBytesTransferred, totalFilesToTransfer, totalSizeToTransfer, cancellationToken, pauseEvent);
         }
 
         try
@@ -1169,14 +1217,14 @@ public class JobManager
     {
         var fileExtension = Path.GetExtension(sourceFile).ToLower();
 
-        if (encryptExtensions.Contains(fileExtension))
+        if (encryptExtensions.Contains(fileExtension) && !string.IsNullOrEmpty(password))
         {
             var targetDirectory = Path.GetDirectoryName(destinationFile);
             if (targetDirectory == null)
             {
                 throw new InvalidOperationException($"Unable to determine the target directory for : {destinationFile}");
             }
-            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
+            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftEncryptionError");
         }
         else
         {
@@ -1192,8 +1240,13 @@ public class JobManager
         {
 
             var appDirectory = AppContext.BaseDirectory;
-            var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
-            var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cyptosoft.exe";
+            var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cryptosoft.exe";
+
+            // Resolve relative path if necessary
+            if (!Path.IsPathRooted(cryptosoftPath))
+            {
+                cryptosoftPath = Path.Combine(appDirectory, cryptosoftPath);
+            }
 
             if (!File.Exists(cryptosoftPath))
             {
@@ -1315,7 +1368,6 @@ public class JobManager
                     _isBusinessAppRunning = detectedApp != null;
                     _detectedBusinessApp = detectedApp;
 
-                    // Business app detected - pause all active jobs
                     if (_isBusinessAppRunning && !previousState)
                     {
                         LogEvent(
@@ -1330,7 +1382,6 @@ public class JobManager
 
                         PauseAllActiveJobs();
                     }
-                    // Business app closed - resume jobs that were paused by it
                     else if (!_isBusinessAppRunning && previousState)
                     {
                         LogEvent(
@@ -1347,7 +1398,6 @@ public class JobManager
                     }
                 }
 
-                // Check every 2 seconds
                 Thread.Sleep(2000);
             }
             catch (Exception ex)
@@ -1361,7 +1411,6 @@ public class JobManager
                     }
                 );
 
-                // Wait a bit before retrying
                 Thread.Sleep(5000);
             }
         }
@@ -1374,10 +1423,9 @@ public class JobManager
             var jobName = kvp.Key;
             var pauseEvent = kvp.Value;
 
-            // Only pause if not already paused
             if (pauseEvent.IsSet)
             {
-                pauseEvent.Reset(); // Signal pause
+                pauseEvent.Reset();
                 _jobsPausedByBusinessApp.Add(jobName);
 
                 _stateTracker.UpdateJobState(
@@ -1407,7 +1455,7 @@ public class JobManager
         {
             if (_jobPauseEvents.TryGetValue(jobName, out var pauseEvent))
             {
-                pauseEvent.Set(); // Signal resume
+                pauseEvent.Set();
 
                 _stateTracker.UpdateJobState(
                     new StateEntry(
@@ -1433,7 +1481,6 @@ public class JobManager
 
     public async Task LaunchMultipleJobsAsync(List<Job> jobs, string password)
     {
-        // Check if business app is running before starting
         lock (_businessAppLock)
         {
             if (_isBusinessAppRunning)
@@ -1569,4 +1616,43 @@ public class JobManager
         );
     }
 
+    //================================================//
+    //          PRIORITY MANAGEMENT METHODS           //
+    //================================================//
+
+    private void RegisterJobForPriorityScan()
+    {
+        lock (_priorityLock)
+        {
+            _jobsWaitingToScan++;
+            _priorityWaitHandle.Reset();
+        }
+    }
+
+    private void ReportPriorityFilesFound(int count)
+    {
+        lock (_priorityLock)
+        {
+            _jobsWaitingToScan--;
+            _priorityFilesPending += count;
+
+            if (_jobsWaitingToScan == 0 && _priorityFilesPending == 0)
+            {
+                _priorityWaitHandle.Set();
+            }
+        }
+    }
+
+    private void ReportPriorityFileProcessed()
+    {
+        lock (_priorityLock)
+        {
+            _priorityFilesPending--;
+
+            if (_jobsWaitingToScan == 0 && _priorityFilesPending == 0)
+            {
+                _priorityWaitHandle.Set();
+            }
+        }
+    }
 }

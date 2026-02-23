@@ -9,6 +9,8 @@
         <None Include="..\config.example.json"
               CopyToOutputDirectory="PreserveNewest"
               Link="config.json" />
+        <None Include="..\Cryptosoft.exe"
+              CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     <PropertyGroup>
         <OutputType>Exe</OutputType>

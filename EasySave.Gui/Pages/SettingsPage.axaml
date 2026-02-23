@@ -128,6 +128,43 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Priority Extensions Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="PrioritySectionTitle"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Priority Extensions Label -->
+                            <TextBlock FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="#666666"
+                                       x:Name="PriorityExtensionsLabel"/>
+
+                            <!-- Priority Extensions Panel -->
+                            <WrapPanel x:Name="PriorityExtensionsPanel"
+                                       Orientation="Horizontal" />
+
+                            <!-- Add Priority Extension -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                <TextBox x:Name="AddPriorityExtensionBox" 
+                                         Grid.Column="0" 
+                                         Watermark=".ext"
+                                         Margin="0,0,10,0"/>
+                                <Button x:Name="AddPriorityExtensionButton" 
+                                        Grid.Column="1" 
+                                        Content="+"
+                                        Padding="15,5"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Business Applications Section -->
                     <Border Background="White"
                             BorderBrush="#E0E0E0"

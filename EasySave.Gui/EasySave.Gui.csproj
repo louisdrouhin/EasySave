@@ -35,6 +35,8 @@
         <None Include="..\config.example.json"
               CopyToOutputDirectory="PreserveNewest"
               Link="config.json" />
+        <None Include="..\Cryptosoft.exe"
+              CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     <ItemGroup>
         <AvaloniaResource Include="font\**\*" />

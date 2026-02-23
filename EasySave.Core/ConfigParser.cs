@@ -161,4 +161,31 @@ public class ConfigParser
         var maxConcurrentJobs = Config?["config"]?["maxConcurrentJobs"]?.GetValue<int>();
         return maxConcurrentJobs ?? 3; // Default to 3 concurrent jobs
     }
+
+    public List<string> GetPriorityExtensions()
+    {
+        var extensions = new List<string>();
+        var priorityExtensionsNode = Config?["config"]?["priorityExtensions"];
+
+        if (priorityExtensionsNode == null)
+        {
+            return extensions;
+        }
+
+        var extensionsArray = priorityExtensionsNode.AsArray();
+
+        if (extensionsArray != null)
+        {
+            foreach (var ext in extensionsArray)
+            {
+                var extension = ext?.GetValue<string>();
+                if (!string.IsNullOrEmpty(extension))
+                {
+                    extensions.Add(extension.ToLower());
+                }
+            }
+        }
+
+        return extensions;
+    }
 }

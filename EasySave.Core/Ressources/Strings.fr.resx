@@ -388,7 +388,20 @@ Pile :
         xml:space="preserve">
       <value>Langue actuelle</value>
   </data>
-  <data name="SettingsPage_Section_About"
+      <data name="SettingsPage_Section_Priority"
+            xml:space="preserve">
+          <value>Gestion des Priorités</value>
+      </data>
+      <data name="SettingsPage_Section_Priority_Extensions"
+            xml:space="preserve">
+          <value>Extensions prioritaires (Les sauvegardes d'autres fichiers attendront celles-ci)</value>
+      </data>
+      <data name="SettingsPage_NoPriorityExtensions"
+            xml:space="preserve">
+          <value>Aucune extension prioritaire configurée</value>
+      </data>
+      <data name="SettingsPage_Section_About"
+  
         xml:space="preserve">
       <value>À propos</value>
   </data>

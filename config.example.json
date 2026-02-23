@@ -8,6 +8,7 @@
     "encryption": {
       "extensions": [".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".txt"]
     },
+    "priorityExtensions": [".pdf", ".docx"],
     "businessApplications": ["notepad"]
   },
   "easyLogServer": {
