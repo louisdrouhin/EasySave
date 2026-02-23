@@ -1,3 +1,29 @@
+## v2.1.0 (2026-02-23)
+
+### Feat
+
+- **app**: add icon app
+- **jobmanager**: add software tracking
+- **core**: send machine hostname as clientId from client
+- **easylog**: support 3 logging modes
+- **easylog**: create centralized log server
+- **easylog**: add network client for remote log sending
+- **job-status**: add play pause and stop job
+- **multithreding**: add multithreding features
+
+### Fix
+
+- play pause stop
+- **easylog**: add client id into logs
+- **easylog**: improve network error handling and graceful shutdown
+- **config**: add easyLogServer configuration section
+- play pause stop
+- **state**: add job status
+
+### Refactor
+
+- **easylog**: simplify client identification strategy
+
 ## v2.0.1 (2026-02-18)
 
 ## v4.0.1 (2026-02-18)
