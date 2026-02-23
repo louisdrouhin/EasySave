@@ -1240,7 +1240,7 @@ public class JobManager
             {
                 throw new InvalidOperationException($"Unable to determine the target directory for : {destinationFile}");
             }
-            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftExecutionError");
+            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory);
         }
         else
         {
