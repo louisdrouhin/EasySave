@@ -541,10 +541,6 @@ public class JobManager
 
     public void LaunchJob(Job job, string password, bool alreadyRegistered = false)
     {
-        if (!alreadyRegistered)
-        {
-            RegisterJobForPriorityScan();
-        }
         var cts = new CancellationTokenSource();
         var pauseEvent = new ManualResetEventSlim(true); 
 
@@ -951,17 +947,11 @@ public class JobManager
             }
         }
 
-        ReportPriorityFilesFound(priorityFiles.Count);
-
         // Process priority files
         foreach (var sourceFile in priorityFiles)
         {
             ProcessFile(sourceFile, fullBackupPath, job, password, encryptExtensions, createHashFile, hashDictionary, ref filesProcessed, ref totalBytesTransferred, totalFiles, totalSize, cancellationToken, pauseEvent);
-            ReportPriorityFileProcessed();
         }
-
-        // Wait for all priority files in all jobs to be processed
-        _priorityWaitHandle.Wait(cancellationToken);
 
         // Process non-priority files
         foreach (var sourceFile in nonPriorityFiles)
@@ -1160,17 +1150,11 @@ public class JobManager
             }
         }
 
-        ReportPriorityFilesFound(priorityFilesToCopy.Count);
-
         // Process priority files
         foreach (var fileToCopy in priorityFilesToCopy)
         {
             ProcessDifferentialFile(fileToCopy, diffBackupPath, job, password, encryptExtensions, ref filesProcessed, ref totalBytesTransferred, totalFilesToTransfer, totalSizeToTransfer, cancellationToken, pauseEvent);
-            ReportPriorityFileProcessed();
         }
-
-        // Wait for all priority files in all jobs to be processed
-        _priorityWaitHandle.Wait(cancellationToken);
 
         // Process non-priority files
         foreach (var fileToCopy in nonPriorityFilesToCopy)
@@ -1240,7 +1224,7 @@ public class JobManager
             {
                 throw new InvalidOperationException($"Unable to determine the target directory for : {destinationFile}");
             }
-            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory);
+            return ExecuteCryptosoftCommand("-c", sourceFile, password, targetDirectory, "CryptosoftEncryptionError");
         }
         else
         {
@@ -1521,13 +1505,12 @@ public class JobManager
 
         foreach (var job in jobs)
         {
-            RegisterJobForPriorityScan();
             tasks.Add(Task.Run(async () =>
             {
                 await semaphore.WaitAsync();
                 try
                 {
-                    LaunchJob(job, password, true);
+                    LaunchJob(job, password);
                 }
                 finally
                 {
