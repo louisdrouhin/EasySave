@@ -21,7 +21,6 @@
 
 ### Feat
 
-- **gui**: Create CustomCheckBox component and integrate in JobCard
 - **gui**: Implement multi-job selection and parallel execution
 - **gui**: Create CustomCheckBox component and integrate in JobCard
 - **core**: Add localization strings for multi-job selection
@@ -59,8 +58,6 @@
 - **easylog**: simplify client identification strategy
 
 ## v2.0.1 (2026-02-18)
-
-## v4.0.1 (2026-02-18)
 
 ### Fix
 
