@@ -1256,8 +1256,13 @@ public class JobManager
         {
 
             var appDirectory = AppContext.BaseDirectory;
-            var projectRootDirectory = Path.Combine(appDirectory, "..", "..", "..", "..");
-            var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cyptosoft.exe";
+            var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cryptosoft.exe";
+
+            // Resolve relative path if necessary
+            if (!Path.IsPathRooted(cryptosoftPath))
+            {
+                cryptosoftPath = Path.Combine(appDirectory, cryptosoftPath);
+            }
 
             if (!File.Exists(cryptosoftPath))
             {
