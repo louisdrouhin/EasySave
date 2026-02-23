@@ -2,6 +2,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="clr-namespace:EasySave.Models;assembly=EasySave.Models"
+             xmlns:comp="clr-namespace:EasySave.GUI.Components"
              x:Class="EasySave.GUI.Components.JobCard"
              x:DataType="models:Job">
     <UserControl.Resources>
@@ -51,12 +52,11 @@
                                   Foreground="#6B7280"/>
                     </Button>
 
-                    <TextBlock x:Name="IndexText"
-                               Grid.Column="1"
-                               Foreground="#666666"
-                               FontSize="13"
-                               VerticalAlignment="Center"
-                               IsVisible="False" />
+                                    <comp:CustomCheckBox x:Name="SelectCheckBox"
+                                         Grid.Column="1"
+                                         VerticalAlignment="Center"
+                                         HorizontalAlignment="Center"
+                                         Margin="4,0" />
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="10,0,0,0">
                         <TextBlock Text="{Binding Name}"

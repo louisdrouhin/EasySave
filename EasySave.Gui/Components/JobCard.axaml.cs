@@ -19,6 +19,7 @@ public partial class JobCard : UserControl
     public event EventHandler<Job>? ResumeClicked;
     public event EventHandler<Job>? StopClicked;
     public event EventHandler<(int, Job)>? DeleteClicked;
+    public event EventHandler<(Job job, bool isSelected)>? SelectionChanged;
 
     public JobCard()
     {
@@ -67,7 +68,6 @@ public partial class JobCard : UserControl
         if (toggleButton != null)
         {
             toggleButton.Click += (s, e) => OnToggleExpanded();
-            // Désactiver le hover orange
             toggleButton.PointerEntered += (s, e) =>
             {
                 toggleButton.Background = Brushes.Transparent;
@@ -101,6 +101,12 @@ public partial class JobCard : UserControl
         {
             confirmDeleteButton.Click += (s, e) => OnConfirmDeleteClicked();
         }
+
+        var selectCheckBox = this.FindControl<CustomCheckBox>("SelectCheckBox");
+        if (selectCheckBox != null)
+        {
+            selectCheckBox.CheckedChanged += (s, e) => OnSelectCheckBoxChanged();
+        }
     }
 
     private void OnToggleExpanded()
@@ -120,6 +126,15 @@ public partial class JobCard : UserControl
         if (detailsPanel != null)
         {
             detailsPanel.IsVisible = _isExpanded;
+        }
+    }
+
+    private void OnSelectCheckBoxChanged()
+    {
+        var selectCheckBox = this.FindControl<CustomCheckBox>("SelectCheckBox");
+        if (selectCheckBox != null)
+        {
+            SelectionChanged?.Invoke(this, (_job, selectCheckBox.IsChecked));
         }
     }
 
@@ -348,5 +363,14 @@ public partial class JobCard : UserControl
         }
 
         return $"{doubleSize:0.##} {suffixes[suffixIndex]}";
+    }
+
+    public void SetChecked(bool value)
+    {
+        var selectCheckBox = this.FindControl<CustomCheckBox>("SelectCheckBox");
+        if (selectCheckBox != null)
+        {
+            selectCheckBox.SetChecked(value);
+        }
     }
 }
