@@ -1,3 +1,12 @@
+## v2.2.0 (2026-02-23)
+
+### Feat
+
+- **gui**: Create CustomCheckBox component and integrate in JobCard
+- **gui**: Implement multi-job selection and parallel execution
+- **gui**: Create CustomCheckBox component and integrate in JobCard
+- **core**: Add localization strings for multi-job selection
+
 ## v2.1.1 (2026-02-23)
 
 ### Fix
