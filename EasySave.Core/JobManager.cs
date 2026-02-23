@@ -1233,7 +1233,7 @@ public class JobManager
     {
         var fileExtension = Path.GetExtension(sourceFile).ToLower();
 
-        if (encryptExtensions.Contains(fileExtension))
+        if (encryptExtensions.Contains(fileExtension) && !string.IsNullOrEmpty(password))
         {
             var targetDirectory = Path.GetDirectoryName(destinationFile);
             if (targetDirectory == null)
