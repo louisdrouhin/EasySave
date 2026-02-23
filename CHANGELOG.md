@@ -1,3 +1,22 @@
+## v2.3.0 (2026-02-23)
+
+### Feat
+
+- **multithreading**: file management
+
+### Fix
+
+- **cryptosoft**: add cryptosoft to the bluid project
+- **jobmanager**: cryptosoft
+- **cryptosoft.exe**: delete cryptosoft argument
+- cryptosoft.exe
+- **jobmanager**: cryptosoft
+- **jobmanager**: cryptosoft name
+
+### Refactor
+
+- **jobManager**: delete comments
+
 ## v2.2.0 (2026-02-23)
 
 ### Feat
