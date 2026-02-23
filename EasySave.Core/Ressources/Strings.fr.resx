@@ -429,4 +429,10 @@ Pile :
   <data name="JobCard_Status_Active" xml:space="preserve"><value>Actif</value></data>
   <data name="JobCard_Progress_InProgress" xml:space="preserve"><value>EN COURS</value></data>
   <data name="JobCard_Progress_Processing" xml:space="preserve"><value>Traitement...</value></data>
+
+  <!-- JobsPage - Multi-selection -->
+  <data name="JobsPage_SelectAll" xml:space="preserve"><value>Tout sélectionner</value></data>
+  <data name="JobsPage_DeselectAll" xml:space="preserve"><value>Tout désélectionner</value></data>
+  <data name="JobsPage_RunSelected" xml:space="preserve"><value>Lancer la sélection ({0})</value></data>
+  <data name="JobsPage_SelectedCount" xml:space="preserve"><value>{0} job(s) sélectionné(s)</value></data>
 </root>
