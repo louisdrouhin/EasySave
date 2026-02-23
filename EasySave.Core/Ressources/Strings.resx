@@ -565,4 +565,10 @@ Stack:
     <data name="JobCard_Status_Active" xml:space="preserve"><value>Active</value></data>
     <data name="JobCard_Progress_InProgress" xml:space="preserve"><value>IN PROGRESS</value></data>
     <data name="JobCard_Progress_Processing" xml:space="preserve"><value>Processing...</value></data>
+
+    <!-- JobsPage - Multi-selection -->
+    <data name="JobsPage_SelectAll" xml:space="preserve"><value>Select All</value></data>
+    <data name="JobsPage_DeselectAll" xml:space="preserve"><value>Deselect All</value></data>
+    <data name="JobsPage_RunSelected" xml:space="preserve"><value>Run Selected ({0})</value></data>
+    <data name="JobsPage_SelectedCount" xml:space="preserve"><value>{0} job(s) selected</value></data>
 </root>
