@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EasySave.GUI.Components.CustomCheckBox">
+    <UserControl.Styles>
+        <Style Selector="Button#CheckButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button#CheckButton:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button#CheckButton:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Button x:Name="CheckButton"
+            Width="20"
+            Height="20"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+        <Border x:Name="CheckBox"
+                Width="20"
+                Height="20"
+                Background="White"
+                BorderBrush="#15171D"
+                BorderThickness="2"
+                CornerRadius="4">
+            <Path x:Name="CheckMark"
+                  Data="M 3,9 L 7,13 L 15,5"
+                  Stroke="White"
+                  StrokeThickness="2"
+                  Fill="Transparent"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  IsVisible="False"
+                  Margin="0,1,0,0"/>
+        </Border>
+    </Button>
+</UserControl>
