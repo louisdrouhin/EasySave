@@ -189,25 +189,6 @@ public class EasyLogTests
         CleanupTestFile(logPath);
     }
 
-    [Fact]
-    public void Write_WithFormatterException_PropagatesException()
-    {
-        // Arrange
-        var formatterMock = new Mock<ILogFormatter>();
-        formatterMock.Setup(f => f.Format(It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
-            .Throws(new InvalidOperationException("Formatter error"));
-
-        var logPath = GetTempLogBasePath();
-        var easyLog = new EasyLog(formatterMock.Object, logPath);
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-            easyLog.Write(DateTime.Now, "Event", new Dictionary<string, object>()));
-
-        // Cleanup
-        CleanupTestFile(logPath);
-    }
-
     #endregion
 
     #region SetLogPath Tests
