@@ -74,6 +74,10 @@
         </Style>
         <Style Selector="Button.button-gray-cancel:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#D1D5DB" />
+            <Setter Property="TextBlock.Foreground" Value="#374151" />
+        </Style>
+        <Style Selector="Button.button-gray-cancel:pointerover">
+            <Setter Property="Foreground" Value="#374151" />
         </Style>
 
         <Style Selector="Button.button-primary-orange">
