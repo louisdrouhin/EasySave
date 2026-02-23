@@ -26,7 +26,7 @@ public class JobManager
     private ILogFormatter _logFormatter;
     private readonly StateTracker _stateTracker;
     private EasyLogNetworkClient? _networkClient;
-    private string _logMode = "local_only";  // "local_only", "server_only", "both"
+    private string _logMode = "local_only";
 
     // Job control mechanisms
     private readonly Dictionary<string, CancellationTokenSource> _jobCancellationTokens = new();
@@ -50,7 +50,6 @@ public class JobManager
         _logFormatter = CreateLogFormatter();
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        // Initialize network client if server is enabled
         try
         {
             InitializeNetworkClient();
@@ -120,7 +119,6 @@ public class JobManager
             new Dictionary<string, object>()
         );
 
-        // Start business application monitoring
         StartBusinessAppMonitoring();
     }
 
@@ -152,7 +150,6 @@ public class JobManager
         catch (Exception ex)
         {
             Console.WriteLine($"[JobManager] Failed to connect to EasyLog server: {ex.Message}");
-            // Fallback to local_only if connection fails
             _logMode = "local_only";
             _networkClient = null;
         }
@@ -160,7 +157,6 @@ public class JobManager
 
     private void LogEvent(DateTime timestamp, string name, Dictionary<string, object> content)
     {
-        // Add client machine name
         content["clientId"] = Environment.MachineName;
 
         switch (_logMode)
@@ -276,7 +272,6 @@ public class JobManager
 
     public void Close()
     {
-        // Stop business app monitoring
         StopBusinessAppMonitoring();
 
         _logger.Close();
@@ -339,7 +334,6 @@ public class JobManager
 
         _logger = new EasyLog(_logFormatter, _configParser.GetLogsPath());
 
-        // Reinitialize network client after config reload
         InitializeNetworkClient();
 
         LogEvent(
@@ -446,7 +440,7 @@ public class JobManager
     {
         if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
         {
-            pauseEvent.Reset(); // Signal pause
+            pauseEvent.Reset();
 
             _stateTracker.UpdateJobState(
                 new StateEntry(
@@ -469,7 +463,6 @@ public class JobManager
 
     public void ResumeJob(Job job)
     {
-        // Check if business app is running - prevent resume
         lock (_businessAppLock)
         {
             if (_isBusinessAppRunning)
@@ -494,7 +487,7 @@ public class JobManager
                 _jobsPausedByBusinessApp.Remove(job.Name);
             }
 
-            pauseEvent.Set(); // Signal resume
+            pauseEvent.Set();
 
             _stateTracker.UpdateJobState(
                 new StateEntry(
@@ -519,7 +512,7 @@ public class JobManager
     {
         if (_jobCancellationTokens.TryGetValue(job.Name, out var cts))
         {
-            cts.Cancel(); // Signal cancellation
+            cts.Cancel();
 
             _stateTracker.UpdateJobState(
                 new StateEntry(
@@ -542,9 +535,8 @@ public class JobManager
 
     public void LaunchJob(Job job, string password)
     {
-        // Create control mechanisms for this job
         var cts = new CancellationTokenSource();
-        var pauseEvent = new ManualResetEventSlim(true); // Initially not paused
+        var pauseEvent = new ManualResetEventSlim(true); 
 
         _jobCancellationTokens[job.Name] = cts;
         _jobPauseEvents[job.Name] = pauseEvent;
@@ -603,7 +595,6 @@ public class JobManager
         }
         catch (OperationCanceledException)
         {
-            // Job was cancelled, ensure state is set to Inactive
             _stateTracker.UpdateJobState(
                 new StateEntry(
                     job.Name,
@@ -621,11 +612,9 @@ public class JobManager
                     { "jobType", job.Type.ToString() }
                 }
             );
-            // Don't rethrow - cancellation is expected
         }
         catch (Exception ex)
         {
-            // Ensure state is set to Inactive on error
             _stateTracker.UpdateJobState(
                 new StateEntry(
                     job.Name,
@@ -648,7 +637,6 @@ public class JobManager
         }
         finally
         {
-            // Cleanup
             _jobCancellationTokens.Remove(job.Name);
             if (_jobPauseEvents.Remove(job.Name, out var pauseEventToDispose))
             {
@@ -722,10 +710,8 @@ public class JobManager
 
         foreach (var sourceFile in sourceFiles)
         {
-            // Check for cancellation
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Wait if paused
             pauseEvent.Wait(cancellationToken);
 
             try
@@ -963,10 +949,8 @@ public class JobManager
 
         foreach (var sourceFile in allSourceFiles)
         {
-            // Check for cancellation
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Wait if paused
             pauseEvent.Wait(cancellationToken);
 
             try
@@ -1023,10 +1007,8 @@ public class JobManager
 
         foreach (var fileToCopy in filesToCopy)
         {
-            // Check for cancellation
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Wait if paused
             pauseEvent.Wait(cancellationToken);
 
             try
@@ -1315,7 +1297,6 @@ public class JobManager
                     _isBusinessAppRunning = detectedApp != null;
                     _detectedBusinessApp = detectedApp;
 
-                    // Business app detected - pause all active jobs
                     if (_isBusinessAppRunning && !previousState)
                     {
                         LogEvent(
@@ -1330,7 +1311,6 @@ public class JobManager
 
                         PauseAllActiveJobs();
                     }
-                    // Business app closed - resume jobs that were paused by it
                     else if (!_isBusinessAppRunning && previousState)
                     {
                         LogEvent(
@@ -1347,7 +1327,6 @@ public class JobManager
                     }
                 }
 
-                // Check every 2 seconds
                 Thread.Sleep(2000);
             }
             catch (Exception ex)
@@ -1361,7 +1340,6 @@ public class JobManager
                     }
                 );
 
-                // Wait a bit before retrying
                 Thread.Sleep(5000);
             }
         }
@@ -1374,10 +1352,9 @@ public class JobManager
             var jobName = kvp.Key;
             var pauseEvent = kvp.Value;
 
-            // Only pause if not already paused
             if (pauseEvent.IsSet)
             {
-                pauseEvent.Reset(); // Signal pause
+                pauseEvent.Reset();
                 _jobsPausedByBusinessApp.Add(jobName);
 
                 _stateTracker.UpdateJobState(
@@ -1407,7 +1384,7 @@ public class JobManager
         {
             if (_jobPauseEvents.TryGetValue(jobName, out var pauseEvent))
             {
-                pauseEvent.Set(); // Signal resume
+                pauseEvent.Set();
 
                 _stateTracker.UpdateJobState(
                     new StateEntry(
@@ -1433,7 +1410,6 @@ public class JobManager
 
     public async Task LaunchMultipleJobsAsync(List<Job> jobs, string password)
     {
-        // Check if business app is running before starting
         lock (_businessAppLock)
         {
             if (_isBusinessAppRunning)
