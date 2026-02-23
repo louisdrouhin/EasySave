@@ -49,6 +49,9 @@ public partial class SettingsPage : UserControl
         var businessAppsSectionTitle = this.FindControl<TextBlock>("BusinessAppsSectionTitle");
         if (businessAppsSectionTitle != null) businessAppsSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps");
 
+        var prioritySectionTitle = this.FindControl<TextBlock>("PrioritySectionTitle");
+        if (prioritySectionTitle != null) prioritySectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Priority");
+
         var logsPathLabel = this.FindControl<TextBlock>("LogsPathLabel");
         if (logsPathLabel != null) logsPathLabel.Text = LocalizationManager.Get("SettingsPage_Section_Logs_Path");
 
@@ -60,6 +63,9 @@ public partial class SettingsPage : UserControl
 
         var extensionsLabel = this.FindControl<TextBlock>("ExtensionsLabel");
         if (extensionsLabel != null) extensionsLabel.Text = LocalizationManager.Get("SettingsPage_Section_Encryption_Extensions");
+
+        var priorityExtensionsLabel = this.FindControl<TextBlock>("PriorityExtensionsLabel");
+        if (priorityExtensionsLabel != null) priorityExtensionsLabel.Text = LocalizationManager.Get("SettingsPage_Section_Priority_Extensions");
 
         var appsLabel = this.FindControl<TextBlock>("AppsLabel");
         if (appsLabel != null) appsLabel.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps_List");
@@ -89,7 +95,42 @@ public partial class SettingsPage : UserControl
         var xmlButton = this.FindControl<Button>("XmlFormatButton");
         if (xmlButton != null) xmlButton.Click += OnXmlFormatClick;
 
+        var addPriorityButton = this.FindControl<Button>("AddPriorityExtensionButton");
+        if (addPriorityButton != null) addPriorityButton.Click += OnAddPriorityExtensionClick;
+
         PopulateData();
+    }
+
+    private void OnAddPriorityExtensionClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var textBox = this.FindControl<TextBox>("AddPriorityExtensionBox");
+        if (textBox == null || string.IsNullOrWhiteSpace(textBox.Text)) return;
+
+        string extension = textBox.Text.Trim().ToLower();
+        if (!extension.StartsWith(".")) extension = "." + extension;
+
+        var currentExtensions = _configParser.GetPriorityExtensions();
+        if (!currentExtensions.Contains(extension))
+        {
+            currentExtensions.Add(extension);
+            SavePriorityExtensions(currentExtensions);
+            textBox.Text = "";
+            PopulateData();
+        }
+    }
+
+    private void SavePriorityExtensions(System.Collections.Generic.List<string> extensions)
+    {
+        if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject && configObject["config"] is System.Text.Json.Nodes.JsonObject configSection)
+        {
+            var array = new System.Text.Json.Nodes.JsonArray();
+            foreach (var ext in extensions)
+            {
+                array.Add(ext);
+            }
+            configSection["priorityExtensions"] = array;
+            _configParser.EditAndSaveConfig(configObject);
+        }
     }
 
     private void OnFrenchClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -184,6 +225,9 @@ public partial class SettingsPage : UserControl
         var businessAppsSectionTitle = this.FindControl<TextBlock>("BusinessAppsSectionTitle");
         if (businessAppsSectionTitle != null) businessAppsSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps");
 
+        var prioritySectionTitle = this.FindControl<TextBlock>("PrioritySectionTitle");
+        if (prioritySectionTitle != null) prioritySectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Priority");
+
         var languageSectionTitle = this.FindControl<TextBlock>("LanguageSectionTitle");
         if (languageSectionTitle != null) languageSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Language");
 
@@ -198,6 +242,9 @@ public partial class SettingsPage : UserControl
 
         var extensionsLabel = this.FindControl<TextBlock>("ExtensionsLabel");
         if (extensionsLabel != null) extensionsLabel.Text = LocalizationManager.Get("SettingsPage_Section_Encryption_Extensions");
+
+        var priorityExtensionsLabel = this.FindControl<TextBlock>("PriorityExtensionsLabel");
+        if (priorityExtensionsLabel != null) priorityExtensionsLabel.Text = LocalizationManager.Get("SettingsPage_Section_Priority_Extensions");
 
         var appsLabel = this.FindControl<TextBlock>("AppsLabel");
         if (appsLabel != null) appsLabel.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps_List");
@@ -291,6 +338,38 @@ public partial class SettingsPage : UserControl
                 }
             }
 
+            var priorityPanel = this.FindControl<WrapPanel>("PriorityExtensionsPanel");
+            if (priorityPanel != null)
+            {
+                priorityPanel.Children.Clear();
+                var extensions = _configParser.GetPriorityExtensions();
+
+                if (extensions.Count == 0)
+                {
+                    var emptyText = new TextBlock
+                    {
+                        Text = LocalizationManager.Get("SettingsPage_NoExtensions"),
+                        Foreground = Avalonia.Media.Brushes.Gray,
+                        FontSize = 12
+                    };
+                    priorityPanel.Children.Add(emptyText);
+                }
+                else
+                {
+                    foreach (var ext in extensions)
+                    {
+                        var badge = CreateBadge(ext, () =>
+                        {
+                            var current = _configParser.GetPriorityExtensions();
+                            current.Remove(ext);
+                            SavePriorityExtensions(current);
+                            PopulateData();
+                        });
+                        priorityPanel.Children.Add(badge);
+                    }
+                }
+            }
+
             var appsPanel = this.FindControl<WrapPanel>("AppsPanel");
             if (appsPanel != null)
             {
@@ -323,9 +402,9 @@ public partial class SettingsPage : UserControl
         }
     }
 
-    private Border CreateBadge(string text)
+    private Border CreateBadge(string text, Action? onClick = null)
     {
-        return new Border
+        var badge = new Border
         {
             Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#F3F4F6")),
             CornerRadius = new Avalonia.CornerRadius(6),
@@ -333,12 +412,20 @@ public partial class SettingsPage : UserControl
             Margin = new Avalonia.Thickness(4, 4, 4, 4),
             Child = new TextBlock
             {
-                Text = text,
+                Text = onClick != null ? $"{text} ✕" : text,
                 FontSize = 11,
                 FontWeight = Avalonia.Media.FontWeight.Bold,
                 Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#374151"))
             }
         };
+
+        if (onClick != null)
+        {
+            badge.Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand);
+            badge.PointerPressed += (s, e) => onClick();
+        }
+
+        return badge;
     }
 
     private string GetApplicationVersion()
