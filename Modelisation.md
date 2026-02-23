@@ -79,6 +79,10 @@ classDiagram
       +GetJobs() List~Job~
       +Close() void
       +LaunchJob(job: Job, password: string) void
+      +LaunchMultipleJobsAsync(jobs: List~Job~, password: string) Task
+      +PauseJob(job: Job) void
+      +ResumeJob(job: Job) void
+      +StopJob(job: Job) void
       +CheckBusinessApplications() string?
       -CreateLogFormatter() ILogFormatter
       -LoadJobsFromConfig() void
@@ -147,6 +151,7 @@ classDiagram
     class JobState {
       <<enumeration>>
       Active
+      Paused
       Inactive
     }
   }
@@ -222,6 +227,7 @@ classDiagram
 
   JobCard --> Job
   JobCard --> JobTypeColorConverter
+  JobCard *-- CustomCheckBox
 
   CreateJobDialog --> JobResult
   CreateJobDialog --> JobType
@@ -284,13 +290,29 @@ classDiagram
     }
 
     class JobsPage {
-      -JobManager _jobManager
+      -JobManager? _jobManager
+      -FileSystemWatcher? _watcher
+      -string _stateFilePath
+      -Dictionary~string, JobCard~ _jobCards
+      -HashSet~Job~ _selectedJobs
       +JobsPage()
       +JobsPage(jobManager: JobManager)
       -LoadJobs() void
+      -InitializeStateWatcher() void
+      -OnStateFileChanged(sender: object, e: FileSystemEventArgs) void
+      -UpdateStateContent() void
       -CreateJobButton_Click(sender: object, e: RoutedEventArgs) void
       -OnJobPlay(sender: object, job: Job) void
+      -OnJobPause(sender: object, job: Job) void
+      -OnJobResume(sender: object, job: Job) void
+      -OnJobStop(sender: object, job: Job) void
       -OnJobDelete(sender: object, data: (int, Job)) void
+      -OnJobSelectionChanged(sender: object, data: (Job, bool)) void
+      -UpdateSelectionBar() void
+      -DeselectAllButton_Click(sender: object, e: RoutedEventArgs) void
+      -RunSelectedButton_Click(sender: object, e: RoutedEventArgs) void
+      -OnRunSelectedJobs() Task
+      -OnLanguageChanged(sender: object, e: LanguageChangedEventArgs) void
     }
 
     class LogsPage {
@@ -341,17 +363,39 @@ classDiagram
   }
 
   namespace EasySave.GUI.Components {
+    class CustomCheckBox {
+      -bool _isChecked
+      +event EventHandler~bool~? CheckedChanged
+      +bool IsChecked
+      +CustomCheckBox()
+      +Toggle() void
+      +SetChecked(value: bool) void
+      -UpdateVisuals() void
+    }
+
     class JobCard {
       -Job _job
       -int _index
       -bool _isExpanded
-      +PlayClicked EventHandler
-      +DeleteClicked EventHandler
+      -JobState _currentState
+      +event EventHandler~Job~? PlayClicked
+      +event EventHandler~Job~? PauseClicked
+      +event EventHandler~Job~? ResumeClicked
+      +event EventHandler~Job~? StopClicked
+      +event EventHandler~(int, Job)~? DeleteClicked
+      +event EventHandler~(Job, bool)~? SelectionChanged
       +JobCard()
       +JobCard(job: Job, index: int)
       -OnToggleExpanded() void
+      -OnSelectCheckBoxChanged() void
       -OnPlayClicked() void
       -OnDeleteClicked() void
+      -OnCancelDeleteClicked() void
+      -OnConfirmDeleteClicked() void
+      -ToggleDeleteMode(isDeleting: bool) void
+      +UpdateState(state: StateEntry) void
+      -FormatSize(size: long) string
+      +SetChecked(value: bool) void
     }
   }
 
@@ -401,6 +445,10 @@ classDiagram
       +GetJobs() List~Job~
       +Close() void
       +LaunchJob(job: Job, password: string) void
+      +LaunchMultipleJobsAsync(jobs: List~Job~, password: string) Task
+      +PauseJob(job: Job) void
+      +ResumeJob(job: Job) void
+      +StopJob(job: Job) void
       +CheckBusinessApplications() string?
       -CreateLogFormatter() ILogFormatter
       -LoadJobsFromConfig() void
@@ -469,6 +517,7 @@ classDiagram
     class JobState {
       <<enumeration>>
       Active
+      Paused
       Inactive
     }
   }
@@ -654,7 +703,7 @@ sequenceDiagram
     deactivate CLI
 ```
 
-### 3.4 JSON Logger
+### 3.4 JSON local Logger
 
 ```mermaid
 sequenceDiagram
