@@ -67,6 +67,52 @@ public class LogsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Helper Methods
+
+    private List<string> ExtractJsonObjects(string content)
+    {
+        List<string> objects = new List<string>();
+        int braceCount = 0;
+        int startIndex = -1;
+
+        for (int i = 0; i < content.Length; i++)
+        {
+            char c = content[i];
+
+            if (c == '{')
+            {
+                if (braceCount == 0)
+                    startIndex = i;
+                braceCount++;
+            }
+            else if (c == '}')
+            {
+                braceCount--;
+                if (braceCount == 0 && startIndex != -1)
+                {
+                    try
+                    {
+                        string obj = content.Substring(startIndex, i - startIndex + 1);
+                        // Validate that it's valid JSON
+                        using (JsonDocument.Parse(obj))
+                        {
+                            objects.Add(obj);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore invalid objects
+                    }
+                    startIndex = -1;
+                }
+            }
+        }
+
+        return objects;
+    }
+
+    #endregion
+
     #region Methods
 
     private void OpenFolder()
@@ -151,9 +197,9 @@ public class LogsPageViewModel : ViewModelBase
 
     private void LoadJsonLogs(string filePath)
     {
+        string? jsonContent = null;
         try
         {
-            string jsonContent;
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var reader = new StreamReader(fileStream))
             {
@@ -163,46 +209,63 @@ public class LogsPageViewModel : ViewModelBase
             if (string.IsNullOrWhiteSpace(jsonContent))
                 return;
 
-            // Fix incomplete JSON
+            // Fix incomplete/malformed JSON
             jsonContent = jsonContent.TrimEnd();
-            if (!jsonContent.StartsWith("{\"logs\":["))
-            {
-                if (jsonContent.StartsWith("{"))
-                {
-                    jsonContent = "{\"logs\":[" + jsonContent.TrimStart('{');
-                }
-                else
-                {
-                    jsonContent = "{\"logs\":[" + jsonContent;
-                }
-            }
 
-            if (!jsonContent.EndsWith("]}"))
-            {
-                if (jsonContent.EndsWith(","))
-                {
-                    jsonContent = jsonContent.Substring(0, jsonContent.Length - 1);
-                }
-                jsonContent += "]}";
-            }
+            // Remove leading whitespace and commas
+            jsonContent = jsonContent.TrimStart(' ', '\t', '\n', '\r', ',');
 
-            List<string> logStrings = new List<string>();
-            using (var doc = JsonDocument.Parse(jsonContent))
+            // Try to parse individual JSON objects if the wrapper is malformed
+            List<string> logStrings = ExtractJsonObjects(jsonContent);
+
+            if (logStrings.Count == 0)
             {
-                if (doc.RootElement.TryGetProperty("logs", out JsonElement logsArray))
+                // Try the standard wrapped format
+                if (!jsonContent.StartsWith("{\"logs\":["))
                 {
-                    foreach (JsonElement logEntry in logsArray.EnumerateArray())
+                    if (jsonContent.StartsWith("{"))
                     {
-                        try
+                        jsonContent = "{\"logs\":[" + jsonContent.TrimStart('{');
+                    }
+                    else
+                    {
+                        jsonContent = "{\"logs\":[" + jsonContent;
+                    }
+                }
+
+                if (!jsonContent.EndsWith("]}"))
+                {
+                    if (jsonContent.EndsWith(","))
+                    {
+                        jsonContent = jsonContent.Substring(0, jsonContent.Length - 1);
+                    }
+                    jsonContent += "]}";
+                }
+
+                try
+                {
+                    using (var doc = JsonDocument.Parse(jsonContent))
+                    {
+                        if (doc.RootElement.TryGetProperty("logs", out JsonElement logsArray))
                         {
-                            string logJson = JsonSerializer.Serialize(logEntry, new JsonSerializerOptions { WriteIndented = false });
-                            logStrings.Add(logJson);
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"[LogsPageViewModel.LoadJsonLogs] Error serializing entry: {ex.Message}");
+                            foreach (JsonElement logEntry in logsArray.EnumerateArray())
+                            {
+                                try
+                                {
+                                    string logJson = JsonSerializer.Serialize(logEntry, new JsonSerializerOptions { WriteIndented = false });
+                                    logStrings.Add(logJson);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.WriteLine($"[LogsPageViewModel.LoadJsonLogs] Error serializing entry: {ex.Message}");
+                                }
+                            }
                         }
                     }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[LogsPageViewModel.LoadJsonLogs] Failed to parse wrapped JSON: {ex.Message}");
                 }
             }
 
@@ -247,6 +310,8 @@ public class LogsPageViewModel : ViewModelBase
         catch (Exception ex)
         {
             Debug.WriteLine($"[LogsPageViewModel.LoadJsonLogs] ERROR: {ex.Message}");
+            // Si le parsing échoue complètement, enregistrer le contenu du début du fichier
+            Debug.WriteLine($"[LogsPageViewModel.LoadJsonLogs] File content preview: {jsonContent?.Substring(0, Math.Min(200, jsonContent?.Length ?? 0)) ?? "null"}");
         }
     }
 
