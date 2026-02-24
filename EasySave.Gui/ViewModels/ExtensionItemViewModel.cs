@@ -11,7 +11,7 @@ public class ExtensionItemViewModel : ViewModelBase
 
     public ExtensionItemViewModel(string ext, Action<ExtensionItemViewModel> removeCallback)
     {
-        DisplayText = $"{ext} ✕";
+        DisplayText = ext;
         RemoveCommand = new RelayCommand(_ => removeCallback(this));
     }
 }

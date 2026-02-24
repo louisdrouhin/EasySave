@@ -15,6 +15,10 @@ public class SettingsPageViewModel : ViewModelBase
     private readonly ConfigParser _configParser;
     private readonly JobManager _jobManager;
     private string _newPriorityExtensionText = "";
+    private string _newEncryptionExtensionText = "";
+    private string _newBusinessAppText = "";
+    private string _maxConcurrentJobs = "";
+    private long _largeFileSizeLimitKb;
 
     public SettingsPageViewModel(JobManager jobManager)
     {
@@ -22,8 +26,8 @@ public class SettingsPageViewModel : ViewModelBase
         _configParser = jobManager.ConfigParser;
 
         // Collections
-        EncryptionExtensions = new ObservableCollection<string>(_configParser.GetEncryptionExtensions());
-        BusinessApps = new ObservableCollection<string>(_configParser.GetBusinessApplications());
+        EncryptionExtensions = new ObservableCollection<ExtensionItemViewModel>();
+        BusinessApps = new ObservableCollection<AppItemViewModel>();
         PriorityExtensions = new ObservableCollection<ExtensionItemViewModel>();
 
         // Commands
@@ -32,8 +36,15 @@ public class SettingsPageViewModel : ViewModelBase
         SetFrenchLanguageCommand = new RelayCommand(_ => LocalizationManager.SetLanguage("fr"));
         SetEnglishLanguageCommand = new RelayCommand(_ => LocalizationManager.SetLanguage("en"));
         AddPriorityExtensionCommand = new RelayCommand(_ => AddPriorityExtension());
+        AddEncryptionExtensionCommand = new RelayCommand(_ => AddEncryptionExtension());
+        AddBusinessAppCommand = new RelayCommand(_ => AddBusinessApp());
 
         // Load initial data
+        _maxConcurrentJobs = _configParser.GetMaxConcurrentJobs().ToString();
+        _largeFileSizeLimitKb = _configParser.GetLargeFileSizeLimitKb();
+
+        RefreshEncryptionExtensions();
+        RefreshBusinessApps();
         RefreshPriorityExtensions();
 
         // Subscribe to language changes
@@ -50,12 +61,15 @@ public class SettingsPageViewModel : ViewModelBase
     public string EncryptionSectionTitle => LocalizationManager.Get("SettingsPage_Section_Encryption");
     public string BusinessAppsSectionTitle => LocalizationManager.Get("SettingsPage_Section_BusinessApps");
     public string PrioritySectionTitle => LocalizationManager.Get("SettingsPage_Section_Priority");
+    public string PerformanceSectionTitle => LocalizationManager.Get("SettingsPage_Section_Performance");
     public string LogsPathLabel => LocalizationManager.Get("SettingsPage_Section_Logs_Path");
     public string LogsFormatLabel => LocalizationManager.Get("SettingsPage_Section_Logs_Format");
     public string StatePathLabel => LocalizationManager.Get("SettingsPage_Section_State_Path");
     public string ExtensionsLabel => LocalizationManager.Get("SettingsPage_Section_Encryption_Extensions");
     public string PriorityExtensionsLabel => LocalizationManager.Get("SettingsPage_Section_Priority_Extensions");
     public string AppsLabel => LocalizationManager.Get("SettingsPage_Section_BusinessApps_List");
+    public string MaxConcurrentJobsLabel => LocalizationManager.Get("SettingsPage_Section_Performance_MaxConcurrentJobs");
+    public string LargeFileSizeLimitLabel => LocalizationManager.Get("SettingsPage_Section_Performance_LargeFileSize");
     public string LanguageSectionTitle => LocalizationManager.Get("SettingsPage_Section_Language");
     public string CurrentLanguageLabel => LocalizationManager.Get("SettingsPage_Section_Language_Current");
     public string AboutSectionTitle => LocalizationManager.Get("SettingsPage_Section_About");
@@ -99,12 +113,44 @@ public class SettingsPageViewModel : ViewModelBase
         set => SetProperty(ref _newPriorityExtensionText, value);
     }
 
+    public string NewEncryptionExtensionText
+    {
+        get => _newEncryptionExtensionText;
+        set => SetProperty(ref _newEncryptionExtensionText, value);
+    }
+
+    public string NewBusinessAppText
+    {
+        get => _newBusinessAppText;
+        set => SetProperty(ref _newBusinessAppText, value);
+    }
+
+    public string MaxConcurrentJobs
+    {
+        get => _maxConcurrentJobs;
+        set
+        {
+            SetProperty(ref _maxConcurrentJobs, value);
+            SaveMaxConcurrentJobs();
+        }
+    }
+
+    public long LargeFileSizeLimitKb
+    {
+        get => _largeFileSizeLimitKb;
+        set
+        {
+            SetProperty(ref _largeFileSizeLimitKb, value);
+            SaveLargeFileSize();
+        }
+    }
+
     #endregion
 
     #region Collections
 
-    public ObservableCollection<string> EncryptionExtensions { get; }
-    public ObservableCollection<string> BusinessApps { get; }
+    public ObservableCollection<ExtensionItemViewModel> EncryptionExtensions { get; }
+    public ObservableCollection<AppItemViewModel> BusinessApps { get; }
     public ObservableCollection<ExtensionItemViewModel> PriorityExtensions { get; }
 
     #endregion
@@ -116,6 +162,8 @@ public class SettingsPageViewModel : ViewModelBase
     public ICommand SetFrenchLanguageCommand { get; }
     public ICommand SetEnglishLanguageCommand { get; }
     public ICommand AddPriorityExtensionCommand { get; }
+    public ICommand AddEncryptionExtensionCommand { get; }
+    public ICommand AddBusinessAppCommand { get; }
 
     #endregion
 
@@ -152,6 +200,110 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    private void AddEncryptionExtension()
+    {
+        if (string.IsNullOrWhiteSpace(NewEncryptionExtensionText))
+            return;
+
+        string extension = NewEncryptionExtensionText.Trim().ToLower();
+        if (!extension.StartsWith("."))
+            extension = "." + extension;
+
+        var currentExtensions = _configParser.GetEncryptionExtensions();
+        if (!currentExtensions.Contains(extension))
+        {
+            currentExtensions.Add(extension);
+            SaveEncryptionExtensions(currentExtensions);
+            NewEncryptionExtensionText = "";
+            RefreshEncryptionExtensions();
+        }
+    }
+
+    private void RemoveEncryptionExtension(ExtensionItemViewModel vm)
+    {
+        var currentExtensions = _configParser.GetEncryptionExtensions();
+        currentExtensions.Remove(vm.DisplayText);
+        SaveEncryptionExtensions(currentExtensions);
+        RefreshEncryptionExtensions();
+    }
+
+    private void SaveEncryptionExtensions(List<string> extensions)
+    {
+        if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
+            configObject["config"] is System.Text.Json.Nodes.JsonObject configSection)
+        {
+            if (configSection["encryption"] is System.Text.Json.Nodes.JsonObject encryptionSection)
+            {
+                var array = new System.Text.Json.Nodes.JsonArray();
+                foreach (var ext in extensions)
+                {
+                    array.Add(ext);
+                }
+                encryptionSection["extensions"] = array;
+                _configParser.EditAndSaveConfig(configObject);
+            }
+        }
+    }
+
+    private void RefreshEncryptionExtensions()
+    {
+        EncryptionExtensions.Clear();
+        var extensions = _configParser.GetEncryptionExtensions();
+        foreach (var ext in extensions)
+        {
+            EncryptionExtensions.Add(new ExtensionItemViewModel(ext, RemoveEncryptionExtension));
+        }
+    }
+
+    private void AddBusinessApp()
+    {
+        if (string.IsNullOrWhiteSpace(NewBusinessAppText))
+            return;
+
+        string appName = NewBusinessAppText.Trim().ToLower();
+        var currentApps = _configParser.GetBusinessApplications();
+        if (!currentApps.Contains(appName))
+        {
+            currentApps.Add(appName);
+            SaveBusinessApps(currentApps);
+            NewBusinessAppText = "";
+            RefreshBusinessApps();
+        }
+    }
+
+    private void RemoveBusinessApp(AppItemViewModel vm)
+    {
+        var currentApps = _configParser.GetBusinessApplications();
+        currentApps.Remove(vm.DisplayText);
+        SaveBusinessApps(currentApps);
+        RefreshBusinessApps();
+    }
+
+    private void SaveBusinessApps(List<string> apps)
+    {
+        if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
+            configObject["config"] is System.Text.Json.Nodes.JsonObject configSection)
+        {
+            var array = new System.Text.Json.Nodes.JsonArray();
+            foreach (var app in apps)
+            {
+                array.Add(app);
+            }
+            configSection["businessApplications"] = array;
+            _configParser.EditAndSaveConfig(configObject);
+        }
+    }
+
+    private void RefreshBusinessApps()
+    {
+        BusinessApps.Clear();
+        var apps = _configParser.GetBusinessApplications();
+        foreach (var app in apps)
+        {
+            BusinessApps.Add(new AppItemViewModel(app, RemoveBusinessApp));
+        }
+    }
+
     private void RemovePriorityExtension(ExtensionItemViewModel vm)
     {
         var currentExtensions = _configParser.GetPriorityExtensions();
@@ -182,6 +334,32 @@ public class SettingsPageViewModel : ViewModelBase
         foreach (var ext in extensions)
         {
             PriorityExtensions.Add(new ExtensionItemViewModel(ext, RemovePriorityExtension));
+        }
+    }
+
+    private void SaveMaxConcurrentJobs()
+    {
+        if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
+            configObject["config"] is System.Text.Json.Nodes.JsonObject configSection)
+        {
+            if (string.IsNullOrWhiteSpace(_maxConcurrentJobs) || !int.TryParse(_maxConcurrentJobs, out int value))
+            {
+                // Don't save invalid values
+                return;
+            }
+
+            configSection["maxConcurrentJobs"] = value;
+            _configParser.EditAndSaveConfig(configObject);
+        }
+    }
+
+    private void SaveLargeFileSize()
+    {
+        if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
+            configObject["config"] is System.Text.Json.Nodes.JsonObject configSection)
+        {
+            configSection["largeFileSizeLimitKb"] = _largeFileSizeLimitKb;
+            _configParser.EditAndSaveConfig(configObject);
         }
     }
 
@@ -226,12 +404,15 @@ public class SettingsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(EncryptionSectionTitle));
         OnPropertyChanged(nameof(BusinessAppsSectionTitle));
         OnPropertyChanged(nameof(PrioritySectionTitle));
+        OnPropertyChanged(nameof(PerformanceSectionTitle));
         OnPropertyChanged(nameof(LogsPathLabel));
         OnPropertyChanged(nameof(LogsFormatLabel));
         OnPropertyChanged(nameof(StatePathLabel));
         OnPropertyChanged(nameof(ExtensionsLabel));
         OnPropertyChanged(nameof(PriorityExtensionsLabel));
         OnPropertyChanged(nameof(AppsLabel));
+        OnPropertyChanged(nameof(MaxConcurrentJobsLabel));
+        OnPropertyChanged(nameof(LargeFileSizeLimitLabel));
         OnPropertyChanged(nameof(LanguageSectionTitle));
         OnPropertyChanged(nameof(CurrentLanguageLabel));
         OnPropertyChanged(nameof(AboutSectionTitle));
