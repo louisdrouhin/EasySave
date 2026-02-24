@@ -102,6 +102,37 @@ public class EasyLog
                     // Vérifie si le fichier JSON contient des entrées (cherche "timestamp")
                     _isFirstEntry = !content.Contains("\"timestamp\"");
 
+                    content = content.Trim();
+
+                    // Fix malformed JSON: starts with comma (,{...})
+                    if (content.StartsWith(","))
+                    {
+                        content = content.TrimStart(' ', '\t', '\n', '\r', ',');
+                        // Wrap in proper format: {"logs":[{...}]}
+                        if (!content.StartsWith("{\"logs\":["))
+                        {
+                            content = "{\"logs\":[" + content;
+                        }
+                        File.WriteAllText(_logPath, content);
+                    }
+                    // Fix malformed JSON that starts with [ instead of {"logs":[
+                    else if (content.StartsWith("["))
+                    {
+                        // Convert old format from [...]  to {"logs":[...]}
+                        if (content.EndsWith("]"))
+                        {
+                            content = "{\"logs\":" + content;
+                        }
+                        File.WriteAllText(_logPath, content);
+                    }
+                    // Fix if it starts with { but not with {"logs":[
+                    else if (content.StartsWith("{") && !content.StartsWith("{\"logs\":["))
+                    {
+                        // Check if it's actually individual objects
+                        content = "{\"logs\":[" + content;
+                        File.WriteAllText(_logPath, content);
+                    }
+
                     // Si le fichier est fermé, on le rouvre
                     if (content.EndsWith("]}"))
                     {
@@ -128,7 +159,8 @@ public class EasyLog
 
                 if (isXml)
                 {
-                    // Vérifie si le fichier contient des entrées                    _isFirstEntry = !content.Contains("<logEntry>");
+                    // Vérifie si le fichier contient des entrées
+                    _isFirstEntry = !content.Contains("<logEntry>");
 
                     // Si le fichier est fermé, on le rouvre
                     if (content.EndsWith("</logs>"))
@@ -141,6 +173,37 @@ public class EasyLog
                 {
                     // Vérifie si le fichier contient des entrées
                     _isFirstEntry = !content.Contains("\"timestamp\"");
+
+                    content = content.Trim();
+
+                    // Fix malformed JSON: starts with comma (,{...})
+                    if (content.StartsWith(","))
+                    {
+                        content = content.TrimStart(' ', '\t', '\n', '\r', ',');
+                        // Wrap in proper format: {"logs":[{...}]}
+                        if (!content.StartsWith("{\"logs\":["))
+                        {
+                            content = "{\"logs\":[" + content;
+                        }
+                        File.WriteAllText(_logPath, content);
+                    }
+                    // Fix malformed JSON that starts with [ instead of {"logs":[
+                    else if (content.StartsWith("["))
+                    {
+                        // Convert old format from [...]  to {"logs":[...]}
+                        if (content.EndsWith("]"))
+                        {
+                            content = "{\"logs\":" + content;
+                        }
+                        File.WriteAllText(_logPath, content);
+                    }
+                    // Fix if it starts with { but not with {"logs":[
+                    else if (content.StartsWith("{") && !content.StartsWith("{\"logs\":["))
+                    {
+                        // Check if it's actually individual objects
+                        content = "{\"logs\":[" + content;
+                        File.WriteAllText(_logPath, content);
+                    }
 
                     // Si le fichier est fermé, on le rouvre
                     if (content.EndsWith("]}"))
