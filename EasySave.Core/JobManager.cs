@@ -51,6 +51,9 @@ public class JobManager
     private readonly object _largeFileLock = new object();
     private readonly ManualResetEventSlim _largeFileWaitHandle = new ManualResetEventSlim(true);
 
+    // CryptoSoft queue for single-instance operations
+    private readonly CryptosoftQueue _cryptosoftQueue = new CryptosoftQueue();
+
     public ConfigParser ConfigParser => _configParser;
 
     public event EventHandler<LogFormatChangedEventArgs>? LogFormatChanged;
@@ -1261,65 +1264,42 @@ public class JobManager
 
     private long ExecuteCryptosoftCommand(string operation, string sourceFile, string password, string targetDirectory, string errorLogType)
     {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var appDirectory = AppContext.BaseDirectory;
+        var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cryptosoft.exe";
+
+        // Resolve relative path if necessary
+        if (!Path.IsPathRooted(cryptosoftPath))
+        {
+            cryptosoftPath = Path.Combine(appDirectory, cryptosoftPath);
+        }
+
+        // Use the queue to ensure single-instance execution
         try
         {
+            var result = _cryptosoftQueue.EnqueueOperationAsync(
+                operation,
+                sourceFile,
+                password,
+                targetDirectory,
+                errorLogType,
+                cryptosoftPath
+            ).GetAwaiter().GetResult();
 
-            var appDirectory = AppContext.BaseDirectory;
-            var cryptosoftPath = _configParser.Config?["config"]?["cryptosoftPath"]?.GetValue<string>() ?? "Cryptosoft.exe";
-
-            // Resolve relative path if necessary
-            if (!Path.IsPathRooted(cryptosoftPath))
+            if (result < 0)
             {
-                cryptosoftPath = Path.Combine(appDirectory, cryptosoftPath);
+                LogEvent(
+                    DateTime.Now,
+                    errorLogType,
+                    new Dictionary<string, object>
+                    {
+                        { "sourceFile", sourceFile },
+                        { "targetDirectory", targetDirectory },
+                        { "errorCode", result }
+                    }
+                );
             }
 
-            if (!File.Exists(cryptosoftPath))
-            {
-                return -1;
-            }
-
-            var arguments = $"{operation} \"{sourceFile}\" \"{password}\" \"{targetDirectory}\"";
-
-            var processInfo = new ProcessStartInfo
-            {
-                FileName = cryptosoftPath,
-                Arguments = arguments,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-
-            using (var process = Process.Start(processInfo))
-            {
-                if (process == null)
-                {
-                    return -2;
-                }
-
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
-                {
-                    var error = process.StandardError.ReadToEnd();
-                    LogEvent(
-                        DateTime.Now,
-                        errorLogType,
-                        new Dictionary<string, object>
-                        {
-                            { "sourceFile", sourceFile },
-                            { "targetDirectory", targetDirectory },
-                            { "exitCode", process.ExitCode },
-                            { "error", error }
-                        }
-                    );
-                    return -process.ExitCode;
-                }
-            }
-
-            stopwatch.Stop();
-            return stopwatch.ElapsedMilliseconds;
+            return result;
         }
         catch (Exception ex)
         {
