@@ -1,3 +1,9 @@
+## v2.4.0 (2026-02-24)
+
+### Feat
+
+- **large-file-processing**: add large file processing base code
+
 ## v2.3.0 (2026-02-23)
 
 ### Feat
