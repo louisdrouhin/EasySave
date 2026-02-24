@@ -188,4 +188,14 @@ public class ConfigParser
 
         return extensions;
     }
+
+    public long GetLargeFileSizeLimitKb()
+    {
+        var limitNode = Config?["config"]?["largeFileSizeLimitKb"];
+        if (limitNode != null)
+        {
+            return limitNode.GetValue<long>();
+        }
+        return -1; // -1 means no limit
+    }
 }

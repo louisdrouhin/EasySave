@@ -9,7 +9,8 @@
       "extensions": [".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".txt"]
     },
     "priorityExtensions": [".pdf", ".docx"],
-    "businessApplications": ["notepad"]
+    "businessApplications": ["notepad"],
+    "largeFileSizeLimitKb": 10240
   },
   "easyLogServer": {
     "enabled": false,

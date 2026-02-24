@@ -46,6 +46,11 @@ public class JobManager
     private readonly object _priorityLock = new object();
     private readonly ManualResetEventSlim _priorityWaitHandle = new ManualResetEventSlim(true);
 
+    // Large file processing
+    private bool _isProcessingLargeFile = false;
+    private readonly object _largeFileLock = new object();
+    private readonly ManualResetEventSlim _largeFileWaitHandle = new ManualResetEventSlim(true);
+
     public ConfigParser ConfigParser => _configParser;
 
     public event EventHandler<LogFormatChangedEventArgs>? LogFormatChanged;
@@ -657,6 +662,27 @@ public class JobManager
         cancellationToken.ThrowIfCancellationRequested();
 
         pauseEvent.Wait(cancellationToken);
+
+        long largeFileSizeLimitKb = _configParser.GetLargeFileSizeLimitKb();
+        long limitBytes = largeFileSizeLimitKb * 1024;
+        bool isLargeFile = (largeFileSizeLimitKb > 0 && fileToCopy.Size > limitBytes);
+
+        if (isLargeFile)
+        {
+            while (true)
+            {
+                _largeFileWaitHandle.Wait(cancellationToken);
+                lock (_largeFileLock)
+                {
+                    if (!_isProcessingLargeFile)
+                    {
+                        _isProcessingLargeFile = true;
+                        _largeFileWaitHandle.Reset();
+                        break;
+                    }
+                }
+            }
+        }
 
         try
         {
