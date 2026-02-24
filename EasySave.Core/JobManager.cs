@@ -57,6 +57,10 @@ public class JobManager
     public ConfigParser ConfigParser => _configParser;
 
     public event EventHandler<LogFormatChangedEventArgs>? LogFormatChanged;
+    public event EventHandler<StateEntry>? JobStateChanged;
+    public event EventHandler<Job>? JobCreated;
+    public event EventHandler<int>? JobRemoved;
+    public event EventHandler<string>? LogEntryWritten;
 
     public JobManager()
     {
@@ -116,6 +120,9 @@ public class JobManager
         string stateFilePath = _configParser.Config?["config"]?["stateFilePath"]?.GetValue<string>() ?? "state.json";
         _stateTracker = new StateTracker(stateFilePath);
 
+        // Subscribe to state changes and forward to UI
+        _stateTracker.JobStateChanged += (s, e) => JobStateChanged?.Invoke(this, e);
+
         foreach (var job in _jobs)
         {
             _stateTracker.UpdateJobState(
@@ -173,10 +180,13 @@ public class JobManager
     {
         content["clientId"] = Environment.MachineName;
 
+        string formattedLog = $"[{timestamp:yyyy-MM-dd HH:mm:ss}] {name}";
+
         switch (_logMode)
         {
             case "local_only":
                 _logger.Write(timestamp, name, content);
+                LogEntryWritten?.Invoke(this, formattedLog);
                 break;
 
             case "server_only":
@@ -185,6 +195,7 @@ public class JobManager
                     try
                     {
                         _networkClient.Send(timestamp, name, content);
+                        LogEntryWritten?.Invoke(this, formattedLog);
                     }
                     catch (Exception ex)
                     {
@@ -206,6 +217,7 @@ public class JobManager
                         Console.WriteLine($"[JobManager] Error sending log to server: {ex.Message}");
                     }
                 }
+                LogEntryWritten?.Invoke(this, formattedLog);
                 break;
         }
     }
@@ -249,6 +261,9 @@ public class JobManager
                 { "destinationPath", job.DestinationPath }
             }
         );
+
+        // Raise event for UI subscribers
+        JobCreated?.Invoke(this, job);
     }
 
     public void removeJob(int index)
@@ -277,6 +292,9 @@ public class JobManager
                 { "destinationPath", jobToRemove.DestinationPath }
             }
         );
+
+        // Raise event for UI subscribers
+        JobRemoved?.Invoke(this, index);
     }
 
     public List<Job> GetJobs()
@@ -452,27 +470,29 @@ public class JobManager
 
     public void PauseJob(Job job)
     {
+        // Always update state, even if pause event doesn't exist
+        _stateTracker.UpdateJobState(
+            new StateEntry(
+                job.Name,
+                DateTime.Now,
+                JobState.Paused
+            )
+        );
+
+        // Try to pause the background task if it exists
         if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
         {
             pauseEvent.Reset();
-
-            _stateTracker.UpdateJobState(
-                new StateEntry(
-                    job.Name,
-                    DateTime.Now,
-                    JobState.Paused
-                )
-            );
-
-            LogEvent(
-                DateTime.Now,
-                "JobPaused",
-                new Dictionary<string, object>
-                {
-                    { "jobName", job.Name }
-                }
-            );
         }
+
+        LogEvent(
+            DateTime.Now,
+            "JobPaused",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name }
+            }
+        );
     }
 
     public void ResumeJob(Job job)
@@ -494,32 +514,33 @@ public class JobManager
             }
         }
 
+        // Always update state, even if pause event doesn't exist
+        _stateTracker.UpdateJobState(
+            new StateEntry(
+                job.Name,
+                DateTime.Now,
+                JobState.Active
+            )
+        );
+
+        // Try to resume the background task if it exists
         if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
         {
             lock (_businessAppLock)
             {
                 _jobsPausedByBusinessApp.Remove(job.Name);
             }
-
             pauseEvent.Set();
-
-            _stateTracker.UpdateJobState(
-                new StateEntry(
-                    job.Name,
-                    DateTime.Now,
-                    JobState.Active
-                )
-            );
-
-            LogEvent(
-                DateTime.Now,
-                "JobResumed",
-                new Dictionary<string, object>
-                {
-                    { "jobName", job.Name }
-                }
-            );
         }
+
+        LogEvent(
+            DateTime.Now,
+            "JobResumed",
+            new Dictionary<string, object>
+            {
+                { "jobName", job.Name }
+            }
+        );
     }
 
     public void StopJob(Job job)

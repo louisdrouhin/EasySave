@@ -7,7 +7,10 @@ namespace EasySave.Core;
 public class StateTracker
 {
   private readonly string _stateFilePath;
+  private readonly object _fileLock = new object();
   private Dictionary<string, StateEntry> _jobStates = new();
+
+  public event EventHandler<StateEntry>? JobStateChanged;
 
   public StateTracker(string stateFilePath)
   {
@@ -19,22 +22,28 @@ public class StateTracker
     if (stateEntry == null || string.IsNullOrEmpty(stateEntry.JobName))
       return;
 
-    _jobStates[stateEntry.JobName] = stateEntry;
-
-    var options = new JsonSerializerOptions
+    lock (_fileLock)
     {
-      WriteIndented = true,
-      Converters = { new JsonStringEnumConverter() }
-    };
-    var json = JsonSerializer.Serialize(_jobStates.Values, options);
+      _jobStates[stateEntry.JobName] = stateEntry;
 
-    var directory = Path.GetDirectoryName(_stateFilePath);
-    if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-    {
-      Directory.CreateDirectory(directory);
+      var options = new JsonSerializerOptions
+      {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+      };
+      var json = JsonSerializer.Serialize(_jobStates.Values, options);
+
+      var directory = Path.GetDirectoryName(_stateFilePath);
+      if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+      {
+        Directory.CreateDirectory(directory);
+      }
+
+      File.WriteAllText(_stateFilePath, json);
     }
 
-    File.WriteAllText(_stateFilePath, json);
+    // Raise event for in-memory subscribers (GUI) - outside lock
+    JobStateChanged?.Invoke(this, stateEntry);
   }
 
   public void RemoveJobState(int index)
@@ -42,17 +51,20 @@ public class StateTracker
     if (index < 0 || index >= _jobStates.Count)
       return;
 
-    var jobStateKey = _jobStates.Keys.ElementAt(index);
-
-    if (_jobStates.Remove(jobStateKey))
+    lock (_fileLock)
     {
-      var options = new JsonSerializerOptions
+      var jobStateKey = _jobStates.Keys.ElementAt(index);
+
+      if (_jobStates.Remove(jobStateKey))
       {
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
-      };
-      var json = JsonSerializer.Serialize(_jobStates.Values, options);
-      File.WriteAllText(_stateFilePath, json);
+        var options = new JsonSerializerOptions
+        {
+          WriteIndented = true,
+          Converters = { new JsonStringEnumConverter() }
+        };
+        var json = JsonSerializer.Serialize(_jobStates.Values, options);
+        File.WriteAllText(_stateFilePath, json);
+      }
     }
   }
 }

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:EasySave.Gui.ViewModels"
         xmlns:views="clr-namespace:EasySave.GUI.Pages"
-        mc:Ignorable="d"
-        d:DesignWidth="800"
-        d:DesignHeight="450"
         x:Class="EasySave.GUI.MainWindow"
-        Title="EasySave.GUI">
+        Title="{Binding WindowTitle}"
+        x:DataType="vm:MainWindowViewModel"
+        WindowStartupLocation="CenterScreen"
+        Width="1400"
+        Height="800">
     <Window.Styles>
         <Style Selector="Button.menu-button-inactive">
             <Setter Property="Background"
@@ -106,23 +106,38 @@
                         <Image Source="avares://EasySave.GUI/images/logo-easysave.png"
                                Stretch="UniformToFill" />
                     </Border>
-                    <Button x:Name="JobsButton"
-                            Classes="menu-button-active"
-                            Click="OnJobsClick" />
-                    <Button x:Name="LogsButton"
-                            Classes="menu-button-inactive"
-                            Click="OnLogsClick" />
+                    <Button Content="{Binding JobsButtonLabel}"
+                            Command="{Binding NavigateToJobsCommand}"
+                            Classes.menu-button-active="{Binding IsJobsActive}"
+                            Classes.menu-button-inactive="{Binding !IsJobsActive}" />
+                    <Button Content="{Binding LogsButtonLabel}"
+                            Command="{Binding NavigateToLogsCommand}"
+                            Classes.menu-button-active="{Binding IsLogsActive}"
+                            Classes.menu-button-inactive="{Binding !IsLogsActive}" />
                 </StackPanel>
                 <Button Grid.Row="1"
-                        x:Name="SettingsButton"
-                        Classes="menu-button-inactive"
-                        Click="OnSettingsClick"
+                        Content="{Binding SettingsButtonLabel}"
+                        Command="{Binding NavigateToSettingsCommand}"
+                        Classes.menu-button-active="{Binding IsSettingsActive}"
+                        Classes.menu-button-inactive="{Binding !IsSettingsActive}"
                         Margin="0,15,0,0" />
             </Grid>
         </Border>
         <Border Grid.Column="1"
                 Background="#FFE6D5">
-            <ContentControl x:Name="PageHost" />
+            <ContentControl Content="{Binding CurrentPage}">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="vm:JobsPageViewModel">
+                        <views:JobsPage />
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:LogsPageViewModel">
+                        <views:LogsPage />
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:SettingsPageViewModel">
+                        <views:SettingsPage />
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
         </Border>
     </Grid>
 </Window>

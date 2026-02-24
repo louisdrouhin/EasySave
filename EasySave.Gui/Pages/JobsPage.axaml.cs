@@ -1,14 +1,11 @@
-using Avalonia.Controls;
-using Avalonia.Threading;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
-using EasySave.Core;
-using EasySave.Core.Localization;
-using EasySave.GUI.Components;
+using Avalonia.Controls;
+using Avalonia.Threading;
+using EasySave.Gui.ViewModels;
 using EasySave.GUI.Dialogs;
 using EasySave.Models;
 
@@ -16,385 +13,113 @@ namespace EasySave.GUI.Pages;
 
 public partial class JobsPage : UserControl
 {
-    private readonly JobManager? _jobManager;
-    private FileSystemWatcher? _watcher;
-    private string _stateFilePath = string.Empty;
-    private Dictionary<string, JobCard> _jobCards = new();
-    private readonly HashSet<Job> _selectedJobs = new();
-
     public JobsPage()
     {
-        _jobManager = null;
         InitializeComponent();
     }
 
-    public JobsPage(JobManager jobManager)
+    protected override void OnDataContextChanged(EventArgs e)
     {
-        _jobManager = jobManager;
-        InitializeComponent();
+        base.OnDataContextChanged(e);
 
-        LocalizationManager.LanguageChanged += OnLanguageChanged;
-
-        var headerTitle = this.FindControl<TextBlock>("HeaderTitleText");
-        if (headerTitle != null) headerTitle.Text = LocalizationManager.Get("JobsPage_Header_Title");
-
-        var headerSubtitle = this.FindControl<TextBlock>("HeaderSubtitleText");
-        if (headerSubtitle != null) headerSubtitle.Text = LocalizationManager.Get("JobsPage_Header_Subtitle");
-
-        var createJobButton = this.FindControl<Button>("CreateJobButton");
-        if (createJobButton != null)
+        if (DataContext is JobsPageViewModel vm)
         {
-            createJobButton.Content = LocalizationManager.Get("JobsPage_Button_NewJob");
-            createJobButton.Click += CreateJobButton_Click;
-        }
-
-        LoadJobs();
-    }
-
-    protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-        InitializeStateWatcher();
-    }
-
-    protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
-    {
-        base.OnDetachedFromVisualTree(e);
-        _watcher?.Dispose();
-        _watcher = null;
-    }
-
-    private void LoadJobs()
-    {
-        if (_jobManager == null) return;
-
-        var jobs = _jobManager.GetJobs();
-        _jobCards.Clear();
-        _selectedJobs.Clear();
-
-        if (JobsStackPanel != null)
-        {
-            JobsStackPanel.Children.Clear();
-
-            for (int i = 0; i < jobs.Count; i++)
+            // Handle CreateJob dialog request
+            vm.CreateJobRequested += async (s, e) =>
             {
-                var job = jobs[i];
-                var card = new JobCard(job, i + 1);
-                card.PlayClicked += OnJobPlay;
-                card.PauseClicked += OnJobPause;
-                card.ResumeClicked += OnJobResume;
-                card.StopClicked += OnJobStop;
-                card.DeleteClicked += OnJobDelete;
-                card.SelectionChanged += OnJobSelectionChanged;
-                JobsStackPanel.Children.Add(card);
-                _jobCards[job.Name] = card;
-            }
-        }
-
-        UpdateStateContent();
-        UpdateSelectionBar();
-    }
-
-    private void InitializeStateWatcher()
-    {
-        try
-        {
-            var configParser = new ConfigParser("config.json");
-            _stateFilePath = configParser.Config?["config"]?["stateFilePath"]?.GetValue<string>() ?? "state.json";
-
-            if (!Path.IsPathRooted(_stateFilePath))
-            {
-                string executionDirState = Path.Combine(AppContext.BaseDirectory, _stateFilePath);
-                string projectRootState = Path.Combine(AppContext.BaseDirectory, "../../../../../", _stateFilePath);
-
-                if (File.Exists(executionDirState)) _stateFilePath = executionDirState;
-                else if (File.Exists(projectRootState)) _stateFilePath = Path.GetFullPath(projectRootState);
-            }
-
-            string directory = Path.GetDirectoryName(_stateFilePath) ?? AppContext.BaseDirectory;
-            if (string.IsNullOrEmpty(directory)) directory = ".";
-            string fileName = Path.GetFileName(_stateFilePath);
-
-            if (Directory.Exists(directory))
-            {
-                _watcher = new FileSystemWatcher(directory)
+                try
                 {
-                    Filter = fileName,
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
-                    EnableRaisingEvents = true
-                };
-                _watcher.Changed += OnStateFileChanged;
-            }
+                    var window = TopLevel.GetTopLevel(this) as Window;
+                    var dialog = new CreateJobDialog();
+                    var result = await dialog.ShowDialog<CreateJobDialog.JobResult?>(window);
 
-            UpdateStateContent();
-        }
-        catch (Exception) { }
-    }
-
-    private void OnStateFileChanged(object sender, FileSystemEventArgs e)
-    {
-        Dispatcher.UIThread.Post(UpdateStateContent);
-    }
-
-    private void UpdateStateContent()
-    {
-        try
-        {
-            if (!File.Exists(_stateFilePath))
-            {
-                return;
-            }
-
-            using (var fs = new FileStream(_stateFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var sr = new StreamReader(fs))
-            {
-                string content = sr.ReadToEnd();
-                if (string.IsNullOrWhiteSpace(content)) return;
-
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-                };
-
-                var states = JsonSerializer.Deserialize<List<StateEntry>>(content, options);
-
-                if (states != null)
-                {
-                    foreach (var state in states)
+                    if (result != null)
                     {
-                        if (_jobCards.TryGetValue(state.JobName, out var card))
-                        {
-                            card.UpdateState(state);
-                        }
+                        vm.OnJobCreated(result.Name, result.Type, result.SourcePath, result.DestinationPath);
                     }
                 }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[JobsPage] Error updating state: {ex.Message}");
-        }
-    }
-
-    private async void CreateJobButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        var dialog = new CreateJobDialog();
-        var mainWindow = (Window?)TopLevel.GetTopLevel(this);
-        if (mainWindow != null)
-        {
-            var result = await dialog.ShowDialog<CreateJobDialog.JobResult?>(mainWindow);
-            if (result != null)
-            {
-                _jobManager?.CreateJob(result.Name, result.Type, result.SourcePath, result.DestinationPath);
-                LoadJobs();
-            }
-        }
-    }
-
-    private async void OnJobPlay(object? sender, Job job)
-    {
-        var runningBusinessApp = _jobManager?.CheckBusinessApplications();
-        if (runningBusinessApp != null)
-        {
-            var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
-            var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
-
-            var mainWindow = (Window?)TopLevel.GetTopLevel(this);
-            if (mainWindow != null)
-            {
-                var errorDialog = new ErrorDialog(errorTitle, errorMessage);
-                await errorDialog.ShowDialog(mainWindow);
-            }
-            return;
-        }
-
-        var passwordDialog = new PasswordDialog();
-        var mainWindow2 = (Window?)TopLevel.GetTopLevel(this);
-        if (mainWindow2 != null)
-        {
-            var password = await passwordDialog.ShowDialog<string?>(mainWindow2);
-            if (password != null)
-            {
-                await Task.Run(() =>
+                catch (Exception ex)
                 {
-                    try
+                    Debug.WriteLine($"[JobsPage] Error in CreateJob dialog: {ex.Message}");
+                }
+            };
+
+            // Handle PlayJob dialog request (password prompt)
+            vm.PlayJobRequested += async (s, jobVm) =>
+            {
+                try
+                {
+                    // Check for business applications (just log, don't show warning)
+                    string? businessApp = vm.CheckBusinessApp();
+                    if (!string.IsNullOrEmpty(businessApp))
                     {
-                        _jobManager?.LaunchJob(job, password);
+                        Debug.WriteLine($"[JobsPage] Business app running: {businessApp}");
                     }
-                    catch (Exception)
+
+                    // Show password dialog
+                    var window = TopLevel.GetTopLevel(this) as Window;
+                    var passwordDialog = new PasswordDialog();
+                    var password = await passwordDialog.ShowDialog<string?>(window);
+
+                    if (password != null)
                     {
+                        await vm.ExecutePlayJob(jobVm, password);
                     }
-                });
-            }
-        }
-    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[JobsPage] Error in PlayJob: {ex.Message}");
+                }
+            };
 
-    private void OnJobPause(object? sender, Job job)
-    {
-        _jobManager?.PauseJob(job);
-    }
-
-    private async void OnJobResume(object? sender, Job job)
-    {
-        // Check if business app is running before resuming
-        var runningBusinessApp = _jobManager?.CheckBusinessApplications();
-        if (runningBusinessApp != null)
-        {
-            var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
-            var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
-
-            var mainWindow = (Window?)TopLevel.GetTopLevel(this);
-            if (mainWindow != null)
+            // Handle RunSelected dialog request
+            vm.RunSelectedRequested += async (s, e) =>
             {
-                var errorDialog = new ErrorDialog(errorTitle, errorMessage);
-                await errorDialog.ShowDialog(mainWindow);
-            }
-            return;
-        }
+                try
+                {
+                    var selected = vm.GetSelectedJobs();
+                    if (!selected.Any()) return;
 
-        _jobManager?.ResumeJob(job);
-    }
+                    // Check for business applications (just log, don't show warning)
+                    string? businessApp = vm.CheckBusinessApp();
+                    if (!string.IsNullOrEmpty(businessApp))
+                    {
+                        Debug.WriteLine($"[JobsPage] Business app running: {businessApp}");
+                    }
 
-    private void OnJobStop(object? sender, Job job)
-    {
-        _jobManager?.StopJob(job);
-    }
+                    // Show password dialog
+                    var window = TopLevel.GetTopLevel(this) as Window;
+                    var passwordDialog = new PasswordDialog();
+                    var password = await passwordDialog.ShowDialog<string?>(window);
 
-    private void OnJobDelete(object? sender, (int index, Job job) data)
-    {
-        var (index, job) = data;
-        _jobManager?.removeJob(index);
-        LoadJobs();
-    }
+                    if (password != null)
+                    {
+                        await vm.ExecuteRunSelected(selected, password);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[JobsPage] Error in RunSelected: {ex.Message}");
+                }
+            };
 
-    private void OnJobSelectionChanged(object? sender, (Job job, bool isSelected) data)
-    {
-        var (job, isSelected) = data;
-        if (isSelected)
-        {
-            _selectedJobs.Add(job);
-        }
-        else
-        {
-            _selectedJobs.Remove(job);
-        }
-        UpdateSelectionBar();
-    }
-
-    private void UpdateSelectionBar()
-    {
-        var selectionBar = this.FindControl<Border>("SelectionBar");
-        var selectionCountText = this.FindControl<TextBlock>("SelectionCountText");
-        var deselectAllButton = this.FindControl<Button>("DeselectAllButton");
-        var runSelectedButton = this.FindControl<Button>("RunSelectedButton");
-
-        if (selectionBar == null) return;
-
-        if (_selectedJobs.Count == 0)
-        {
-            selectionBar.IsVisible = false;
-            return;
-        }
-
-        selectionBar.IsVisible = true;
-
-        if (selectionCountText != null)
-        {
-            selectionCountText.Text = LocalizationManager.GetFormatted("JobsPage_SelectedCount", _selectedJobs.Count.ToString());
-        }
-
-        if (deselectAllButton != null)
-        {
-            deselectAllButton.Content = LocalizationManager.Get("JobsPage_DeselectAll");
-            deselectAllButton.Click -= DeselectAllButton_Click;
-            deselectAllButton.Click += DeselectAllButton_Click;
-        }
-
-        if (runSelectedButton != null)
-        {
-            runSelectedButton.Content = LocalizationManager.GetFormatted("JobsPage_RunSelected", _selectedJobs.Count.ToString());
-            runSelectedButton.Click -= RunSelectedButton_Click;
-            runSelectedButton.Click += RunSelectedButton_Click;
-        }
-    }
-
-    private void DeselectAllButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        foreach (var card in _jobCards.Values)
-        {
-            card.SetChecked(false);
-        }
-    }
-
-    private async void RunSelectedButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        await OnRunSelectedJobs();
-    }
-
-    private async Task OnRunSelectedJobs()
-    {
-        if (_selectedJobs.Count == 0) return;
-
-        var mainWindow = (Window?)TopLevel.GetTopLevel(this);
-        if (mainWindow == null) return;
-
-        // Check business applications once
-        var runningBusinessApp = _jobManager?.CheckBusinessApplications();
-        if (runningBusinessApp != null)
-        {
-            var errorMessage = LocalizationManager.GetFormatted("JobsPage_Error_BusinessAppMessage", runningBusinessApp);
-            var errorTitle = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
-            var errorDialog = new ErrorDialog(errorTitle, errorMessage);
-            await errorDialog.ShowDialog(mainWindow);
-            return;
-        }
-
-        // Show password dialog once
-        var passwordDialog = new PasswordDialog();
-        var password = await passwordDialog.ShowDialog<string?>(mainWindow);
-        if (password != null)
-        {
-            var jobsToExecute = _selectedJobs.ToList();
-
-            _selectedJobs.Clear();
-            foreach (var card in _jobCards.Values)
+            // Handle error dialogs
+            vm.ErrorOccurred += (s, errorMsg) =>
             {
-                card.SetChecked(false);
-            }
-            UpdateSelectionBar();
-
-            try
-            {
-                await _jobManager!.LaunchMultipleJobsAsync(jobsToExecute, password);
-            }
-            catch (Exception ex)
-            {
-                var errorMessage = LocalizationManager.Get("JobsPage_Error_BusinessAppTitle");
-                var errorDialog = new ErrorDialog("Erreur d'exécution", $"Une erreur s'est produite: {ex.Message}");
-                await errorDialog.ShowDialog(mainWindow);
-            }
-        }
-    }
-
-    private void OnLanguageChanged(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
-    {
-        try
-        {
-            var headerTitle = this.FindControl<TextBlock>("HeaderTitleText");
-            if (headerTitle != null) headerTitle.Text = LocalizationManager.Get("JobsPage_Header_Title");
-
-            var headerSubtitle = this.FindControl<TextBlock>("HeaderSubtitleText");
-            if (headerSubtitle != null) headerSubtitle.Text = LocalizationManager.Get("JobsPage_Header_Subtitle");
-
-            var createJobButton = this.FindControl<Button>("CreateJobButton");
-            if (createJobButton != null) createJobButton.Content = LocalizationManager.Get("JobsPage_Button_NewJob");
-
-            UpdateSelectionBar();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error updating language in JobsPage: {ex.Message}");
+                try
+                {
+                    Dispatcher.UIThread.Post(async () =>
+                    {
+                        var window = TopLevel.GetTopLevel(this) as Window;
+                        var dialog = new ErrorDialog("Error", errorMsg);
+                        await dialog.ShowDialog(window);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[JobsPage] Error showing error dialog: {ex.Message}");
+                }
+            };
         }
     }
 }

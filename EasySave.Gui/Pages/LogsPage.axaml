@@ -1,33 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EasySave.Gui.ViewModels"
              xmlns:pages="clr-namespace:EasySave.GUI.Pages"
              x:Class="EasySave.GUI.Pages.LogsPage"
-             x:CompileBindings="False">
+             x:DataType="vm:LogsPageViewModel">
     <UserControl.Styles>
     </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
         
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,20,20,20">
             <StackPanel Grid.Column="0" Spacing="10">
-                <TextBlock x:Name="TitleText"
+                <TextBlock Text="{Binding HeaderTitle}"
                            FontSize="22"
                            FontWeight="Bold"
                            Foreground="Black"/>
                 <StackPanel Orientation="Horizontal"
                             Spacing="10">
-                    <TextBlock x:Name="TotalLogsLabelText"
+                    <TextBlock Text="{Binding TotalLogsLabel}"
                                VerticalAlignment="Center"
                                Foreground="Black" />
-                    <TextBlock x:Name="LogsCountText"
-                               Text="0"
+                    <TextBlock Text="{Binding LogCount}"
                                VerticalAlignment="Center"
                                FontWeight="Bold"
                                Foreground="Black" />
                 </StackPanel>
             </StackPanel>
-            <Button Grid.Column="1"
-                    x:Name="OpenFolderButton"
+            <Button Command="{Binding OpenFolderCommand}"
+                    Content="{Binding OpenFolderLabel}"
+                    Grid.Column="1"
                     Classes="button-primary-orange"
                     Padding="16,10"
                     VerticalAlignment="Top" />
@@ -39,7 +40,7 @@
                 BorderThickness="1"
                 CornerRadius="5"
                 Background="White">
-            <ListBox x:Name="LogsListBox"
+            <ListBox ItemsSource="{Binding Logs}"
                      Background="White"
                      Foreground="Black"
                      Padding="10">
@@ -56,7 +57,7 @@
                     </Style>
                 </ListBox.Styles>
                 <ListBox.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate DataType="vm:LogEntryViewModel">
                         <TextBlock Text="{Binding LogText}"
                                    Foreground="Black"
                                    TextWrapping="Wrap"

@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="EasySave.GUI.Pages.SettingsPage">
+             xmlns:vm="using:EasySave.Gui.ViewModels"
+             x:Class="EasySave.GUI.Pages.SettingsPage"
+             x:DataType="vm:SettingsPageViewModel">
     <Border Padding="20" Background="#FFE6D5">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Section -->
             <Grid Grid.Row="0" ColumnDefinitions="*" Margin="0,0,0,20">
                 <StackPanel Spacing="8">
-                    <TextBlock x:Name="HeaderTitleText"
+                    <TextBlock Text="{Binding HeaderTitle}"
                                FontSize="22"
                                FontWeight="Bold"
                                Foreground="#15171D"/>
-                    <TextBlock x:Name="HeaderSubtitleText"
+                    <TextBlock Text="{Binding HeaderSubtitle}"
                                FontSize="14"
                                Foreground="#666666" />
                 </StackPanel>
@@ -27,7 +29,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="LogsSectionTitle"
+                            <TextBlock Text="{Binding LogsSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -36,37 +38,37 @@
                             <!-- Logs Path -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding LogsPathLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="LogsPathLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding LogsPathValue}"
                                            FontSize="12"
                                            Foreground="#15171D"
-                                           x:Name="LogsPathText"
                                            TextWrapping="Wrap"/>
                             </Grid>
 
                             <!-- Logs Format -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding LogsFormatLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="LogsFormatLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding LogsFormatValue}"
                                            FontSize="12"
-                                           Foreground="#15171D"
-                                           x:Name="LogsFormatText"/>
+                                           Foreground="#15171D"/>
                             </Grid>
 
                             <!-- Format Buttons -->
                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-                                <Button x:Name="JsonFormatButton"
+                                <Button Command="{Binding SetJsonFormatCommand}"
                                         Content="JSON"
                                         Padding="12,8"
                                         FontSize="12"/>
-                                <Button x:Name="XmlFormatButton"
+                                <Button Command="{Binding SetXmlFormatCommand}"
                                         Content="XML"
                                         Padding="12,8"
                                         FontSize="12"/>
@@ -81,7 +83,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="StateSectionTitle"
+                            <TextBlock Text="{Binding StateSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -90,14 +92,14 @@
                             <!-- State Path -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding StatePathLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="StatePathLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding StatePathValue}"
                                            FontSize="12"
                                            Foreground="#15171D"
-                                           x:Name="StatePathText"
                                            TextWrapping="Wrap"/>
                             </Grid>
                         </StackPanel>
@@ -110,21 +112,41 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="EncryptionSectionTitle"
+                            <TextBlock Text="{Binding EncryptionSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
                             <Border Height="1" Background="#E0E0E0" />
 
                             <!-- Extensions Label -->
-                            <TextBlock FontSize="12"
+                            <TextBlock Text="{Binding ExtensionsLabel}"
+                                       FontSize="12"
                                        FontWeight="Bold"
-                                       Foreground="#666666"
-                                       x:Name="ExtensionsLabel"/>
+                                       Foreground="#666666"/>
 
-                            <!-- Extensions Panel -->
-                            <WrapPanel x:Name="ExtensionsPanel"
-                                       Orientation="Horizontal" />
+                            <!-- Extensions Panel (read-only display) -->
+                            <WrapPanel Orientation="Horizontal">
+                                <ItemsControl ItemsSource="{Binding EncryptionExtensions}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#F3F4F6"
+                                                    CornerRadius="6"
+                                                    Padding="8,3"
+                                                    Margin="4">
+                                                <TextBlock Text="{Binding .}"
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="#374151"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
 
@@ -135,30 +157,54 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="PrioritySectionTitle"
+                            <TextBlock Text="{Binding PrioritySectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
                             <Border Height="1" Background="#E0E0E0" />
 
                             <!-- Priority Extensions Label -->
-                            <TextBlock FontSize="12"
+                            <TextBlock Text="{Binding PriorityExtensionsLabel}"
+                                       FontSize="12"
                                        FontWeight="Bold"
-                                       Foreground="#666666"
-                                       x:Name="PriorityExtensionsLabel"/>
+                                       Foreground="#666666"/>
 
-                            <!-- Priority Extensions Panel -->
-                            <WrapPanel x:Name="PriorityExtensionsPanel"
-                                       Orientation="Horizontal" />
+                            <!-- Priority Extensions Panel with remove capability -->
+                            <WrapPanel Orientation="Horizontal">
+                                <ItemsControl ItemsSource="{Binding PriorityExtensions}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:ExtensionItemViewModel">
+                                            <Button Background="#F3F4F6"
+                                                    CornerRadius="6"
+                                                    Padding="8,3"
+                                                    Margin="4"
+                                                    Command="{Binding RemoveCommand}"
+                                                    BorderThickness="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayText}"
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="#374151"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </WrapPanel>
 
                             <!-- Add Priority Extension -->
                             <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
-                                <TextBox x:Name="AddPriorityExtensionBox" 
-                                         Grid.Column="0" 
+                                <TextBox Text="{Binding NewPriorityExtensionText}"
+                                         Grid.Column="0"
                                          Watermark=".ext"
                                          Margin="0,0,10,0"/>
-                                <Button x:Name="AddPriorityExtensionButton" 
-                                        Grid.Column="1" 
+                                <Button Command="{Binding AddPriorityExtensionCommand}"
+                                        Grid.Column="1"
                                         Content="+"
                                         Padding="15,5"/>
                             </Grid>
@@ -172,21 +218,41 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="BusinessAppsSectionTitle"
+                            <TextBlock Text="{Binding BusinessAppsSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
                             <Border Height="1" Background="#E0E0E0" />
 
                             <!-- Apps Label -->
-                            <TextBlock FontSize="12"
+                            <TextBlock Text="{Binding AppsLabel}"
+                                       FontSize="12"
                                        FontWeight="Bold"
-                                       Foreground="#666666"
-                                       x:Name="AppsLabel"/>
+                                       Foreground="#666666"/>
 
                             <!-- Apps Panel -->
-                            <WrapPanel x:Name="AppsPanel"
-                                       Orientation="Horizontal" />
+                            <WrapPanel Orientation="Horizontal">
+                                <ItemsControl ItemsSource="{Binding BusinessApps}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#F3F4F6"
+                                                    CornerRadius="6"
+                                                    Padding="8,3"
+                                                    Margin="4">
+                                                <TextBlock Text="{Binding .}"
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="#374151"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </WrapPanel>
                         </StackPanel>
                     </Border>
 
@@ -197,7 +263,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="LanguageSectionTitle"
+                            <TextBlock Text="{Binding LanguageSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -206,24 +272,24 @@
                             <!-- Current Language Display -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding CurrentLanguageLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="CurrentLanguageLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding CurrentLanguageValue}"
                                            FontSize="12"
-                                           Foreground="#15171D"
-                                           x:Name="CurrentLanguageText"/>
+                                           Foreground="#15171D"/>
                             </Grid>
 
                             <!-- Language Buttons -->
                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-                                <Button x:Name="FrenchButton"
+                                <Button Command="{Binding SetFrenchLanguageCommand}"
                                         Content="Français"
                                         Classes="language-button"
                                         Padding="12,8"
                                         FontSize="12"/>
-                                <Button x:Name="EnglishButton"
+                                <Button Command="{Binding SetEnglishLanguageCommand}"
                                         Content="English"
                                         Classes="language-button"
                                         Padding="12,8"
@@ -239,7 +305,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="AboutSectionTitle"
+                            <TextBlock Text="{Binding AboutSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -248,14 +314,14 @@
                             <!-- Version Display -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding VersionLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="VersionLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding VersionValue}"
                                            FontSize="12"
-                                           Foreground="#15171D"
-                                           x:Name="VersionText"/>
+                                           Foreground="#15171D"/>
                             </Grid>
                         </StackPanel>
                     </Border>
