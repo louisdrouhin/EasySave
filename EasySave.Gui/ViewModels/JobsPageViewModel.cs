@@ -155,6 +155,9 @@ public class JobsPageViewModel : ViewModelBase
                 _jobManager.LaunchJob(vm.Job, password);
             });
 
+            // Deselect the job after launching
+            vm.IsSelected = false;
+
             // Return immediately so dialog closes
             await Task.CompletedTask;
         }
