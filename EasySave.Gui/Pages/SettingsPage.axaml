@@ -4,6 +4,112 @@
              xmlns:vm="using:EasySave.Gui.ViewModels"
              x:Class="EasySave.GUI.Pages.SettingsPage"
              x:DataType="vm:SettingsPageViewModel">
+    <UserControl.Resources>
+        <!-- Custom NumericUpDown Template -->
+        <ControlTemplate x:Key="CustomNumericUpDownTemplate" TargetType="NumericUpDown">
+            <Border Name="root"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0"
+                             Name="PART_TextBox"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Foreground="#000000"
+                             CaretBrush="Transparent"
+                             Padding="8,6,4,6"
+                             FontSize="{TemplateBinding FontSize}"
+                             VerticalContentAlignment="Center" />
+                    <StackPanel Grid.Column="1"
+                                Orientation="Vertical"
+                                Spacing="0">
+                        <RepeatButton Name="PART_IncrementButton"
+                                      Background="White"
+                                      Foreground="#000000"
+                                      BorderThickness="0"
+                                      Padding="4,2"
+                                      FontSize="12"
+                                      FontWeight="Bold"
+                                      Content="+" />
+                        <RepeatButton Name="PART_DecrementButton"
+                                      Background="White"
+                                      Foreground="#000000"
+                                      BorderThickness="0"
+                                      Padding="4,2"
+                                      FontSize="12"
+                                      FontWeight="Bold"
+                                      Content="−" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </ControlTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- TextBox styling with transparent cursor -->
+        <Style Selector="TextBox.input-field">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="BorderBrush" Value="#E0E0E0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CaretBrush" Value="Transparent" />
+        </Style>
+
+        <!-- TextBox hover state -->
+        <Style Selector="TextBox.input-field:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="#F97316" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <!-- TextBox focus state -->
+        <Style Selector="TextBox.input-field:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <!-- TextBox selection colors -->
+        <Style Selector="TextBox.input-field /template/ TextBlock">
+            <Setter Property="Foreground" Value="#000000" />
+        </Style>
+
+        <!-- NumericUpDown styling with custom template -->
+        <Style Selector="NumericUpDown.input-field">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="BorderBrush" Value="#E0E0E0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template" Value="{StaticResource CustomNumericUpDownTemplate}" />
+        </Style>
+
+        <!-- NumericUpDown hover state -->
+        <Style Selector="NumericUpDown.input-field:pointerover">
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- NumericUpDown focus state -->
+        <Style Selector="NumericUpDown.input-field:focus">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- RepeatButton hover inside NumericUpDown -->
+        <Style Selector="NumericUpDown.input-field /template/ RepeatButton:pointerover">
+            <Setter Property="Background" Value="#F97316" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- RepeatButton pressed inside NumericUpDown -->
+        <Style Selector="NumericUpDown.input-field /template/ RepeatButton:pressed">
+            <Setter Property="Background" Value="#EA580C" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+    </UserControl.Styles>
     <Border Padding="20" Background="#FFE6D5">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Section -->
@@ -124,7 +230,7 @@
                                        FontWeight="Bold"
                                        Foreground="#666666"/>
 
-                            <!-- Extensions Panel (read-only display) -->
+                            <!-- Extensions Panel with remove capability -->
                             <WrapPanel Orientation="Horizontal">
                                 <ItemsControl ItemsSource="{Binding EncryptionExtensions}">
                                     <ItemsControl.ItemsPanel>
@@ -133,20 +239,37 @@
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="#F3F4F6"
+                                        <DataTemplate DataType="vm:ExtensionItemViewModel">
+                                            <Button Background="#F3F4F6"
                                                     CornerRadius="6"
                                                     Padding="8,3"
-                                                    Margin="4">
-                                                <TextBlock Text="{Binding .}"
+                                                    Margin="4"
+                                                    Command="{Binding RemoveCommand}"
+                                                    BorderThickness="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayText}"
                                                            FontSize="11"
                                                            FontWeight="Bold"
                                                            Foreground="#374151"/>
-                                            </Border>
+                                            </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </WrapPanel>
+
+                            <!-- Add Encryption Extension -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                <TextBox Text="{Binding NewEncryptionExtensionText}"
+                                         Grid.Column="0"
+                                         Watermark=".ext"
+                                         Margin="0,0,10,0"
+                                         Classes="input-field"/>
+                                <Button Command="{Binding AddEncryptionExtensionCommand}"
+                                        Grid.Column="1"
+                                        Content="Add"
+                                        Padding="12,5"/>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -202,11 +325,12 @@
                                 <TextBox Text="{Binding NewPriorityExtensionText}"
                                          Grid.Column="0"
                                          Watermark=".ext"
-                                         Margin="0,0,10,0"/>
+                                         Margin="0,0,10,0"
+                                         Classes="input-field"/>
                                 <Button Command="{Binding AddPriorityExtensionCommand}"
                                         Grid.Column="1"
-                                        Content="+"
-                                        Padding="15,5"/>
+                                        Content="Add"
+                                        Padding="12,5"/>
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -230,7 +354,7 @@
                                        FontWeight="Bold"
                                        Foreground="#666666"/>
 
-                            <!-- Apps Panel -->
+                            <!-- Apps Panel with remove capability -->
                             <WrapPanel Orientation="Horizontal">
                                 <ItemsControl ItemsSource="{Binding BusinessApps}">
                                     <ItemsControl.ItemsPanel>
@@ -239,20 +363,128 @@
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="#F3F4F6"
+                                        <DataTemplate DataType="vm:AppItemViewModel">
+                                            <Button Background="#F3F4F6"
                                                     CornerRadius="6"
                                                     Padding="8,3"
-                                                    Margin="4">
-                                                <TextBlock Text="{Binding .}"
+                                                    Margin="4"
+                                                    Command="{Binding RemoveCommand}"
+                                                    BorderThickness="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayText}"
                                                            FontSize="11"
                                                            FontWeight="Bold"
                                                            Foreground="#374151"/>
-                                            </Border>
+                                            </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </WrapPanel>
+
+                            <!-- Add Business App -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                <TextBox Text="{Binding NewBusinessAppText}"
+                                         Grid.Column="0"
+                                         Watermark="App name"
+                                         Margin="0,0,10,0"
+                                         Classes="input-field"/>
+                                <Button Command="{Binding AddBusinessAppCommand}"
+                                        Grid.Column="1"
+                                        Content="Add"
+                                        Padding="12,5"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Performance Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{Binding PerformanceSectionTitle}"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Max Concurrent Jobs -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding MaxConcurrentJobsLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding MaxConcurrentJobs}"
+                                         Watermark="Leave empty for default"
+                                         Classes="input-field"/>
+                            </Grid>
+
+                            <!-- Large File Size Limit -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding LargeFileSizeLimitLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                    <Border Name="LargeFileSizeBorder"
+                                            Background="White"
+                                            BorderBrush="#E0E0E0"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Width="200">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBox Grid.Column="0"
+                                                     Name="LargeFileSizeTextBox"
+                                                     Text="{Binding LargeFileSizeLimitKb}"
+                                                     Background="White"
+                                                     BorderThickness="0"
+                                                     Foreground="#000000"
+                                                     CaretBrush="Transparent"
+                                                     Padding="8,6,4,6"
+                                                     FontSize="12"
+                                                     Classes="input-field"
+                                                     PointerEntered="OnLargeFileSizePointerEntered"
+                                                     PointerExited="OnLargeFileSizePointerExited"
+                                                     GotFocus="OnLargeFileSizeGotFocus"
+                                                     LostFocus="OnLargeFileSizeLostFocus"
+                                                     VerticalContentAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Vertical" Spacing="0">
+                                                <Button Name="IncrementBtn"
+                                                        Background="White"
+                                                        Foreground="#000000"
+                                                        BorderThickness="0"
+                                                        Padding="6,4"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Content="+"
+                                                        Width="28"
+                                                        Height="18"
+                                                        Click="OnIncrementLargeFileSize" />
+                                                <Button Name="DecrementBtn"
+                                                        Background="White"
+                                                        Foreground="#000000"
+                                                        BorderThickness="0"
+                                                        Padding="6,4"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Content="−"
+                                                        Width="28"
+                                                        Height="18"
+                                                        Click="OnDecrementLargeFileSize" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Text="KB"
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="#666666"/>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
