@@ -536,6 +536,18 @@ Stack:
           xml:space="preserve">
         <value>No priority extension configured</value>
     </data>
+    <data name="SettingsPage_Section_Performance"
+          xml:space="preserve">
+        <value>Performance</value>
+    </data>
+    <data name="SettingsPage_Section_Performance_MaxConcurrentJobs"
+          xml:space="preserve">
+        <value>Max concurrent jobs</value>
+    </data>
+    <data name="SettingsPage_Section_Performance_LargeFileSize"
+          xml:space="preserve">
+        <value>Large file size limit</value>
+    </data>
     <data name="SettingsPage_Section_About"
           xml:space="preserve">
         <value>About</value>
