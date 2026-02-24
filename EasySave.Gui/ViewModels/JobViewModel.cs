@@ -297,6 +297,7 @@ public class JobViewModel : ViewModelBase
         OnPropertyChanged(nameof(PlayButtonColor));
         OnPropertyChanged(nameof(PlayButtonBackground));
         OnPropertyChanged(nameof(StatusBadgeColor));
+        OnPropertyChanged(nameof(StatusLabel));
     }
 
     private void OnPlayPauseResume()
