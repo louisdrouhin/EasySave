@@ -180,7 +180,14 @@ public class JobManager
     {
         content["clientId"] = Environment.MachineName;
 
-        string formattedLog = $"[{timestamp:yyyy-MM-dd HH:mm:ss}] {name}";
+        // Format log as JSON object (same format as file logs)
+        var logEntry = new
+        {
+            timestamp = timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
+            name = name,
+            content = content
+        };
+        string formattedLog = System.Text.Json.JsonSerializer.Serialize(logEntry, new System.Text.Json.JsonSerializerOptions { WriteIndented = false });
 
         switch (_logMode)
         {
