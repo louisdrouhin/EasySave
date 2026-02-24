@@ -40,7 +40,8 @@
                 BorderThickness="1"
                 CornerRadius="5"
                 Background="White">
-            <ListBox ItemsSource="{Binding Logs}"
+            <ListBox x:Name="LogsListBox"
+                     ItemsSource="{Binding Logs}"
                      Background="White"
                      Foreground="Black"
                      Padding="10">
