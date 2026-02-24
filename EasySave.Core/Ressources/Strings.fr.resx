@@ -440,6 +440,7 @@ Pile :
   <data name="JobCard_Label_Size" xml:space="preserve"><value>TAILLE (TRAITÉE / TOTAL)</value></data>
   <data name="JobCard_Status_Inactive" xml:space="preserve"><value>Inactif</value></data>
   <data name="JobCard_Status_Active" xml:space="preserve"><value>Actif</value></data>
+  <data name="JobCard_Status_Paused" xml:space="preserve"><value>En pause</value></data>
   <data name="JobCard_Progress_InProgress" xml:space="preserve"><value>EN COURS</value></data>
   <data name="JobCard_Progress_Processing" xml:space="preserve"><value>Traitement...</value></data>
 

@@ -575,6 +575,7 @@ Stack:
     <data name="JobCard_Label_Size" xml:space="preserve"><value>SIZE (PROCESSED / TOTAL)</value></data>
     <data name="JobCard_Status_Inactive" xml:space="preserve"><value>Inactive</value></data>
     <data name="JobCard_Status_Active" xml:space="preserve"><value>Active</value></data>
+    <data name="JobCard_Status_Paused" xml:space="preserve"><value>Paused</value></data>
     <data name="JobCard_Progress_InProgress" xml:space="preserve"><value>IN PROGRESS</value></data>
     <data name="JobCard_Progress_Processing" xml:space="preserve"><value>Processing...</value></data>
 
