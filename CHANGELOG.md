@@ -1,3 +1,9 @@
+## v2.5.0 (2026-02-24)
+
+### Feat
+
+- **cryptosoft**: cryptosoft mono instance
+
 ## v2.4.0 (2026-02-24)
 
 ### Feat
