@@ -8,9 +8,8 @@ using EasySave.Models;
 
 namespace EasySave.Gui.ViewModels;
 
-/// <summary>
-/// ViewModel for a single Job - handles job state, properties, and user interactions
-/// </summary>
+// ViewModel pour une tâche de sauvegarde individuelle
+// Gère l'état, la progression et les interactions utilisateur (play/pause/stop/delete)
 public class JobViewModel : ViewModelBase
 {
     private readonly Job _job;
@@ -26,13 +25,16 @@ public class JobViewModel : ViewModelBase
     private bool _isExpanded;
     private bool _isDeleteConfirming;
 
+    // Accès au modèle Job sous-jacent
     public Job Job => _job;
 
+    // Initialise le ViewModel pour un job donné
+    // @param job - le job à gérer
     public JobViewModel(Job job)
     {
         _job = job ?? throw new ArgumentNullException(nameof(job));
 
-        // Commands
+        // Commandes utilisateur
         PlayPauseResumeCommand = new RelayCommand(_ => OnPlayPauseResume());
         StopCommand = new RelayCommand(_ => OnStop());
         DeleteCommand = new RelayCommand(_ => OnDelete());
@@ -40,16 +42,21 @@ public class JobViewModel : ViewModelBase
         ConfirmDeleteCommand = new RelayCommand(_ => OnConfirmDelete());
         CancelDeleteCommand = new RelayCommand(_ => OnCancelDelete());
 
-        // Subscribe to language changes for localized status
+        // S'abonne aux changements de langue pour actualiser le label d'état
         LocalizationManager.LanguageChanged += (s, e) => OnPropertyChanged(nameof(StatusLabel));
     }
 
-    #region Properties - Job Info
 
+    // Nom du job
     public string Name => _job.Name;
+
+    // Chemin du répertoire source
     public string SourcePath => _job.SourcePath;
+
+    // Chemin du répertoire destination
     public string DestinationPath => _job.DestinationPath;
 
+    // Label du type de sauvegarde (FULL ou DIFF)
     public string TypeLabel
     {
         get
@@ -63,20 +70,25 @@ public class JobViewModel : ViewModelBase
         }
     }
 
-    #endregion
 
-    #region Properties - State
-
+    // État actuel du job (Active, Inactive, Paused)
     public JobState State
     {
         get => _state;
         set => SetProperty(ref _state, value);
     }
 
+    // True si le job est en cours d'exécution
     public bool IsActive => _state == JobState.Active;
+
+    // True si le job est suspendu
     public bool IsPaused => _state == JobState.Paused;
+
+    // True si le job est arrêté ou jamais lancé
     public bool IsInactive => _state == JobState.Inactive;
 
+
+    // Label d'état traduit du job (Active, Paused, Inactive)
     public string StatusLabel
     {
         get
@@ -91,6 +103,7 @@ public class JobViewModel : ViewModelBase
         }
     }
 
+    // Couleur du badge d'état (Vert=Active, Orange=Paused, Gris=Inactive)
     public IBrush StatusBadgeColor
     {
         get
@@ -105,40 +118,43 @@ public class JobViewModel : ViewModelBase
         }
     }
 
-    #endregion
 
-    #region Properties - Progress
-
+    // Pourcentage de progression (0-100)
     public double Progress
     {
         get => _progress;
         set => SetProperty(ref _progress, value);
     }
 
+    // Nombre total de fichiers à traiter
     public int? TotalFiles
     {
         get => _totalFiles;
         set => SetProperty(ref _totalFiles, value);
     }
 
+    // Nombre de fichiers restants à traiter
     public int? RemainingFiles
     {
         get => _remainingFiles;
         set => SetProperty(ref _remainingFiles, value);
     }
 
+    // Taille totale à transférer en bytes
     public long? TotalSize
     {
         get => _totalSize;
         set => SetProperty(ref _totalSize, value);
     }
 
+    // Taille restante à transférer en bytes
     public long? RemainingSize
     {
         get => _remainingSize;
         set => SetProperty(ref _remainingSize, value);
     }
 
+    // Texte formaté des fichiers restants (ex: "5/10 files")
     public string RemainingFilesText
     {
         get
@@ -149,11 +165,13 @@ public class JobViewModel : ViewModelBase
         }
     }
 
+    // Texte du pourcentage formaté (ex: "45.5%")
     public string ProgressText
     {
         get => $"{Progress:F1}%";
     }
 
+    // Texte de la taille restante formatée en MB (ex: "12.50 MB")
     public string RemainingSizeText
     {
         get
@@ -164,12 +182,11 @@ public class JobViewModel : ViewModelBase
         }
     }
 
+    // True si la progression doit être affichée (Active ou Paused)
     public bool IsProgressVisible => IsActive || IsPaused;
 
-    #endregion
 
-    #region Properties - UI State
-
+    // Indique si le job est sélectionné
     public bool IsSelected
     {
         get => _isSelected;
@@ -183,37 +200,41 @@ public class JobViewModel : ViewModelBase
         }
     }
 
+    // Indique si la carte du job est expandue pour voir plus de détails
     public bool IsExpanded
     {
         get => _isExpanded;
         set => SetProperty(ref _isExpanded, value);
     }
 
+    // True si le dialogue de confirmation de suppression est affiché
     public bool IsDeleteConfirming
     {
         get => _isDeleteConfirming;
         set => SetProperty(ref _isDeleteConfirming, value);
     }
 
+    // Données géométriques pour l'icône du bouton Play/Pause/Resume
+    // Play (inactif), Pause (actif), Flèche (reprise)
     public Geometry PlayPauseIconData
     {
         get
         {
-            // Return icon based on state: Play (inactive), Pause (active), Arrow/Resume (paused)
             if (IsActive)
                 return Geometry.Parse("M14,19H18V5H14M6,19H10V5H6V19Z"); // Pause
             else if (IsPaused)
-                return Geometry.Parse("M5,12H19M15,8L19,12L15,16"); // Arrow right (Resume)
+                return Geometry.Parse("M8,5.14V19.14L19,12.14L8,5.14Z"); // Arrow right (Resume)
             else
                 return Geometry.Parse("M8,5.14V19.14L19,12.14L8,5.14Z"); // Play
         }
     }
 
+    // Données géométriques pour l'icône du bouton Supprimer
+    // Stop (en cours/pause), Trash (inactif)
     public Geometry DeleteIconData
     {
         get
         {
-            // Show Stop icon if active/paused, Trash icon if inactive
             if (IsActive || IsPaused)
                 return Geometry.Parse("M18,18H6V6H18V18Z"); // Stop icon
             else
@@ -221,70 +242,81 @@ public class JobViewModel : ViewModelBase
         }
     }
 
+    // Couleur de fond du bouton Play (Vert=inactif, Orange=actif/pause)
     public IBrush PlayButtonBackground
     {
         get
         {
-            // Green for Inactive (Play), Orange for both Active (Pause) and Paused (Resume)
             if (IsInactive)
                 return new SolidColorBrush(Color.Parse("#22C55E")); // Green
-            else // IsActive or IsPaused
-                return new SolidColorBrush(Color.Parse("#F97316")); // Orange for both
+            else
+                return new SolidColorBrush(Color.Parse("#F97316")); // Orange
         }
     }
 
+    // Couleur du bouton Play
     public IBrush PlayButtonColor => IsInactive ? Brushes.Green : Brushes.Orange;
 
-    #endregion
 
-    #region Commands
 
+    // Commande Play/Pause/Resume selon l'état
     public ICommand PlayPauseResumeCommand { get; }
+
+    // Commande pour arrêter le job
     public ICommand StopCommand { get; }
+
+    // Commande pour supprimer le job
     public ICommand DeleteCommand { get; }
+
+    // Commande pour montrer/cacher les détails du job
     public ICommand ToggleExpandCommand { get; }
+
+    // Commande pour confirmer la suppression
     public ICommand ConfirmDeleteCommand { get; }
+
+    // Commande pour annuler la suppression
     public ICommand CancelDeleteCommand { get; }
 
-    #endregion
 
-    #region Events
-
+    // Déclenché quand l'utilisateur clique sur Play
     public event EventHandler<JobViewModel>? PlayRequested;
+
+    // Déclenché quand l'utilisateur clique sur Pause
     public event EventHandler<JobViewModel>? PauseRequested;
+
+    // Déclenché quand l'utilisateur clique sur Resume
     public event EventHandler<JobViewModel>? ResumeRequested;
+
+    // Déclenché quand l'utilisateur clique sur Stop
     public event EventHandler<JobViewModel>? StopRequested;
+
+    // Déclenché quand l'utilisateur confirme la suppression
     public event EventHandler<JobViewModel>? DeleteRequested;
+
+    // Déclenché quand la sélection du job change
     public event EventHandler<(JobViewModel, bool)>? SelectionChanged;
 
-    #endregion
 
-    #region Methods
-
-    /// <summary>
-    /// Apply a state update from the Core layer to this ViewModel
-    /// </summary>
+    // Applique une mise à jour d'état depuis la couche Core
+    // Met à jour l'état et la progression du job
+    // @param entry - StateEntry du Core contenant les infos à jour
     public void ApplyState(StateEntry entry)
     {
         if (entry.JobName != _job.Name)
             return;
 
-        // Log state changes for debugging
         var oldState = _state;
         System.Diagnostics.Debug.WriteLine($"[{_job.Name}] ApplyState called: {oldState} → {entry.State}");
 
-        // Apply the state change immediately - trust the backend state
         State = entry.State;
         System.Diagnostics.Debug.WriteLine($"[{_job.Name}] State applied: {_state}");
 
-        // Update progress if available
         Progress = entry.Progress ?? 0;
         TotalFiles = entry.TotalFiles;
         RemainingFiles = entry.RemainingFiles;
         TotalSize = entry.TotalSizeToTransfer;
         RemainingSize = entry.RemainingSizeToTransfer;
 
-        // Refresh computed properties
         OnPropertyChanged(nameof(IsActive));
         OnPropertyChanged(nameof(IsPaused));
         OnPropertyChanged(nameof(IsInactive));
@@ -300,6 +332,8 @@ public class JobViewModel : ViewModelBase
         OnPropertyChanged(nameof(StatusLabel));
     }
 
+    // Gère le clic sur le bouton Play/Pause/Resume
+    // Change l'état selon l'état actuel et déclenche l'événement approprié
     private void OnPlayPauseResume()
     {
         switch (_state)
@@ -316,40 +350,47 @@ public class JobViewModel : ViewModelBase
         }
     }
 
+    // Gère le clic sur le bouton Stop
     private void OnStop()
     {
         StopRequested?.Invoke(this, this);
     }
 
+    // Gère le clic sur le bouton Delete
+    // Si en cours: arrête le job
+    // Si inactif: affiche la confirmation de suppression
     private void OnDelete()
     {
         if (IsActive || IsPaused)
         {
-            // If job is running, stop it
+            // Si en cours, arrête d'abord
             StopRequested?.Invoke(this, this);
         }
         else
         {
-            // If job is inactive, toggle confirmation mode
+            // Si inactif, affiche la confirmation
             IsDeleteConfirming = !IsDeleteConfirming;
         }
     }
 
+    // Gère la confirmation de suppression
+    // Ferme le dialogue et déclenche l'événement DeleteRequested
     private void OnConfirmDelete()
     {
         IsDeleteConfirming = false;
         DeleteRequested?.Invoke(this, this);
     }
 
+    // Gère l'annulation de la suppression
+    // Ferme simplement le dialogue
     private void OnCancelDelete()
     {
         IsDeleteConfirming = false;
     }
 
+    // Bascule l'affichage des détails du job
     private void OnToggleExpand()
     {
         IsExpanded = !IsExpanded;
     }
-
-    #endregion
 }

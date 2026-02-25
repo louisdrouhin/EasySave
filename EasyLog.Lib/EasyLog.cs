@@ -1,5 +1,7 @@
 namespace EasyLog.Lib;
 
+// Gestionnaire de logs avec support JSON et XML
+// Crée un fichier de log par jour, manage les rotations, et utilise des formateurs pluggables
 public class EasyLog
 {
     private readonly ILogFormatter _formatter;
@@ -11,6 +13,10 @@ public class EasyLog
     private readonly string _entrySeparator;
     private readonly object _lock = new object();
 
+    // Initialise le gestionnaire de logs
+    // Crée le dossier si absent et initialise la structure du fichier de log du jour
+    // @param formatter - formateur JSON ou XML pour les entrées
+    // @param logDirectory - répertoire où stocker les fichiers de log
     public EasyLog(ILogFormatter formatter, string logDirectory)
     {
         if (formatter == null)
@@ -46,6 +52,9 @@ public class EasyLog
         Console.WriteLine($"[EasyLog] Log file exists after init: {File.Exists(_logPath)}");
     }
 
+    // Génère le chemin du fichier de log pour une date donnée
+    // @param date - date pour laquelle générer le chemin du log
+    // @returns chemin complet du fichier de log pour la date
     private string GetLogPathForDate(DateTime date)
     {
         var dateStr = date.ToString("yyyy-MM-dd");
@@ -63,6 +72,9 @@ public class EasyLog
         return dailyLogPath;
     }
 
+    // Initialise la structure du fichier de log
+    // Si le fichier n'existe pas, crée-le avec les en-têtes appropriés
+    // Si le fichier existe, vérifie sa structure et la corrige si nécessaire pour permettre l'ajout de nouvelles entrées
     private void InitializeLogStructure()
     {
         try
@@ -132,6 +144,8 @@ public class EasyLog
         }
     }
 
+    // Vérifie que le fichier de log est prêt à recevoir de nouvelles entrées
+    // Si le fichier existe, vérifie sa structure et la corrige si nécessaire pour permettre l'ajout de nouvelles entrées
     private void EnsureFileIsOpen()
     {
         try
@@ -194,6 +208,9 @@ public class EasyLog
         }
     }
 
+    // Normalise les paths dans le contenu des logs
+    // Convertit les chemins locaux en chemins UNC pour assurer la compatibilité avec les systèmes de fichiers distants
+    // @param content - dictionnaire de propriétés de l'entrée de log, potentiellement contenant des chemins à normaliser
     private void NormalizePathsInContent(Dictionary<string, object> content)
     {
         var keysToUpdate = content.Keys
@@ -209,6 +226,10 @@ public class EasyLog
         }
     }
 
+    // Convertit un chemin local en chemin UNC
+    // Si le chemin est déjà un chemin UNC, le retourne tel quel
+    // @param path - chemin à convertir
+    // @returns chemin UNC équivalent ou le chemin original si la conversion échoue
     private string ConvertToUncPath(string path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -236,6 +257,12 @@ public class EasyLog
         }
     }
 
+    // Écrit une entrée de log dans le fichier
+    // Formate l'entrée avec le formateur configuré et l'ajoute au fichier de log
+    // Si le jour a changé depuis la dernière écriture, effectue une rotation du fichier de log
+    // @param timestamp - date/heure de l'entrée de log
+    // @param name - nom du backup ou de l'événement à loguer
+    // @param content - dictionnaire de propriétés de l'entrée de log
     public void Write(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (content == null)
@@ -287,6 +314,8 @@ public class EasyLog
         }
     }
 
+    // Vérifie si le jour a changé depuis la dernière écriture
+    // Si le jour a changé, ferme le fichier de log actuel et initialise un nouveau fichier pour le nouveau jour
     private void CheckAndRotateIfNeeded()
     {
         DateTime todayDate = DateTime.Now.Date;
@@ -301,6 +330,9 @@ public class EasyLog
         }
     }
 
+    // Permet de changer dynamiquement le répertoire de stockage des logs
+    // Ferme le fichier de log actuel, met à jour le chemin, et initialise la structure du nouveau fichier de log
+    // @param newLogDirectory - nouveau chemin du répertoire de logs
     public void SetLogPath(string newLogDirectory)
     {
         if (string.IsNullOrWhiteSpace(newLogDirectory))
@@ -320,6 +352,8 @@ public class EasyLog
         }
     }
 
+    // Récupère le chemin actuel du fichier de log
+    // @returns chemin complet du fichier de log actuellement utilisé
     public string GetCurrentLogPath()
     {
         lock (_lock)
@@ -328,6 +362,8 @@ public class EasyLog
         }
     }
 
+    // Récupère le répertoire actuel où les fichiers de log sont stockés
+    // @returns chemin du répertoire de logs
     public string GetLogDirectory()
     {
         lock (_lock)
@@ -336,6 +372,8 @@ public class EasyLog
         }
     }
 
+    // Ferme le fichier de log actuel en appelant la méthode de fermeture du formateur
+    // Assure que les marqueurs de fin sont ajoutés si nécessaire pour garantir la validité du fichier de log
     public void Close()
     {
         lock (_lock)
@@ -344,11 +382,15 @@ public class EasyLog
         }
     }
 
+    // Ferme le fichier de log actuel sans acquérir de lock (utilisé en interne lors de la rotation ou du changement de chemin)
+    // Appelle la méthode de fermeture du formateur pour ajouter les marqueurs de fin si nécessaire
     private void CloseInternal()
     {
         _formatter.Close(_logPath);
     }
 
+    // Assure que le répertoire de logs existe, et le crée s'il n'existe pas
+    // @param directory - chemin du répertoire à vérifier/créer
     private static void EnsureDirectoryExists(string directory)
     {
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))

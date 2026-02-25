@@ -10,6 +10,8 @@ using EasySave.Gui.Commands;
 
 namespace EasySave.Gui.ViewModels;
 
+// ViewModel pour la page des paramètres
+// Gère la configuration: logs, extensions, applications métier, langue, etc.
 public class SettingsPageViewModel : ViewModelBase
 {
     private readonly ConfigParser _configParser;
@@ -20,6 +22,9 @@ public class SettingsPageViewModel : ViewModelBase
     private string _maxConcurrentJobs = "";
     private long _largeFileSizeLimitKb;
 
+    // Initialise la page des paramètres
+    // Charge la configuration et les listes (extensions, apps, etc.)
+    // @param jobManager - gestionnaire central contenant ConfigParser
     public SettingsPageViewModel(JobManager jobManager)
     {
         _jobManager = jobManager ?? throw new ArgumentNullException(nameof(jobManager));
@@ -30,7 +35,7 @@ public class SettingsPageViewModel : ViewModelBase
         BusinessApps = new ObservableCollection<AppItemViewModel>();
         PriorityExtensions = new ObservableCollection<ExtensionItemViewModel>();
 
-        // Commands
+        // Commandes
         SetJsonFormatCommand = new RelayCommand(_ => SetLogFormat("json"));
         SetXmlFormatCommand = new RelayCommand(_ => SetLogFormat("xml"));
         SetFrenchLanguageCommand = new RelayCommand(_ => LocalizationManager.SetLanguage("fr"));
@@ -39,7 +44,7 @@ public class SettingsPageViewModel : ViewModelBase
         AddEncryptionExtensionCommand = new RelayCommand(_ => AddEncryptionExtension());
         AddBusinessAppCommand = new RelayCommand(_ => AddBusinessApp());
 
-        // Load initial data
+        // Charge les données initiales
         _maxConcurrentJobs = _configParser.GetMaxConcurrentJobs().ToString();
         _largeFileSizeLimitKb = _configParser.GetLargeFileSizeLimitKb();
 
@@ -47,13 +52,12 @@ public class SettingsPageViewModel : ViewModelBase
         RefreshBusinessApps();
         RefreshPriorityExtensions();
 
-        // Subscribe to language changes
+        // S'abonne aux changements
         LocalizationManager.LanguageChanged += OnLanguageChanged;
         _jobManager.LogFormatChanged += OnLogFormatChanged;
     }
 
-    #region Properties - Localized Labels (computed, no backing field)
-
+    // Titres et sous-titres traduits
     public string HeaderTitle => LocalizationManager.Get("SettingsPage_Header_Title");
     public string HeaderSubtitle => LocalizationManager.Get("SettingsPage_Header_Subtitle");
     public string LogsSectionTitle => LocalizationManager.Get("SettingsPage_Section_Logs");
@@ -62,6 +66,7 @@ public class SettingsPageViewModel : ViewModelBase
     public string BusinessAppsSectionTitle => LocalizationManager.Get("SettingsPage_Section_BusinessApps");
     public string PrioritySectionTitle => LocalizationManager.Get("SettingsPage_Section_Priority");
     public string PerformanceSectionTitle => LocalizationManager.Get("SettingsPage_Section_Performance");
+    // Labels spécifiques des paramètres
     public string LogsPathLabel => LocalizationManager.Get("SettingsPage_Section_Logs_Path");
     public string LogsFormatLabel => LocalizationManager.Get("SettingsPage_Section_Logs_Format");
     public string StatePathLabel => LocalizationManager.Get("SettingsPage_Section_State_Path");
@@ -74,17 +79,18 @@ public class SettingsPageViewModel : ViewModelBase
     public string CurrentLanguageLabel => LocalizationManager.Get("SettingsPage_Section_Language_Current");
     public string AboutSectionTitle => LocalizationManager.Get("SettingsPage_Section_About");
     public string VersionLabel => LocalizationManager.Get("SettingsPage_Section_About_Version");
+    // Messages vides
     public string NoExtensionsText => LocalizationManager.Get("SettingsPage_NoExtensions");
     public string NoAppsText => LocalizationManager.Get("SettingsPage_NoApps");
 
-    #endregion
 
-    #region Properties - Config Values
-
+    // Valeurs actuelles de la configuration
     public string LogsPathValue => Path.GetFullPath(_configParser.GetLogsPath());
 
+    // Affiche le format de log actuel en majuscules (JSON ou XML)
     public string LogsFormatValue => _configParser.GetLogFormat().ToUpper();
 
+    // Affiche le chemin du fichier d'état ou "N/A" si non configuré
     public string StatePathValue
     {
         get
@@ -94,6 +100,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Affiche la langue actuelle (Français ou Anglais) basée sur la culture
     public string CurrentLanguageValue
     {
         get
@@ -105,26 +112,31 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Affiche la version de l'application extraite du fichier .cz.toml ou "Unknown" si non trouvée
     public string VersionValue => GetApplicationVersion();
 
+    // Propriétés liées aux nouveaux éléments à ajouter (extensions, apps)
     public string NewPriorityExtensionText
     {
         get => _newPriorityExtensionText;
         set => SetProperty(ref _newPriorityExtensionText, value);
     }
 
+    // Texte saisi pour une nouvelle extension d'encryption à ajouter
     public string NewEncryptionExtensionText
     {
         get => _newEncryptionExtensionText;
         set => SetProperty(ref _newEncryptionExtensionText, value);
     }
 
+    // Texte saisi pour une nouvelle application métier à ajouter
     public string NewBusinessAppText
     {
         get => _newBusinessAppText;
         set => SetProperty(ref _newBusinessAppText, value);
     }
 
+    // Nombre maximum de jobs concurrents autorisés, lié à la configuration et sauvegardé à chaque changement
     public string MaxConcurrentJobs
     {
         get => _maxConcurrentJobs;
@@ -135,6 +147,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Seuil de taille en KB pour considérer un fichier comme "gros", lié à la configuration et sauvegardé à chaque changement
     public long LargeFileSizeLimitKb
     {
         get => _largeFileSizeLimitKb;
@@ -145,30 +158,37 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
-    #endregion
-
-    #region Collections
-
+    // Collections d'extensions et d'applications métier
     public ObservableCollection<ExtensionItemViewModel> EncryptionExtensions { get; }
+
+    // Collection des applications métier configurées
     public ObservableCollection<AppItemViewModel> BusinessApps { get; }
+
+    // Collection des extensions prioritaires configurées
     public ObservableCollection<ExtensionItemViewModel> PriorityExtensions { get; }
 
-    #endregion
-
-    #region Commands
-
+    // Commandes liées aux actions de l'utilisateur
     public ICommand SetJsonFormatCommand { get; }
+
+    // Commandes pour changer le format de log, la langue, et ajouter des extensions/apps
     public ICommand SetXmlFormatCommand { get; }
+
+    // Commandes pour changer la langue de l'application
     public ICommand SetFrenchLanguageCommand { get; }
+
+    // Commande pour passer l'application en anglais
     public ICommand SetEnglishLanguageCommand { get; }
+
+    // Commandes pour ajouter une extension prioritaire, une extension d'encryption, ou une application métier
     public ICommand AddPriorityExtensionCommand { get; }
+
+    // Commandes pour ajouter une extension d'encryption
     public ICommand AddEncryptionExtensionCommand { get; }
+
+    // Commandes pour ajouter une application métier
     public ICommand AddBusinessAppCommand { get; }
 
-    #endregion
-
-    #region Methods
-
+    // Méthodes pour gérer les actions de l'utilisateur et manipuler la configuration
     private void SetLogFormat(string format)
     {
         try
@@ -181,6 +201,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Ajoute une nouvelle extension à la liste des extensions prioritaires si elle n'existe pas déjà, puis sauvegarde et rafraîchit la liste affichée
     private void AddPriorityExtension()
     {
         if (string.IsNullOrWhiteSpace(NewPriorityExtensionText))
@@ -200,6 +221,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Ajoute une nouvelle extension à la liste des extensions d'encryption si elle n'existe pas déjà, puis sauvegarde et rafraîchit la liste affichée
     private void AddEncryptionExtension()
     {
         if (string.IsNullOrWhiteSpace(NewEncryptionExtensionText))
@@ -219,6 +241,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Supprime une extension d'encryption de la configuration
     private void RemoveEncryptionExtension(ExtensionItemViewModel vm)
     {
         var currentExtensions = _configParser.GetEncryptionExtensions();
@@ -227,6 +250,7 @@ public class SettingsPageViewModel : ViewModelBase
         RefreshEncryptionExtensions();
     }
 
+    // Sauvegarde la liste des extensions d'encryption dans la configuration en modifiant le fichier JSON et en persistant les changements
     private void SaveEncryptionExtensions(List<string> extensions)
     {
         if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
@@ -245,6 +269,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Rafraîchit la collection d'extensions d'encryption affichée
     private void RefreshEncryptionExtensions()
     {
         EncryptionExtensions.Clear();
@@ -255,6 +280,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Ajoute une nouvelle application métier à la configuration
     private void AddBusinessApp()
     {
         if (string.IsNullOrWhiteSpace(NewBusinessAppText))
@@ -271,6 +297,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Supprime une application métier de la configuration
     private void RemoveBusinessApp(AppItemViewModel vm)
     {
         var currentApps = _configParser.GetBusinessApplications();
@@ -279,6 +306,7 @@ public class SettingsPageViewModel : ViewModelBase
         RefreshBusinessApps();
     }
 
+    // Sauvegarde la liste des applications métier dans la configuration en modifiant le fichier JSON et en persistant les changements
     private void SaveBusinessApps(List<string> apps)
     {
         if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
@@ -294,6 +322,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Rafraîchit la collection d'applications métier affichée
     private void RefreshBusinessApps()
     {
         BusinessApps.Clear();
@@ -304,6 +333,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Supprime une extension prioritaire de la configuration
     private void RemovePriorityExtension(ExtensionItemViewModel vm)
     {
         var currentExtensions = _configParser.GetPriorityExtensions();
@@ -312,6 +342,7 @@ public class SettingsPageViewModel : ViewModelBase
         RefreshPriorityExtensions();
     }
 
+    // Sauvegarde la liste des extensions prioritaires dans la configuration en modifiant le fichier JSON et en persistant les changements
     private void SavePriorityExtensions(List<string> extensions)
     {
         if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
@@ -327,6 +358,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Rafraîchit la collection d'extensions prioritaires affichée
     private void RefreshPriorityExtensions()
     {
         PriorityExtensions.Clear();
@@ -337,6 +369,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Sauvegarde le nombre maximum de jobs concurrents dans la configuration en modifiant le fichier JSON et en persistant les changements
     private void SaveMaxConcurrentJobs()
     {
         if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
@@ -353,6 +386,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Sauvegarde le seuil de taille pour les gros fichiers dans la configuration en modifiant le fichier JSON et en persistant les changements
     private void SaveLargeFileSize()
     {
         if (_configParser.Config is System.Text.Json.Nodes.JsonObject configObject &&
@@ -363,6 +397,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Lit le fichier .cz.toml à la racine du projet pour extraire la version de l'application
     private string GetApplicationVersion()
     {
         try
@@ -395,6 +430,7 @@ public class SettingsPageViewModel : ViewModelBase
         }
     }
 
+    // Gestion des événements pour mettre à jour l'interface lorsque la langue ou le format de log change
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HeaderTitle));
@@ -422,13 +458,13 @@ public class SettingsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentLanguageValue));
     }
 
+    // Met à jour l'affichage du format de log lorsque celui-ci change dans le JobManager
     private void OnLogFormatChanged(object? sender, LogFormatChangedEventArgs e)
     {
         OnPropertyChanged(nameof(LogsFormatValue));
     }
 
-    #endregion
-
+    // Se désabonne des événements pour éviter les fuites de mémoire lorsque le ViewModel est détruit
     public void Dispose()
     {
         LocalizationManager.LanguageChanged -= OnLanguageChanged;

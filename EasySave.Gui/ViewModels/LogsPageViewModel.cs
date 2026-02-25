@@ -14,6 +14,8 @@ using EasySave.Gui.Commands;
 
 namespace EasySave.Gui.ViewModels;
 
+// ViewModel pour la page des logs
+// Affiche et gère les entrées de logs depuis les fichiers JSON/XML
 public class LogsPageViewModel : ViewModelBase
 {
     private readonly ConfigParser _configParser;
@@ -21,6 +23,9 @@ public class LogsPageViewModel : ViewModelBase
     private string _currentLogFilePath = "";
     private int _lastLoadedLogCount = 0;
 
+    // Initialise la page des logs
+    // Charge les logs existants et s'abonne aux événements
+    // @param jobManager - gestionnaire central contenant ConfigParser
     public LogsPageViewModel(JobManager jobManager)
     {
         _jobManager = jobManager ?? throw new ArgumentNullException(nameof(jobManager));
@@ -29,46 +34,44 @@ public class LogsPageViewModel : ViewModelBase
         Logs = new ObservableCollection<LogEntryViewModel>();
         OpenFolderCommand = new RelayCommand(_ => OpenFolder());
 
-        // Load initial logs
+        // Charge les logs initiaux
         LoadLogs();
 
-        // Subscribe to events
+        // S'abonne aux événements
         LocalizationManager.LanguageChanged += OnLanguageChanged;
         _jobManager.LogFormatChanged += OnLogFormatChanged;
         _jobManager.LogEntryWritten += OnLogEntryWritten;
     }
 
-    #region Properties
 
+    // Collection observable des entrées de log
     public ObservableCollection<LogEntryViewModel> Logs { get; }
 
+    // Nombre d'entrées de log actuellement affichées
     private int _logCount;
+
+    // Nombre total d'entrées de log chargées
     public int LogCount
     {
         get => _logCount;
         private set => SetProperty(ref _logCount, value);
     }
 
+    // Titres et labels traduits
     public string HeaderTitle => LocalizationManager.Get("LogsPage_Title");
     public string OpenFolderLabel => LocalizationManager.Get("LogsPage_Button_OpenFolder");
     public string TotalLogsLabel => LocalizationManager.Get("LogsPage_TotalLogs");
 
-    #endregion
-
-    #region Commands
-
+    // Commande pour ouvrir le dossier des logs dans l'explorateur
     public ICommand OpenFolderCommand { get; }
 
-    #endregion
 
-    #region Events
-
+    // Déclenché quand une nouvelle entrée de log est ajoutée
     public event EventHandler? LogAdded;
 
-    #endregion
-
-    #region Helper Methods
-
+    // Extrait les objets JSON individuels d'une chaîne de contenu
+    // @param content - chaîne contenant potentiellement plusieurs objets JSON
+    // @returns liste de chaînes JSON valides extraites du contenu
     private List<string> ExtractJsonObjects(string content)
     {
         List<string> objects = new List<string>();
@@ -111,10 +114,8 @@ public class LogsPageViewModel : ViewModelBase
         return objects;
     }
 
-    #endregion
-
-    #region Methods
-
+    // Ouvre le dossier des logs dans l'explorateur de fichiers
+    // Crée le dossier s'il n'existe pas, puis utilise la commande appropriée selon le système d'exploitation
     private void OpenFolder()
     {
         try
@@ -151,6 +152,8 @@ public class LogsPageViewModel : ViewModelBase
         }
     }
 
+    // Charge les logs depuis le fichier actuel
+    // Vérifie le format de log configuré, lit le fichier correspondant, et met à jour la collection observable
     private void LoadLogs()
     {
         try
@@ -195,6 +198,8 @@ public class LogsPageViewModel : ViewModelBase
         }
     }
 
+    // Charge les logs depuis un fichier JSON
+    // @param filePath - chemin du fichier JSON à lire
     private void LoadJsonLogs(string filePath)
     {
         string? jsonContent = null;
@@ -209,18 +214,14 @@ public class LogsPageViewModel : ViewModelBase
             if (string.IsNullOrWhiteSpace(jsonContent))
                 return;
 
-            // Fix incomplete/malformed JSON
             jsonContent = jsonContent.TrimEnd();
 
-            // Remove leading whitespace and commas
             jsonContent = jsonContent.TrimStart(' ', '\t', '\n', '\r', ',');
 
-            // Try to parse individual JSON objects if the wrapper is malformed
             List<string> logStrings = ExtractJsonObjects(jsonContent);
 
             if (logStrings.Count == 0)
             {
-                // Try the standard wrapped format
                 if (!jsonContent.StartsWith("{\"logs\":["))
                 {
                     if (jsonContent.StartsWith("{"))
@@ -315,6 +316,8 @@ public class LogsPageViewModel : ViewModelBase
         }
     }
 
+    // Charge les logs depuis un fichier XML
+    // @param filePath - chemin du fichier XML à lire
     private void LoadXmlLogs(string filePath)
     {
         try
@@ -381,11 +384,13 @@ public class LogsPageViewModel : ViewModelBase
         }
     }
 
+    // Met à jour le nombre total de logs affichés
     private void UpdateLogCount()
     {
         LogCount = Logs.Count;
     }
 
+    // Gère l'événement de nouvelle entrée de log écrite
     private void OnLogEntryWritten(object? sender, string logLine)
     {
         Dispatcher.UIThread.Post(() =>
@@ -396,6 +401,7 @@ public class LogsPageViewModel : ViewModelBase
         });
     }
 
+    // Gère le changement de langue
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HeaderTitle));
@@ -403,6 +409,7 @@ public class LogsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(TotalLogsLabel));
     }
 
+    // Gère le changement de format de log
     private void OnLogFormatChanged(object? sender, LogFormatChangedEventArgs e)
     {
         Logs.Clear();
@@ -410,8 +417,7 @@ public class LogsPageViewModel : ViewModelBase
         LoadLogs();
     }
 
-    #endregion
-
+    // Nettoie les abonnements aux événements pour éviter les fuites de mémoire
     public void Dispose()
     {
         LocalizationManager.LanguageChanged -= OnLanguageChanged;

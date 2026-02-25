@@ -5,17 +5,25 @@ using System.Globalization;
 
 namespace EasySave.Utils.Converters;
 
+// Convertit un type de job en couleur pour l'affichage
+// Bleu=Full, Violet=Differential
 public class JobTypeColorConverter : IValueConverter
 {
+    // Convertit un type de job en couleur
+    // @param value - type de job (string: "full" ou "differential")
+    // @param targetType - type cible (IBrush)
+    // @param parameter - paramètre optionnel
+    // @param culture - culture de conversion
+    // @returns couleur associée au type de job
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
         if (value is string jobType)
         {
             return jobType.ToLower() switch
             {
-                "full" => new SolidColorBrush(Color.Parse("#3B82F6")),
-                "differential" => new SolidColorBrush(Color.Parse("#8B5CF6")),
-                _ => new SolidColorBrush(Color.Parse("#6B7280"))
+                "full" => new SolidColorBrush(Color.Parse("#3B82F6")), // Blue
+                "differential" => new SolidColorBrush(Color.Parse("#8B5CF6")), // Purple
+                _ => new SolidColorBrush(Color.Parse("#6B7280")) // Gray
             };
         }
 

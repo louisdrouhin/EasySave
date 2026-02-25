@@ -5,16 +5,16 @@ using System.Runtime.CompilerServices;
 
 namespace EasySave.Gui.ViewModels;
 
-/// <summary>
-/// Base class for all ViewModels implementing INotifyPropertyChanged.
-/// </summary>
+// Classe de base pour tous les ViewModels
+// Implémente INotifyPropertyChanged pour les bindings XAML
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    /// <summary>
-    /// Sets a property and raises PropertyChanged if the value changed.
-    /// </summary>
+    // Met à jour une propriété et déclenche PropertyChanged si la valeur change
+    // @param field - référence au champ backing field
+    // @param value - nouvelle valeur
+    // @param propertyName - nom de la propriété (auto-rempli via CallerMemberName)
     protected void SetProperty<T>(
         ref T field,
         T value,
@@ -27,9 +27,8 @@ public abstract class ViewModelBase : INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Raises PropertyChanged for the specified property.
-    /// </summary>
+    // Déclenche PropertyChanged pour une propriété spécifique
+    // @param propertyName - nom de la propriété qui a changé (auto-rempli via CallerMemberName)
     protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

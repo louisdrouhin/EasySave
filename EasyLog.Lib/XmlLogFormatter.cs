@@ -3,8 +3,16 @@ using System.Xml;
 
 namespace EasyLog.Lib;
 
+// Formateur pour les logs en XML
+// Sérialise les entrées de log au format XML
 public class XmlLogFormatter : ILogFormatter
 {
+    // Formate une entrée de log en XML
+    // Crée un élément logEntry avec timestamp, name et contenu
+    // @param timestamp - date/heure de l'entrée
+    // @param name - nom du backup
+    // @param content - contenu de l'entrée (convertis en éléments XML)
+    // @returns chaîne XML minifiée contenant l'entrée
     public string Format(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (content == null)
@@ -24,6 +32,7 @@ public class XmlLogFormatter : ILogFormatter
             writer.WriteElementString("name", name);
 
             writer.WriteStartElement("content");
+            // Convertit chaque propriété en élément XML
             foreach (var kvp in content)
             {
                 writer.WriteStartElement(SanitizeXmlElementName(kvp.Key));
@@ -38,6 +47,8 @@ public class XmlLogFormatter : ILogFormatter
         return sb.ToString();
     }
 
+    // Ferme le fichier XML en ajoutant le marqueur de fin
+    // @param filePath - chemin du fichier XML à fermer
     public void Close(string filePath)
     {
         try
@@ -45,6 +56,7 @@ public class XmlLogFormatter : ILogFormatter
             if (File.Exists(filePath))
             {
                 var content = File.ReadAllText(filePath);
+                // Ajoute le marqueur de fin de l'élément logs si absent
                 if (!content.EndsWith("</logs>"))
                 {
                     File.AppendAllText(filePath, "</logs>");
@@ -59,6 +71,9 @@ public class XmlLogFormatter : ILogFormatter
         }
     }
 
+    // Convertit une chaîne en un nom d'élément XML valide
+    // @param name - nom à convertir
+    // @returns nom d'élément XML valide
     private string SanitizeXmlElementName(string name)
     {
         if (string.IsNullOrEmpty(name))

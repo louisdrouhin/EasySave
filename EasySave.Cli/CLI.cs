@@ -2,22 +2,29 @@ using EasySave.Core;
 using EasySave.Core.Localization;
 using EasySave.Models;
 
+// Interface en ligne de commande pour EasySave
+// Permet à l'utilisateur de créer, exécuter, supprimer et afficher des jobs de sauvegarde
 namespace EasySave.Cli
 {
     public class CLI
     {
         private JobManager _jobManager;
 
+        // Initialise le CLI et le JobManager
         public CLI()
         {
             _jobManager = new JobManager();
         }
 
+        // Affiche un message dans la console
+        // @param message - texte à afficher
         public void WriteLine(string message)
         {
             Console.WriteLine(message);
         }
 
+        // Démarre le menu principal du CLI et gère les interactions de l'utilisateur
+        // Affiche les options du menu, permet de naviguer avec les flèches, et d'exécuter les actions correspondantes
         public void start()
         {
             int selectedIndex = 0;
@@ -103,6 +110,8 @@ namespace EasySave.Cli
             }
         }
 
+        // Permet à l'utilisateur de créer un nouveau job de sauvegarde
+        // Affiche les jobs existants, puis demande à l'utilisateur de saisir les détails du nouveau job (nom, source, destination, type)
         private void CreateJob()
         {
             Console.WriteLine(LocalizationManager.Get("CreateJob_Title"));
@@ -150,6 +159,8 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("CreateJob_Type", typeDisplay));
         }
 
+        // Permet à l'utilisateur de supprimer un job de sauvegarde existant
+        // Affiche les jobs existants, puis demande à l'utilisateur de sélectionner celui à supprimer
         private void DeleteJob()
         {
             Console.WriteLine(LocalizationManager.Get("DeleteJob_Title"));
@@ -181,6 +192,9 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", index));
         }
 
+        // Affiche la liste des jobs de sauvegarde existants
+        // Si aucun job n'existe, affiche un message indiquant qu'il n'y a pas de jobs et des instructions pour en créer un
+        // Sinon, affiche chaque job avec son numéro d'index
         private void ShowJobs()
         {
             Console.WriteLine(LocalizationManager.Get("ShowJobs_Title"));
@@ -203,6 +217,8 @@ namespace EasySave.Cli
             }
         }
 
+        // Permet à l'utilisateur de changer la langue de l'interface
+        // Affiche les langues disponibles, puis demande à l'utilisateur de sélectionner une langue
         private void ChangeLanguage()
         {
             Console.WriteLine(LocalizationManager.Get("Language_Title"));
@@ -223,6 +239,8 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", newLanguage));
         }
 
+        // Permet à l'utilisateur de changer le format de journalisation des sauvegardes
+        // Affiche le format actuel, puis propose à l'utilisateur de choisir entre JSON et XML
         private void ChangeLogFormat()
         {
             Console.WriteLine(LocalizationManager.Get("LogFormat_Title"));
@@ -255,6 +273,8 @@ namespace EasySave.Cli
             }
         }
 
+        // Permet à l'utilisateur d'exécuter un ou plusieurs jobs de sauvegarde
+        // Affiche les jobs disponibles, puis demande à l'utilisateur de sélectionner ceux à exécuter (en entrant les numéros ou "all")
         private async Task ExecuteJobsAsync()
         {
             Console.WriteLine(LocalizationManager.Get("ExecuteJobs_Title"));

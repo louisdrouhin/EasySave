@@ -6,6 +6,8 @@ using EasyLogLib = EasyLog.Lib.EasyLog;
 
 namespace EasyLog.Server;
 
+// Serveur de logs utilisant des sockets TCP
+// Écoute les connexions entrantes, reçoit des messages JSON, et les écrit dans des fichiers de log
 public class SocketServer
 {
     private Socket? _listenerSocket;
@@ -13,6 +15,9 @@ public class SocketServer
     private readonly EasyLogLib _logger;
     private bool _isRunning;
 
+    // Initialise le serveur avec le port d'écoute et le répertoire de logs
+    // @param port - port sur lequel le serveur écoute (généralement 5000)
+    // @param logDirectory - répertoire où les fichiers de log seront stockés
     public SocketServer(int port, string logDirectory)
     {
         if (port <= 0 || port > 65535)
@@ -26,6 +31,9 @@ public class SocketServer
         _isRunning = false;
     }
 
+    // Démarre le serveur et commence à écouter les connexions entrantes
+    // Crée un socket, le lie à l'adresse IP et au port, et accepte les clients en boucle
+    // Chaque client est traité de manière asynchrone pour permettre des connexions simultanées
     public void Start()
     {
         try
@@ -64,9 +72,11 @@ public class SocketServer
         }
     }
 
+    // Gère la communication avec un client connecté
+    // Lit les messages JSON envoyés par le client, les désérialise, et les écrit dans les fichiers de log
+    // @param clientSocket - socket du client connecté
     private async Task HandleClientAsync(Socket clientSocket)
     {
-        // Get client IP:Port for logging server events
         var clientEndpoint = clientSocket.RemoteEndPoint?.ToString() ?? "Unknown";
 
         try
@@ -125,6 +135,8 @@ public class SocketServer
         }
     }
 
+    // Arrête le serveur en fermant le socket d'écoute et en libérant les ressources
+    // Ferme le socket, arrête d'accepter les clients, et ferme le logger
     public void Stop()
     {
         _isRunning = false;
