@@ -4,13 +4,21 @@ This document contains the UML diagrams of the **EasySave** project, created wit
 
 ## Architecture Overview
 
-The project implement the **MVVM (Model-View-ViewModel)** architectural pattern:
+The **EasySave** project follows a multi-tier architecture with MVVM pattern for the GUI:
 
+### GUI Layer (MVVM Pattern)
 - **ViewModels**: Manage UI logic and state using `INotifyPropertyChanged` for data binding
 - **Commands**: Encapsulate user actions via `RelayCommand` implementing `ICommand`
 - **Data Binding**: Eliminates code-behind by binding directly to ViewModel properties
 - **Event-Driven**: Core components (JobManager, StateTracker) emit events that ViewModels subscribe to
 - **Localization**: All labels are computed properties that update on language changes
+
+### Core & Logging Layers
+- **JobManager**: Central orchestrator coordinating backup jobs, state tracking, and logging
+- **StateTracker**: Manages job state persistence and change notifications
+- **EasyLog**: Local logging client that writes logs to files (JSON/XML formats)
+- **SocketServer**: Remote TCP logging server that receives and persists logs from clients
+- **ILogFormatter**: Interface supporting multiple log format implementations
 
 ## 1. Use Case Diagram
 
@@ -27,6 +35,8 @@ Overview of the main classes of the project and their relationships.
 classDiagram
   CLI --> JobManager
   App --> MainWindow
+  SocketServer --> EasyLog
+
   MainWindow --> MainWindowViewModel
 
   MainWindowViewModel o-- JobsPageViewModel
@@ -229,6 +239,8 @@ This version details all components of the GUI module with all its associated na
 classDiagram
   CLI --> JobManager
   App --> MainWindow
+  SocketServer --> EasyLog
+
   MainWindow --> MainWindowViewModel
   MainWindow *-- JobsPage
   MainWindow *-- LogsPage
@@ -732,6 +744,19 @@ classDiagram
       +Format(timestamp: DateTime, name: string, content: Dictionary~string, object~) string
       +Close(filePath: string) void
       -SanitizeXmlElementName(name: string) string
+    }
+  }
+
+  namespace EasyLog.Server {
+    class SocketServer {
+      -Socket? _listenerSocket
+      -int _port
+      -EasyLog _logger
+      -bool _isRunning
+      +SocketServer(port: int, logDirectory: string)
+      +Start() void
+      +Stop() void
+      -HandleClientAsync(clientSocket: Socket) Task
     }
   }
 ```
