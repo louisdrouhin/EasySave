@@ -1,3 +1,5 @@
+## v3.0.0 (2026-02-25)
+
 ## v2.6.0 (2026-02-25)
 
 ### Feat
@@ -25,9 +27,7 @@
 
 ### Refactor
 
-- **global**: clear unused comments
 - **core**: Add encryption, priority, and performance properties into settings
-- **architecture**: refacto
 
 ## v2.5.0 (2026-02-24)
 
