@@ -62,7 +62,7 @@ public class EasyLogNetworkClient
         {
             var logData = new
             {
-                timestamp,
+                timestamp = timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
                 name,
                 content
             };

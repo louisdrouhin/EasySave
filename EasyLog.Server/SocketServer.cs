@@ -93,7 +93,8 @@ public class SocketServer
                     {
                         var logData = JsonSerializer.Deserialize<JsonElement>(line);
 
-                        var timestamp = logData.GetProperty("timestamp").GetDateTime();
+                        var timestampStr = logData.GetProperty("timestamp").GetString() ?? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        var timestamp = DateTime.ParseExact(timestampStr, "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                         var name = logData.GetProperty("name").GetString() ?? "Unknown";
                         var contentJson = logData.GetProperty("content").GetRawText();
                         var content = JsonSerializer.Deserialize<Dictionary<string, object>>(contentJson) ?? new Dictionary<string, object>();
