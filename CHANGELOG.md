@@ -1,3 +1,34 @@
+## v2.6.0 (2026-02-25)
+
+### Feat
+
+- **core/gui**: Add EasyLog server configuration UI in Settings page
+- **gui**: Display EasyLog server config fields in settings
+- **core**: Add EasyLog server configuration getters
+- **gui**: Add Performance, Encryption, Priority and BusinessApps sections
+- **jobs**: Auto-deselect jobs after launch
+- **logs**: Format JSON with indentation for UI display
+- **logs**: Add ListBox name for auto-scroll
+
+### Fix
+
+- **easylog**: Fix EasyLog network protocol timestamp format compatibility
+- **EasySave.GUI**: fix pause button icon and keep precentage on pause
+- **EasySave.GUI**: fix bug on pause button
+- **core**: Add translations for new settings sections
+- **core**: Add AppItemViewModel for business applications
+- **core**: Add missing "Paused" status localization
+- **jobs**: Update StatusLabel when job state changes
+- **logs**: Send complete JSON objects via LogEntryWritten event
+- **logging**: Fix JSON format generation in EasyLog
+- **logs**: Improve JSON parsing for malformed files
+
+### Refactor
+
+- **global**: clear unused comments
+- **core**: Add encryption, priority, and performance properties into settings
+- **architecture**: refacto
+
 ## v2.5.0 (2026-02-24)
 
 ### Feat
