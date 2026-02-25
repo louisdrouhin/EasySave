@@ -21,6 +21,11 @@ public class SettingsPageViewModel : ViewModelBase
     private string _newBusinessAppText = "";
     private string _maxConcurrentJobs = "";
     private long _largeFileSizeLimitKb;
+    private bool _serverLogsEnabled;
+    private string _serverLogsMode = "";
+    private string _serverLogsHost = "";
+    private int _serverLogsPort;
+    private bool _serverLogsModeDropDownOpen;
 
     // Initializes the Settings page
     // Loads configuration and lists (extensions, apps, etc.)
@@ -34,6 +39,7 @@ public class SettingsPageViewModel : ViewModelBase
         EncryptionExtensions = new ObservableCollection<ExtensionItemViewModel>();
         BusinessApps = new ObservableCollection<AppItemViewModel>();
         PriorityExtensions = new ObservableCollection<ExtensionItemViewModel>();
+        ServerLogsModes = new ObservableCollection<string> { "local_only", "server_only", "both" };
 
         // Commandes
         SetJsonFormatCommand = new RelayCommand(_ => SetLogFormat("json"));
@@ -47,6 +53,10 @@ public class SettingsPageViewModel : ViewModelBase
         // Charge les données initiales
         _maxConcurrentJobs = _configParser.GetMaxConcurrentJobs().ToString();
         _largeFileSizeLimitKb = _configParser.GetLargeFileSizeLimitKb();
+        _serverLogsEnabled = _configParser.GetEasyLogServerEnabled();
+        _serverLogsMode = _configParser.GetEasyLogServerMode();
+        _serverLogsHost = _configParser.GetEasyLogServerHost();
+        _serverLogsPort = _configParser.GetEasyLogServerPort();
 
         RefreshEncryptionExtensions();
         RefreshBusinessApps();
@@ -95,16 +105,59 @@ public class SettingsPageViewModel : ViewModelBase
     public string LogsFormatValue => _configParser.GetLogFormat().ToUpper();
 
     // EasyLog server configuration values
-    public string ServerLogsEnabledValue => _configParser.GetEasyLogServerEnabled() ? "Enabled" : "Disabled";
+    public bool ServerLogsEnabledValue
+    {
+        get => _serverLogsEnabled;
+        set
+        {
+            SetProperty(ref _serverLogsEnabled, value);
+            _configParser.SetEasyLogServerEnabled(value);
+        }
+    }
 
-    // Shows EasyLog server mode
-    public string ServerLogsModeValue => _configParser.GetEasyLogServerMode();
+    // Server mode with setter for updating config
+    public string ServerLogsModeValue
+    {
+        get => _serverLogsMode;
+        set
+        {
+            SetProperty(ref _serverLogsMode, value);
+            _configParser.SetEasyLogServerMode(value);
+            ServerLogsModeDropDownOpen = false;
+        }
+    }
 
-    // Shows EasyLog server host address
-    public string ServerLogsHostValue => _configParser.GetEasyLogServerHost();
+    // Control dropdown visibility
+    public bool ServerLogsModeDropDownOpen
+    {
+        get => _serverLogsModeDropDownOpen;
+        set => SetProperty(ref _serverLogsModeDropDownOpen, value);
+    }
 
-    // Shows EasyLog server port number
-    public string ServerLogsPortValue => _configParser.GetEasyLogServerPort().ToString();
+    // Server host address with setter for updating config
+    public string ServerLogsHostValue
+    {
+        get => _serverLogsHost;
+        set
+        {
+            SetProperty(ref _serverLogsHost, value);
+            _configParser.SetEasyLogServerHost(value);
+        }
+    }
+
+    // Server port number with setter for updating config
+    public int ServerLogsPortValue
+    {
+        get => _serverLogsPort;
+        set
+        {
+            SetProperty(ref _serverLogsPort, value);
+            _configParser.SetEasyLogServerPort(value);
+        }
+    }
+
+    // Available server modes for ComboBox
+    public ObservableCollection<string> ServerLogsModes { get; }
 
     // Shows the state file path or "N/A" if not configured
     public string StatePathValue

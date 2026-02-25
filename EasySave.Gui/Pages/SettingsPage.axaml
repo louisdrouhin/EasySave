@@ -5,6 +5,53 @@
              x:Class="EasySave.GUI.Pages.SettingsPage"
              x:DataType="vm:SettingsPageViewModel">
     <UserControl.Resources>
+        <!-- ComboBox Item Template -->
+        <DataTemplate x:Key="ComboBoxItemTemplate">
+            <Border Background="{Binding $parent[ListBoxItem].Background}"
+                    Padding="8,6"
+                    Name="itemBorder">
+                <TextBlock Text="{Binding}"
+                           Foreground="{Binding $parent[ListBoxItem].Foreground}"
+                           VerticalAlignment="Center" />
+            </Border>
+        </DataTemplate>
+
+        <!-- Custom ListBoxItem Template for ComboBox -->
+        <ControlTemplate x:Key="CustomListBoxItemTemplate" TargetType="ListBoxItem">
+            <Border Name="border"
+                    Background="White"
+                    Padding="0"
+                    CornerRadius="0">
+                <ContentPresenter Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  Margin="8,6"
+                                  Foreground="#000000"
+                                  VerticalAlignment="Center" />
+            </Border>
+        </ControlTemplate>
+
+        <!-- Custom CheckBox Template -->
+        <ControlTemplate x:Key="CustomCheckBoxTemplate" TargetType="CheckBox">
+            <Border Name="border"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="4,2"
+                    Width="20"
+                    Height="20">
+                <TextBlock Name="checkmark"
+                           Text="✓"
+                           Foreground="White"
+                           FontSize="14"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsVisible="False" />
+            </Border>
+        </ControlTemplate>
+
+
         <!-- Custom NumericUpDown Template -->
         <ControlTemplate x:Key="CustomNumericUpDownTemplate" TargetType="NumericUpDown">
             <Border Name="root"
@@ -44,6 +91,63 @@
                     </StackPanel>
                 </Grid>
             </Border>
+        </ControlTemplate>
+
+        <!-- Custom ComboBox Template -->
+        <ControlTemplate x:Key="CustomComboBoxTemplate" TargetType="ComboBox">
+            <Grid>
+                <Border Name="PART_Border"
+                        Background="White"
+                        BorderBrush="#E0E0E0"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ContentPresenter Grid.Column="0"
+                                          Name="ContentPresenter"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          Margin="8,6,4,6"
+                                          VerticalAlignment="Center"
+                                          Foreground="#000000"
+                                          FontSize="12" />
+                        <TextBlock Grid.Column="1"
+                                   Text="▼"
+                                   Margin="0,0,8,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="#000000"
+                                   FontSize="10" />
+                    </Grid>
+                </Border>
+                <Popup Name="PART_Popup"
+                       IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
+                       PlacementTarget="{TemplateBinding}"
+                       Placement="BottomEdgeAlignedLeft"
+                       IsLightDismissEnabled="True">
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="0">
+                        <ListBox Name="PART_ListBox"
+                                 ItemsSource="{TemplateBinding ItemsSource}"
+                                 SelectedItem="{TemplateBinding SelectedItem, Mode=TwoWay}"
+                                 Background="White"
+                                 Foreground="#000000"
+                                 Padding="0"
+                                 MinWidth="200"
+                                 MaxHeight="200">
+                            <ListBox.ItemContainerTheme>
+                                <ControlTheme TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="Template" Value="{StaticResource CustomListBoxItemTemplate}" />
+                                    <Setter Property="Background" Value="White" />
+                                    <Setter Property="Foreground" Value="#000000" />
+                                </ControlTheme>
+                            </ListBox.ItemContainerTheme>
+                        </ListBox>
+                    </Border>
+                </Popup>
+            </Grid>
         </ControlTemplate>
     </UserControl.Resources>
 
@@ -108,6 +212,69 @@
         <Style Selector="NumericUpDown.input-field /template/ RepeatButton:pressed">
             <Setter Property="Background" Value="#EA580C" />
             <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- CheckBox styling -->
+        <Style Selector="CheckBox.input-field">
+            <Setter Property="Template" Value="{StaticResource CustomCheckBoxTemplate}" />
+        </Style>
+
+        <!-- CheckBox checked state -->
+        <Style Selector="CheckBox.input-field:checked /template/ Border#border">
+            <Setter Property="Background" Value="#EA580C" />
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- CheckBox checked checkmark visibility -->
+        <Style Selector="CheckBox.input-field:checked /template/ TextBlock#checkmark">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+
+        <!-- CheckBox checked hover state -->
+        <Style Selector="CheckBox.input-field:checked:pointerover /template/ Border#border">
+            <Setter Property="Background" Value="#F97316" />
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- CheckBox unchecked hover state -->
+        <Style Selector="CheckBox.input-field:pointerover /template/ Border#border">
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- CheckBox focus state -->
+        <Style Selector="CheckBox.input-field:focus /template/ Border#border">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- ComboBox styling -->
+        <Style Selector="ComboBox.input-field">
+            <Setter Property="Template" Value="{StaticResource CustomComboBoxTemplate}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <!-- ComboBox border hover state -->
+        <Style Selector="ComboBox.input-field:pointerover /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- ComboBox border focus state -->
+        <Style Selector="ComboBox.input-field:focus /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- ComboBox ListBoxItem custom styling -->
+        <Style Selector="ComboBox.input-field /template/ ListBox ListBoxItem /template/ Border#border">
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <!-- ComboBox ListBoxItem hover state -->
+        <Style Selector="ComboBox.input-field /template/ ListBox ListBoxItem:pointerover /template/ Border#border">
+            <Setter Property="Background" Value="#F97316" />
+        </Style>
+
+        <!-- ComboBox ListBoxItem selected state -->
+        <Style Selector="ComboBox.input-field /template/ ListBox ListBoxItem:selected /template/ Border#border">
+            <Setter Property="Background" Value="#EA580C" />
         </Style>
     </UserControl.Styles>
     <Border Padding="20" Background="#FFE6D5">
@@ -194,10 +361,10 @@
                                            FontSize="12"
                                            FontWeight="Bold"
                                            Foreground="#666666"/>
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding ServerLogsEnabledValue}"
-                                           FontSize="12"
-                                           Foreground="#15171D"/>
+                                <CheckBox Grid.Column="1"
+                                          IsChecked="{Binding ServerLogsEnabledValue}"
+                                          VerticalAlignment="Center"
+                                          Classes="input-field"/>
                             </Grid>
 
                             <!-- Server Mode -->
@@ -207,10 +374,12 @@
                                            FontSize="12"
                                            FontWeight="Bold"
                                            Foreground="#666666"/>
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding ServerLogsModeValue}"
-                                           FontSize="12"
-                                           Foreground="#15171D"/>
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding ServerLogsModes}"
+                                          SelectedItem="{Binding ServerLogsModeValue}"
+                                          IsDropDownOpen="{Binding ServerLogsModeDropDownOpen}"
+                                          Classes="input-field"
+                                          VerticalAlignment="Center"/>
                             </Grid>
 
                             <!-- Server Host -->
@@ -220,10 +389,9 @@
                                            FontSize="12"
                                            FontWeight="Bold"
                                            Foreground="#666666"/>
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding ServerLogsHostValue}"
-                                           FontSize="12"
-                                           Foreground="#15171D"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding ServerLogsHostValue}"
+                                         Classes="input-field"/>
                             </Grid>
 
                             <!-- Server Port -->
@@ -233,10 +401,9 @@
                                            FontSize="12"
                                            FontWeight="Bold"
                                            Foreground="#666666"/>
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding ServerLogsPortValue}"
-                                           FontSize="12"
-                                           Foreground="#15171D"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding ServerLogsPortValue}"
+                                         Classes="input-field"/>
                             </Grid>
                         </StackPanel>
                     </Border>

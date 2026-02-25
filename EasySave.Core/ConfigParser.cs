@@ -234,7 +234,7 @@ public class ConfigParser
     }
 
     // Gets EasyLog server mode
-    // @returns server mode (e.g., local_only, network)
+    // @returns server mode
     public string GetEasyLogServerMode()
     {
         return Config?["easyLogServer"]?["mode"]?.GetValue<string>() ?? "N/A";
@@ -252,5 +252,49 @@ public class ConfigParser
     public int GetEasyLogServerPort()
     {
         return Config?["easyLogServer"]?["port"]?.GetValue<int>() ?? 0;
+    }
+
+    // Sets EasyLog server enabled status
+    // @param enabled - true to enable, false to disable
+    public void SetEasyLogServerEnabled(bool enabled)
+    {
+        if (Config is JsonObject configObject && configObject["easyLogServer"] is JsonObject serverConfig)
+        {
+            serverConfig["enabled"] = enabled;
+            EditAndSaveConfig(configObject);
+        }
+    }
+
+    // Sets EasyLog server mode
+    // @param mode - new server mode (local_only, server_only, both)
+    public void SetEasyLogServerMode(string mode)
+    {
+        if (Config is JsonObject configObject && configObject["easyLogServer"] is JsonObject serverConfig)
+        {
+            serverConfig["mode"] = mode;
+            EditAndSaveConfig(configObject);
+        }
+    }
+
+    // Sets EasyLog server host address
+    // @param host - new host address or IP
+    public void SetEasyLogServerHost(string host)
+    {
+        if (Config is JsonObject configObject && configObject["easyLogServer"] is JsonObject serverConfig)
+        {
+            serverConfig["host"] = host;
+            EditAndSaveConfig(configObject);
+        }
+    }
+
+    // Sets EasyLog server port number
+    // @param port - new port number
+    public void SetEasyLogServerPort(int port)
+    {
+        if (Config is JsonObject configObject && configObject["easyLogServer"] is JsonObject serverConfig)
+        {
+            serverConfig["port"] = port;
+            EditAndSaveConfig(configObject);
+        }
     }
 }
