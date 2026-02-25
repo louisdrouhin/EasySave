@@ -6,15 +6,15 @@ using EasySave.Gui.Commands;
 
 namespace EasySave.Gui.ViewModels;
 
-// ViewModel de la fenêtre principale
-// Gère la navigation entre pages et crée les ViewModels des pages
+// ViewModel for the main window
+// Manages page navigation and creates ViewModels for pages
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly JobManager _jobManager;
     private ViewModelBase _currentPage;
 
-    // Initialise le ViewModel et les pages
-    // Crée JobManager et initialise les 3 pages (Jobs, Logs, Settings)
+    // Initializes the ViewModel and pages
+    // Creates JobManager and initializes the 3 pages (Jobs, Logs, Settings)
     public MainWindowViewModel()
     {
         _jobManager = new JobManager();
@@ -32,56 +32,56 @@ public class MainWindowViewModel : ViewModelBase
         LocalizationManager.LanguageChanged += OnLanguageChanged;
     }
 
-    // ViewModels des pages accessibles depuis la MainWindow
+    // ViewModels for pages accessible from MainWindow
     public JobsPageViewModel JobsPageVm { get; }
 
-    // ViewModel de la page Logs, gère l'affichage des logs et les interactions associées
+    // ViewModel for the Logs page, manages log display and associated interactions
     public LogsPageViewModel LogsPageVm { get; }
 
-    // ViewModel de la page Settings, gère les paramètres de l'application et les interactions associées
+    // ViewModel for the Settings page, manages application settings and associated interactions
     public SettingsPageViewModel SettingsPageVm { get; }
 
 
-    // Page actuellement affichée dans la MainWindow
+    // Page currently displayed in the MainWindow
     public ViewModelBase CurrentPage
     {
         get => _currentPage;
         private set => SetProperty(ref _currentPage, value);
     }
 
-    // Indique si la page Jobs est active
+    // Indicates if the Jobs page is active
     public bool IsJobsActive => CurrentPage is JobsPageViewModel;
 
-    // Indique si la page Logs est active
+    // Indicates if the Logs page is active
     public bool IsLogsActive => CurrentPage is LogsPageViewModel;
 
-    // Indique si la page Settings est active
+    // Indicates if the Settings page is active
     public bool IsSettingsActive => CurrentPage is SettingsPageViewModel;
 
-    // Titre de la fenêtre principale
+    // Title of the main window
     public string WindowTitle => LocalizationManager.Get("MainWindow_Title") ?? "EasySave";
 
-    // Label du bouton Jobs
+    // Label for the Jobs button
     public string JobsButtonLabel => LocalizationManager.Get("MainWindow_Menu_Jobs") ?? "Jobs";
 
-    // Label du bouton Logs
+    // Label for the Logs button
     public string LogsButtonLabel => LocalizationManager.Get("MainWindow_Menu_Logs") ?? "Logs";
 
-    // Label du bouton Settings
+    // Label for the Settings button
     public string SettingsButtonLabel => LocalizationManager.Get("MainWindow_Menu_Settings") ?? "Settings";
 
-    // Commande pour naviguer vers la page Jobs
+    // Command to navigate to the Jobs page
     public ICommand NavigateToJobsCommand { get; }
 
-    // Commande pour naviguer vers la page Logs
+    // Command to navigate to the Logs page
     public ICommand NavigateToLogsCommand { get; }
 
-    // Commande pour naviguer vers la page Settings
+    // Command to navigate to the Settings page
     public ICommand NavigateToSettingsCommand { get; }
 
 
-    // Change la page active et met à jour les propriétés IsXxxActive
-    // @param page - page vers laquelle naviguer
+    // Changes the active page and updates IsXxxActive properties
+    // @param page - page to navigate to
     private void NavigateTo(ViewModelBase page)
     {
         if (CurrentPage == page)
@@ -94,9 +94,9 @@ public class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsSettingsActive));
     }
 
-    // Gère les changements de langue et actualise les labels
-    // @param sender - source de l'événement
-    // @param e - arguments contenant le code langue et CultureInfo
+    // Handles language changes and updates labels
+    // @param sender - event source
+    // @param e - arguments containing language code and CultureInfo
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
         OnPropertyChanged(nameof(WindowTitle));
@@ -106,7 +106,7 @@ public class MainWindowViewModel : ViewModelBase
     }
 
 
-    // Nettoie les ressources: se désabonne des événements et ferme JobManager
+    // Cleans up resources: unsubscribes from events and closes JobManager
     public void Dispose()
     {
         LocalizationManager.LanguageChanged -= OnLanguageChanged;

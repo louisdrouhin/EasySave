@@ -1,14 +1,14 @@
 namespace EasySave.Models;
 
-// Représente l'état en temps réel d'une tâche de sauvegarde
-// Contient informations basiques (nom, état, timestamp) et détails si Active
+// Represents real-time state of a backup job
+// Contains basic info (name, state, timestamp) and details if Active
 public class StateEntry
 {
     public string JobName { get; set; }
     public DateTime LastActionTime { get; set; }
     public JobState State { get; set; }
 
-    // Champs remplis uniquement quand State == Active
+    // Fields populated only when State == Active
     public int? TotalFiles { get; set; }
     public long? TotalSizeToTransfer { get; set; }
     public double? Progress { get; set; }
@@ -17,16 +17,16 @@ public class StateEntry
     public string? CurrentSourcePath { get; set; }
     public string? CurrentDestinationPath { get; set; }
 
-    // Constructeur vide pour sérialisation JSON
+    // Empty constructor for JSON serialization
     public StateEntry()
     {
         JobName = string.Empty;
     }
 
-    // Crée un StateEntry avec infos basiques (pour état Inactive)
-    // @param jobName - nom du job
-    // @param lastActionTime - date/heure de la dernière action
-    // @param state - état actuel du job
+    // Creates StateEntry with basic info (for Inactive state)
+    // @param jobName - job name
+    // @param lastActionTime - date/time of last action
+    // @param state - current job state
     public StateEntry(string jobName, DateTime lastActionTime, JobState state)
     {
         JobName = jobName;
@@ -34,17 +34,17 @@ public class StateEntry
         State = state;
     }
 
-    // Crée un StateEntry complet avec progression (pour état Active)
-    // @param jobName - nom du job
-    // @param lastActionTime - date/heure de la dernière action
-    // @param state - état du job
-    // @param totalFiles - nombre total de fichiers à traiter
-    // @param totalSizeToTransfer - taille totale en bytes
-    // @param progress - pourcentage de progression (0-100)
-    // @param remainingFiles - fichiers restants à traiter
-    // @param remainingSizeToTransfer - taille restante en bytes
-    // @param currentSourcePath - chemin du fichier en cours de traitement
-    // @param currentDestinationPath - chemin de destination du fichier en cours
+    // Creates complete StateEntry with progress (for Active state)
+    // @param jobName - job name
+    // @param lastActionTime - date/time of last action
+    // @param state - job state
+    // @param totalFiles - total number of files to process
+    // @param totalSizeToTransfer - total size in bytes
+    // @param progress - progress percentage (0-100)
+    // @param remainingFiles - remaining files to process
+    // @param remainingSizeToTransfer - remaining size in bytes
+    // @param currentSourcePath - path of file being processed
+    // @param currentDestinationPath - destination path of current file
     public StateEntry(
         string jobName,
         DateTime lastActionTime,
@@ -69,9 +69,9 @@ public class StateEntry
         CurrentDestinationPath = currentDestinationPath;
     }
 
-    // Retourne une représentation textuelle de l'état du job
-    // Inclut la progression si le job est en cours d'exécution
-    // @returns chaîne formatée avec toutes les informations pertinentes
+    // Returns string representation of job state
+    // Includes progress if job is executing
+    // @returns formatted string with all relevant information
     public override string ToString()
     {
         var baseInfo = $"JobName={JobName}, LastActionTime={LastActionTime:yyyy-MM-dd HH:mm:ss.fff}, State={State}";

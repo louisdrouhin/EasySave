@@ -1,8 +1,8 @@
 namespace EasySave.Models;
 
-// Types de sauvegarde disponibles
-// Full: sauvegarde complète de tous les fichiers
-// Differential: sauvegarde uniquement des fichiers modifiés depuis la dernière sauvegarde
+// Available backup types
+// Full: complete backup of all files
+// Differential: backup only files modified since last backup
 public enum JobType
 {
     Full,

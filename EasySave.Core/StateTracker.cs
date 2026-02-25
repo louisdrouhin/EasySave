@@ -4,8 +4,8 @@ using EasySave.Models;
 
 namespace EasySave.Core;
 
-// Gère et persiste l'état des jobs dans un fichier JSON
-// Synchronisation thread-safe des mises à jour d'état
+// Manages and persists job state in JSON file
+// Thread-safe synchronization of state updates
 public class StateTracker
 {
   private readonly string _stateFilePath;
@@ -13,15 +13,15 @@ public class StateTracker
   private Dictionary<string, StateEntry> _jobStates = new();
   public event EventHandler<StateEntry>? JobStateChanged;
 
-  // Initialise le StateTracker avec le chemin du fichier d'état
-  // @param stateFilePath - chemin du fichier JSON contenant les états des jobs
+  // Initializes StateTracker with state file path
+  // @param stateFilePath - path to JSON file containing job states
   public StateTracker(string stateFilePath)
   {
     _stateFilePath = stateFilePath;
   }
 
-  // Met à jour l'état d'un job et le persiste dans le fichier JSON
-  // @param stateEntry - entrée d'état contenant le nom et l'état du job
+  // Updates job state and persists to JSON file
+  // @param stateEntry - state entry containing job name and state
   public void UpdateJobState(StateEntry stateEntry)
   {
     if (stateEntry == null || string.IsNullOrEmpty(stateEntry.JobName))
@@ -50,8 +50,8 @@ public class StateTracker
     JobStateChanged?.Invoke(this, stateEntry);
   }
 
-  // Supprime l'état d'un job par index et le persiste
-  // @param index - index du job à supprimer dans la collection
+  // Removes job state by index and persists
+  // @param index - index of job to remove from collection
   public void RemoveJobState(int index)
   {
     if (index < 0 || index >= _jobStates.Count)

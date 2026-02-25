@@ -3,21 +3,21 @@ using EasySave.Gui.ViewModels;
 
 namespace EasySave.GUI;
 
-// Fenêtre principale de l'application
-// Crée le MainWindowViewModel et configure le DataContext pour les bindings
+// Main application window
+// Creates the MainWindowViewModel and configures the DataContext for bindings
 public partial class MainWindow : Window
 {
-    // Initialise la fenêtre principale
-    // Crée le ViewModel et établit la communication MVVM
+    // Initializes the main window
+    // Creates the ViewModel and establishes MVVM communication
     public MainWindow()
     {
         InitializeComponent();
 
-        // Crée et configure le DataContext pour les bindings MVVM
+        // Creates and configures the DataContext for MVVM bindings
         var viewModel = new MainWindowViewModel();
         DataContext = viewModel;
 
-        // Nettoie les ressources à la fermeture de la fenêtre
+        // Cleans up resources when the window closes
         Closed += (_, _) => viewModel.Dispose();
     }
 }

@@ -5,16 +5,16 @@ using System.Globalization;
 
 namespace EasySave.Utils.Converters;
 
-// Convertit un type de job en couleur pour l'affichage
-// Bleu=Full, Violet=Differential
+// Converts a job type to a color for display
+// Blue=Full, Purple=Differential
 public class JobTypeColorConverter : IValueConverter
 {
-    // Convertit un type de job en couleur
-    // @param value - type de job (string: "full" ou "differential")
-    // @param targetType - type cible (IBrush)
-    // @param parameter - paramètre optionnel
-    // @param culture - culture de conversion
-    // @returns couleur associée au type de job
+    // Converts a job type to a color
+    // @param value - job type (string: "full" or "differential")
+    // @param targetType - target type (IBrush)
+    // @param parameter - optional parameter
+    // @param culture - conversion culture
+    // @returns color associated with the job type
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
         if (value is string jobType)

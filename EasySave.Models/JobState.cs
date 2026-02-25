@@ -1,9 +1,9 @@
 namespace EasySave.Models;
 
-// États possibles d'une tâche de sauvegarde
-// Active: actuellement en cours d'exécution
-// Inactive: arrêtée ou jamais lancée
-// Paused: en cours mais suspendue
+// Possible states of a backup job
+// Active: currently executing
+// Inactive: stopped or never started
+// Paused: in progress but suspended
 public enum JobState
 {
     Active,

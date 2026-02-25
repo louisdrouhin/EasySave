@@ -4,16 +4,16 @@ using System.Globalization;
 
 namespace EasySave.Utils.Converters;
 
-// Convertit une taille en bytes en chaîne lisible (KB, MB, GB, etc.)
+// Converts a size in bytes to a readable string (KB, MB, GB, etc.)
 public class SizeConverter : IValueConverter
 {
-    // Convertit une taille en bytes en format lisible
-    // Divise progressivement par 1024 pour obtenir l'unité appropriée
-    // @param value - taille en bytes (long)
-    // @param targetType - type cible (string)
-    // @param parameter - paramètre optionnel
-    // @param culture - culture de conversion
-    // @returns chaîne formatée avec unité (ex: "12.50 MB")
+    // Converts a size in bytes to readable format
+    // Progressively divides by 1024 to get the appropriate unit
+    // @param value - size in bytes (long)
+    // @param targetType - target type (string)
+    // @param parameter - optional parameter
+    // @param culture - conversion culture
+    // @returns formatted string with unit (e.g., "12.50 MB")
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
         if (value is long size)
@@ -22,7 +22,7 @@ public class SizeConverter : IValueConverter
             int suffixIndex = 0;
             double doubleSize = size;
 
-            // Divise par 1024 jusqu'à obtenir une valeur appropriée
+            // Divide by 1024 until getting an appropriate value
             while (doubleSize >= 1024 && suffixIndex < suffixes.Length - 1)
             {
                 doubleSize /= 1024;

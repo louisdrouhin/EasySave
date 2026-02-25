@@ -3,8 +3,8 @@ using System.Text.Json;
 
 namespace EasyLog.Lib;
 
-// Client réseau pour envoyer des logs à un serveur EasyLog
-// Utilise TCP pour se connecter au serveur et envoyer des messages formatés en JSON
+// Network client for sending logs to an EasyLog server
+// Uses TCP to connect to the server and send messages formatted as JSON
 public class EasyLogNetworkClient
 {
     private Socket? _socket;
@@ -13,9 +13,9 @@ public class EasyLogNetworkClient
     private readonly string _host;
     private readonly int _port;
 
-    // Initialise le client avec l'adresse du serveur et le port
-    // @param host - adresse IP ou nom de domaine du serveur EasyLog
-    // @param port - port sur lequel le serveur EasyLog écoute (généralement 5000)
+    // Initializes the client with the server address and port
+    // @param host - IP address or domain name of the EasyLog server
+    // @param port - port on which the EasyLog server listens (typically 5000)
     public EasyLogNetworkClient(string host, int port)
     {
         if (string.IsNullOrWhiteSpace(host))
@@ -27,8 +27,8 @@ public class EasyLogNetworkClient
         _port = port;
     }
 
-    // Établit une connexion TCP avec le serveur EasyLog
-    // Crée un socket, se connecte au serveur, et prépare un flux pour l'écriture
+    // Establishes a TCP connection with the EasyLog server
+    // Creates a socket, connects to the server, and prepares a stream for writing
     public void Connect()
     {
         try
@@ -46,10 +46,10 @@ public class EasyLogNetworkClient
         }
     }
 
-    // Envoie un message de log au serveur EasyLog
-    // @param timestamp - date et heure du log
-    // @param name - nom du log (ex: "UserLogin", "Error", etc.)
-    // @param content - dictionnaire de données associées au log
+    // Sends a log message to the EasyLog server
+    // @param timestamp - date and time of the log
+    // @param name - name of the log (e.g., "UserLogin", "Error", etc.)
+    // @param content - dictionary of data associated with the log
     public void Send(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (_writer == null || _socket == null || !_socket.Connected)
@@ -78,7 +78,7 @@ public class EasyLogNetworkClient
         }
     }
 
-    // Ferme la connexion avec le serveur EasyLog et libère les ressources
+    // Closes the connection with the EasyLog server and releases resources
     public void Disconnect()
     {
         try
@@ -96,6 +96,6 @@ public class EasyLogNetworkClient
         }
     }
 
-    // Indique si le client est actuellement connecté au serveur EasyLog
+    // Indicates whether the client is currently connected to the EasyLog server
     public bool IsConnected => _socket?.Connected ?? false;
 }

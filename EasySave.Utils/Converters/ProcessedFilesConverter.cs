@@ -5,16 +5,16 @@ using System.Globalization;
 
 namespace EasySave.Utils.Converters;
 
-// Convertit deux valeurs (remaining, total) en texte de progression
-// Affiche le nombre de fichiers traités vs total (ex: "5 / 10")
+// Converts two values (remaining, total) to progress text
+// Displays number of processed files vs total (e.g., "5 / 10")
 public class ProcessedFilesConverter : IMultiValueConverter
 {
-    // Convertit deux valeurs en texte de progression des fichiers
-    // @param values - liste contenant [remaining, total] fichiers
-    // @param targetType - type cible (string)
-    // @param parameter - paramètre optionnel
-    // @param culture - culture de conversion
-    // @returns chaîne formatée (ex: "5 / 10" ou "- / -" si aucune données)
+    // Converts two values to file progress text
+    // @param values - list containing [remaining, total] files
+    // @param targetType - target type (string)
+    // @param parameter - optional parameter
+    // @param culture - conversion culture
+    // @returns formatted string (e.g., "5 / 10" or "- / -" if no data)
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count >= 2)

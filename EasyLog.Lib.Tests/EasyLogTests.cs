@@ -39,7 +39,7 @@ public class EasyLogTests
 
         // Assert
         Assert.NotNull(easyLog);
-        // Vérifier que le chemin contient la date (ex: test_2026-02-05.json)
+        // Verify that the path contains the date (e.g., test_2026-02-05.json)
         var currentPath = easyLog.GetCurrentLogPath();
         Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd"), currentPath);
 
@@ -397,7 +397,7 @@ public class EasyLogTests
         // Assert
         var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
 
-        // Vérifier que c'est un JSON valide
+        // Verify that it is valid JSON
         var parsedJson = System.Text.Json.JsonDocument.Parse(fileContent);
         var logsArray = parsedJson.RootElement.GetProperty("logs");
 

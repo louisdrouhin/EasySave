@@ -14,8 +14,8 @@ using EasySave.Gui.Commands;
 
 namespace EasySave.Gui.ViewModels;
 
-// ViewModel pour la page des logs
-// Affiche et gère les entrées de logs depuis les fichiers JSON/XML
+// ViewModel for the Logs page
+// Displays and manages log entries from JSON/XML files
 public class LogsPageViewModel : ViewModelBase
 {
     private readonly ConfigParser _configParser;
@@ -23,9 +23,9 @@ public class LogsPageViewModel : ViewModelBase
     private string _currentLogFilePath = "";
     private int _lastLoadedLogCount = 0;
 
-    // Initialise la page des logs
-    // Charge les logs existants et s'abonne aux événements
-    // @param jobManager - gestionnaire central contenant ConfigParser
+    // Initializes the Logs page
+    // Loads existing logs and subscribes to events
+    // @param jobManager - central manager containing ConfigParser
     public LogsPageViewModel(JobManager jobManager)
     {
         _jobManager = jobManager ?? throw new ArgumentNullException(nameof(jobManager));
@@ -34,44 +34,44 @@ public class LogsPageViewModel : ViewModelBase
         Logs = new ObservableCollection<LogEntryViewModel>();
         OpenFolderCommand = new RelayCommand(_ => OpenFolder());
 
-        // Charge les logs initiaux
+        // Loads initial logs
         LoadLogs();
 
-        // S'abonne aux événements
+        // Subscribes to events
         LocalizationManager.LanguageChanged += OnLanguageChanged;
         _jobManager.LogFormatChanged += OnLogFormatChanged;
         _jobManager.LogEntryWritten += OnLogEntryWritten;
     }
 
 
-    // Collection observable des entrées de log
+    // Observable collection of log entries
     public ObservableCollection<LogEntryViewModel> Logs { get; }
 
-    // Nombre d'entrées de log actuellement affichées
+    // Number of log entries currently displayed
     private int _logCount;
 
-    // Nombre total d'entrées de log chargées
+    // Total number of loaded log entries
     public int LogCount
     {
         get => _logCount;
         private set => SetProperty(ref _logCount, value);
     }
 
-    // Titres et labels traduits
+    // Translated titles and labels
     public string HeaderTitle => LocalizationManager.Get("LogsPage_Title");
     public string OpenFolderLabel => LocalizationManager.Get("LogsPage_Button_OpenFolder");
     public string TotalLogsLabel => LocalizationManager.Get("LogsPage_TotalLogs");
 
-    // Commande pour ouvrir le dossier des logs dans l'explorateur
+    // Command to open the logs folder in the file explorer
     public ICommand OpenFolderCommand { get; }
 
 
-    // Déclenché quand une nouvelle entrée de log est ajoutée
+    // Raised when a new log entry is added
     public event EventHandler? LogAdded;
 
-    // Extrait les objets JSON individuels d'une chaîne de contenu
-    // @param content - chaîne contenant potentiellement plusieurs objets JSON
-    // @returns liste de chaînes JSON valides extraites du contenu
+    // Extracts individual JSON objects from a content string
+    // @param content - string potentially containing multiple JSON objects
+    // @returns list of valid JSON strings extracted from content
     private List<string> ExtractJsonObjects(string content)
     {
         List<string> objects = new List<string>();
@@ -114,8 +114,8 @@ public class LogsPageViewModel : ViewModelBase
         return objects;
     }
 
-    // Ouvre le dossier des logs dans l'explorateur de fichiers
-    // Crée le dossier s'il n'existe pas, puis utilise la commande appropriée selon le système d'exploitation
+    // Opens the logs folder in the file explorer
+    // Creates the folder if it doesn't exist, then uses the appropriate command based on the OS
     private void OpenFolder()
     {
         try
@@ -152,8 +152,8 @@ public class LogsPageViewModel : ViewModelBase
         }
     }
 
-    // Charge les logs depuis le fichier actuel
-    // Vérifie le format de log configuré, lit le fichier correspondant, et met à jour la collection observable
+    // Loads logs from the current file
+    // Checks the configured log format, reads the corresponding file, and updates the observable collection
     private void LoadLogs()
     {
         try
@@ -198,8 +198,8 @@ public class LogsPageViewModel : ViewModelBase
         }
     }
 
-    // Charge les logs depuis un fichier JSON
-    // @param filePath - chemin du fichier JSON à lire
+    // Loads logs from a JSON file
+    // @param filePath - path to the JSON file to read
     private void LoadJsonLogs(string filePath)
     {
         string? jsonContent = null;
@@ -311,13 +311,13 @@ public class LogsPageViewModel : ViewModelBase
         catch (Exception ex)
         {
             Debug.WriteLine($"[LogsPageViewModel.LoadJsonLogs] ERROR: {ex.Message}");
-            // Si le parsing échoue complètement, enregistrer le contenu du début du fichier
+            // If parsing completely fails, log the beginning of the file content
             Debug.WriteLine($"[LogsPageViewModel.LoadJsonLogs] File content preview: {jsonContent?.Substring(0, Math.Min(200, jsonContent?.Length ?? 0)) ?? "null"}");
         }
     }
 
-    // Charge les logs depuis un fichier XML
-    // @param filePath - chemin du fichier XML à lire
+    // Loads logs from an XML file
+    // @param filePath - path to the XML file to read
     private void LoadXmlLogs(string filePath)
     {
         try
@@ -384,13 +384,13 @@ public class LogsPageViewModel : ViewModelBase
         }
     }
 
-    // Met à jour le nombre total de logs affichés
+    // Updates the total number of displayed logs
     private void UpdateLogCount()
     {
         LogCount = Logs.Count;
     }
 
-    // Gère l'événement de nouvelle entrée de log écrite
+    // Handles new log entry written event
     private void OnLogEntryWritten(object? sender, string logLine)
     {
         Dispatcher.UIThread.Post(() =>
@@ -401,7 +401,7 @@ public class LogsPageViewModel : ViewModelBase
         });
     }
 
-    // Gère le changement de langue
+    // Handles language change
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HeaderTitle));
@@ -409,7 +409,7 @@ public class LogsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(TotalLogsLabel));
     }
 
-    // Gère le changement de format de log
+    // Handles log format change
     private void OnLogFormatChanged(object? sender, LogFormatChangedEventArgs e)
     {
         Logs.Clear();
@@ -417,7 +417,7 @@ public class LogsPageViewModel : ViewModelBase
         LoadLogs();
     }
 
-    // Nettoie les abonnements aux événements pour éviter les fuites de mémoire
+    // Cleans up event subscriptions to prevent memory leaks
     public void Dispose()
     {
         LocalizationManager.LanguageChanged -= OnLanguageChanged;

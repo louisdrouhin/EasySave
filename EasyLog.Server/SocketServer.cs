@@ -6,8 +6,8 @@ using EasyLogLib = EasyLog.Lib.EasyLog;
 
 namespace EasyLog.Server;
 
-// Serveur de logs utilisant des sockets TCP
-// Écoute les connexions entrantes, reçoit des messages JSON, et les écrit dans des fichiers de log
+// Log server using TCP sockets
+// Listens for incoming connections, receives JSON messages, and writes them to log files
 public class SocketServer
 {
     private Socket? _listenerSocket;
@@ -15,9 +15,9 @@ public class SocketServer
     private readonly EasyLogLib _logger;
     private bool _isRunning;
 
-    // Initialise le serveur avec le port d'écoute et le répertoire de logs
-    // @param port - port sur lequel le serveur écoute (généralement 5000)
-    // @param logDirectory - répertoire où les fichiers de log seront stockés
+    // Initializes the server with the listening port and log directory
+    // @param port - port on which the server listens (typically 5000)
+    // @param logDirectory - directory where log files will be stored
     public SocketServer(int port, string logDirectory)
     {
         if (port <= 0 || port > 65535)
@@ -31,9 +31,9 @@ public class SocketServer
         _isRunning = false;
     }
 
-    // Démarre le serveur et commence à écouter les connexions entrantes
-    // Crée un socket, le lie à l'adresse IP et au port, et accepte les clients en boucle
-    // Chaque client est traité de manière asynchrone pour permettre des connexions simultanées
+    // Starts the server and begins listening for incoming connections
+    // Creates a socket, binds it to the IP address and port, and accepts clients in a loop
+    // Each client is handled asynchronously to allow simultaneous connections
     public void Start()
     {
         try
@@ -72,9 +72,9 @@ public class SocketServer
         }
     }
 
-    // Gère la communication avec un client connecté
-    // Lit les messages JSON envoyés par le client, les désérialise, et les écrit dans les fichiers de log
-    // @param clientSocket - socket du client connecté
+    // Handles communication with a connected client
+    // Reads JSON messages sent by the client, deserializes them, and writes them to log files
+    // @param clientSocket - socket of the connected client
     private async Task HandleClientAsync(Socket clientSocket)
     {
         var clientEndpoint = clientSocket.RemoteEndPoint?.ToString() ?? "Unknown";
@@ -135,8 +135,8 @@ public class SocketServer
         }
     }
 
-    // Arrête le serveur en fermant le socket d'écoute et en libérant les ressources
-    // Ferme le socket, arrête d'accepter les clients, et ferme le logger
+    // Stops the server by closing the listening socket and releasing resources
+    // Closes the socket, stops accepting clients, and closes the logger
     public void Stop()
     {
         _isRunning = false;

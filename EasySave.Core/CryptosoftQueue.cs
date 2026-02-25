@@ -6,8 +6,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-// Gère une queue FIFO pour les opérations CryptoSoft
-// S'assure qu'une seule instance s'exécute à la fois (semaphore + timeout de 5 min)
+// Manages FIFO queue for CryptoSoft operations
+// Ensures only one instance runs at a time (semaphore + 5 min timeout)
 public class CryptosoftQueue
 {
     private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
@@ -26,14 +26,14 @@ public class CryptosoftQueue
         public TaskCompletionSource<long> ResultTaskSource { get; set; }
     }
 
-    // Ajoute une opération CryptoSoft à la queue et attend son exécution
-    // @param operation - type d'opération (encrypt/decrypt)
-    // @param sourceFile - chemin du fichier source
-    // @param password - mot de passe pour l'opération
-    // @param targetDirectory - dossier de destination
-    // @param errorLogType - type d'erreur à logger si problème
-    // @param cryptosoftPath - chemin de l'exécutable CryptoSoft
-    // @returns temps écoulé en ms si succès, code erreur négatif sinon
+    // Adds CryptoSoft operation to queue and waits for execution
+    // @param operation - operation type (encrypt/decrypt)
+    // @param sourceFile - source file path
+    // @param password - password for operation
+    // @param targetDirectory - destination folder
+    // @param errorLogType - error type to log if issue
+    // @param cryptosoftPath - path to CryptoSoft executable
+    // @returns elapsed time in ms if success, negative error code otherwise
     public async Task<long> EnqueueOperationAsync(
         string operation,
         string sourceFile,
@@ -82,8 +82,8 @@ public class CryptosoftQueue
         }
     }
 
-    // Traite la queue séquentiellement, une opération à la fois
-    // @param cryptosoftPath - chemin de l'exécutable CryptoSoft
+    // Processes queue sequentially, one operation at a time
+    // @param cryptosoftPath - path to CryptoSoft executable
     private async Task ProcessQueueAsync(string cryptosoftPath)
     {
         _isRunning = true;
@@ -142,15 +142,15 @@ public class CryptosoftQueue
         }
     }
 
-    // Exécute une commande CryptoSoft de manière synchrone
-    // Lance l'exécutable avec les paramètres et attend le résultat avec timeout
-    // @param operation - type d'opération
-    // @param sourceFile - fichier source
-    // @param password - mot de passe
-    // @param targetDirectory - dossier cible
-    // @param errorLogType - type d'erreur à logger
-    // @param cryptosoftPath - chemin de l'exécutable
-    // @returns temps écoulé en ms ou code erreur (-1 fichier manquant, -2 processus échec, -3 timeout, -999 erreur générale)
+    // Executes CryptoSoft command synchronously
+    // Launches executable with parameters and waits for result with timeout
+    // @param operation - operation type
+    // @param sourceFile - source file
+    // @param password - password
+    // @param targetDirectory - target folder
+    // @param errorLogType - error type to log
+    // @param cryptosoftPath - path to executable
+    // @returns elapsed time in ms or error code (-1 missing file, -2 process fail, -3 timeout, -999 general error)
     private long ExecuteCryptosoftCommand(
         string operation,
         string sourceFile,
@@ -213,8 +213,8 @@ public class CryptosoftQueue
         }
     }
 
-    // Récupère la taille actuelle de la queue
-    // @returns nombre d'opérations en attente
+    // Gets current queue size
+    // @returns number of pending operations
     public int GetQueueSize()
     {
         lock (_queueLock)
@@ -223,8 +223,8 @@ public class CryptosoftQueue
         }
     }
 
-    // Vérifie si une opération CryptoSoft est actuellement en cours
-    // @returns true si une opération s'exécute, false sinon
+    // Checks if CryptoSoft operation is currently running
+    // @returns true if operation is running, false otherwise
     public bool IsOperationRunning()
     {
         return _isRunning || _semaphore.CurrentCount == 0;

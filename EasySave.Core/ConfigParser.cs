@@ -3,24 +3,24 @@ using System.Text.Json.Nodes;
 using EasySave.Core.Localization;
 using EasySave.Models;
 
-// Parse et gère la configuration JSON de l'application
-// Charge la configuration initiale et sauvegarde les modifications
+// Parses and manages application JSON configuration
+// Loads initial config and saves modifications
 public class ConfigParser
 {
     private readonly string _configPath;
 
     public JsonNode? Config { get; private set; }
 
-    // Initialise le parseur et charge la configuration
-    // @param configPath - chemin du fichier config.json
+    // Initializes parser and loads configuration
+    // @param configPath - path to config.json file
     public ConfigParser(string configPath)
     {
         _configPath = configPath;
         LoadConfig();
     }
 
-    // Charge la configuration depuis le fichier JSON
-    // Crée le fichier à partir du template si absent
+    // Loads configuration from JSON file
+    // Creates file from template if absent
     public void LoadConfig()
     {
         string appDirectory = AppContext.BaseDirectory;
@@ -43,7 +43,7 @@ public class ConfigParser
         Config = JsonNode.Parse(jsonContent);
     }
 
-    // Recharge la configuration depuis le disque
+    // Reloads configuration from disk
     private void SaveConfig()
     {
         string appDirectory = AppContext.BaseDirectory;
@@ -53,8 +53,8 @@ public class ConfigParser
         Config = JsonNode.Parse(jsonContent);
     }
 
-    // Met à jour la configuration avec de nouvelles valeurs et sauvegarde
-    // @param newConfig - nouvel objet de configuration JSON
+    // Updates configuration with new values and saves
+    // @param newConfig - new JSON configuration object
     public void EditAndSaveConfig(JsonNode newConfig)
     {
         string appDirectory = AppContext.BaseDirectory;
@@ -76,8 +76,8 @@ public class ConfigParser
         File.WriteAllText(fullConfigPath, jsonString);
     }
 
-    // Sauvegarde la liste des jobs dans la configuration
-    // @param jobs - liste des jobs à persister
+    // Saves job list to configuration
+    // @param jobs - list of jobs to persist
     public void saveJobs(List<Job> jobs)
     {
         if (Config is JsonObject configObject)
@@ -87,8 +87,8 @@ public class ConfigParser
         }
     }
 
-    // Récupère les extensions de fichiers à chiffrer depuis la config
-    // @returns liste des extensions (ex: .docx, .xlsx)
+    // Gets file extensions to encrypt from config
+    // @returns list of extensions (e.g. .docx, .xlsx)
     public List<string> GetEncryptionExtensions()
     {
         var extensions = new List<string>();
@@ -116,8 +116,8 @@ public class ConfigParser
         return extensions;
     }
 
-    // Récupère le chemin du répertoire des logs
-    // @returns chemin absolu du dossier logs
+    // Gets path of logs directory
+    // @returns absolute path to logs folder
     public string GetLogsPath()
     {
         string logsPath = Config?["config"]?["logsPath"]?.GetValue<string>() ?? "./logs/";
@@ -125,15 +125,15 @@ public class ConfigParser
         return Path.IsPathRooted(logsPath) ? logsPath : Path.Combine(appDirectory, logsPath);
     }
 
-    // Récupère le format de log configuré (json ou xml)
-    // @returns format de log actuel
+    // Gets configured log format (json or xml)
+    // @returns current log format
     public string GetLogFormat()
     {
         return Config?["config"]?["logFormat"]?.GetValue<string>() ?? "json";
     }
 
-    // Change le format de log et le persiste
-    // @param format - nouveau format (json ou xml)
+    // Changes log format and persists
+    // @param format - new format (json or xml)
     public void SetLogFormat(string format)
     {
         if (format != "json" && format != "xml")
@@ -148,8 +148,8 @@ public class ConfigParser
         }
     }
 
-    // Récupère la liste des applications métier configurées
-    // @returns liste des noms d'applications (ex: CryptoSoft, etc)
+    // Gets list of configured business applications
+    // @returns list of application names (e.g. CryptoSoft, etc)
     public List<string> GetBusinessApplications()
     {
         var applications = new List<string>();
@@ -177,16 +177,16 @@ public class ConfigParser
         return applications;
     }
 
-    // Récupère le nombre maximal de jobs concurrents
-    // @returns nombre de jobs pouvant s'exécuter simultanément (défaut: 3)
+    // Gets maximum concurrent jobs
+    // @returns number of jobs that can run simultaneously (default: 3)
     public int GetMaxConcurrentJobs()
     {
         var maxConcurrentJobs = Config?["config"]?["maxConcurrentJobs"]?.GetValue<int>();
         return maxConcurrentJobs ?? 3;
     }
 
-    // Récupère les extensions de fichiers prioritaires
-    // @returns liste des extensions à traiter en priorité
+    // Gets priority file extensions
+    // @returns list of extensions to process first
     public List<string> GetPriorityExtensions()
     {
         var extensions = new List<string>();
@@ -214,8 +214,8 @@ public class ConfigParser
         return extensions;
     }
 
-    // Récupère le seuil de taille pour les fichiers volumineux en KB
-    // @returns limite de taille en KB (-1 = pas de limite)
+    // Gets large file size threshold in KB
+    // @returns size limit in KB (-1 = no limit)
     public long GetLargeFileSizeLimitKb()
     {
         var limitNode = Config?["config"]?["largeFileSizeLimitKb"];

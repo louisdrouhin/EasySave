@@ -6,16 +6,16 @@ using System.Globalization;
 
 namespace EasySave.Utils.Converters;
 
-// Convertit un état de job en couleur pour l'affichage
-// Vert=Active, Gris=Inactive/Paused
+// Converts a job state to a color for display
+// Green=Active, Gray=Inactive/Paused
 public class JobStateColorConverter : IValueConverter
 {
-    // Convertit un JobState en couleur
-    // @param value - JobState à convertir
-    // @param targetType - type cible (IBrush)
-    // @param parameter - paramètre optionnel
-    // @param culture - culture de conversion
-    // @returns couleur associée à l'état du job
+    // Converts a JobState to a color
+    // @param value - JobState to convert
+    // @param targetType - target type (IBrush)
+    // @param parameter - optional parameter
+    // @param culture - conversion culture
+    // @returns color associated with the job state
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
         if (value is JobState state)

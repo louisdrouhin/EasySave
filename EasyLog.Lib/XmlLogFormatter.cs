@@ -3,16 +3,16 @@ using System.Xml;
 
 namespace EasyLog.Lib;
 
-// Formateur pour les logs en XML
-// Sérialise les entrées de log au format XML
+// Formatter for XML logs
+// Serializes log entries to XML format
 public class XmlLogFormatter : ILogFormatter
 {
-    // Formate une entrée de log en XML
-    // Crée un élément logEntry avec timestamp, name et contenu
-    // @param timestamp - date/heure de l'entrée
-    // @param name - nom du backup
-    // @param content - contenu de l'entrée (convertis en éléments XML)
-    // @returns chaîne XML minifiée contenant l'entrée
+    // Formats a log entry to XML
+    // Creates a logEntry element with timestamp, name, and content
+    // @param timestamp - date/time of the entry
+    // @param name - name of the backup
+    // @param content - entry content (converted to XML elements)
+    // @returns minified XML string containing the entry
     public string Format(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (content == null)
@@ -32,7 +32,7 @@ public class XmlLogFormatter : ILogFormatter
             writer.WriteElementString("name", name);
 
             writer.WriteStartElement("content");
-            // Convertit chaque propriété en élément XML
+            // Converts each property to an XML element
             foreach (var kvp in content)
             {
                 writer.WriteStartElement(SanitizeXmlElementName(kvp.Key));
@@ -47,8 +47,8 @@ public class XmlLogFormatter : ILogFormatter
         return sb.ToString();
     }
 
-    // Ferme le fichier XML en ajoutant le marqueur de fin
-    // @param filePath - chemin du fichier XML à fermer
+    // Closes the XML file by adding the end marker
+    // @param filePath - path to the XML file to close
     public void Close(string filePath)
     {
         try
@@ -56,7 +56,7 @@ public class XmlLogFormatter : ILogFormatter
             if (File.Exists(filePath))
             {
                 var content = File.ReadAllText(filePath);
-                // Ajoute le marqueur de fin de l'élément logs si absent
+                // Adds the logs element end marker if not present
                 if (!content.EndsWith("</logs>"))
                 {
                     File.AppendAllText(filePath, "</logs>");
@@ -66,14 +66,14 @@ public class XmlLogFormatter : ILogFormatter
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Error while closing the XML log file : {filePath}",
+                $"Error while closing the XML log file: {filePath}",
                 ex);
         }
     }
 
-    // Convertit une chaîne en un nom d'élément XML valide
-    // @param name - nom à convertir
-    // @returns nom d'élément XML valide
+    // Converts a string to a valid XML element name
+    // @param name - name to convert
+    // @returns valid XML element name
     private string SanitizeXmlElementName(string name)
     {
         if (string.IsNullOrEmpty(name))

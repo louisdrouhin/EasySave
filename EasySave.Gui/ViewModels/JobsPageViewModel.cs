@@ -12,17 +12,17 @@ using EasySave.Models;
 
 namespace EasySave.Gui.ViewModels;
 
-// ViewModel pour la page Jobs
-// Gère la liste des jobs, la sélection multiple et les opérations sur jobs
+// ViewModel for the Jobs page
+// Manages the job list, multiple selection, and job operations
 public class JobsPageViewModel : ViewModelBase
 {
     private readonly JobManager _jobManager;
     private bool _isSelectionBarVisible;
     private string _selectionCountText = "";
 
-    // Initialise la page des jobs
-    // Charge les jobs existants et s'abonne aux événements du Core
-    // @param jobManager - gestionnaire central des jobs
+    // Initializes the Jobs page
+    // Loads existing jobs and subscribes to Core events
+    // @param jobManager - central job manager
     public JobsPageViewModel(JobManager jobManager)
     {
         _jobManager = jobManager ?? throw new ArgumentNullException(nameof(jobManager));
@@ -30,44 +30,44 @@ public class JobsPageViewModel : ViewModelBase
         // Collections
         Jobs = new ObservableCollection<JobViewModel>();
 
-        // Commandes
+        // Commands
         CreateJobCommand = new RelayCommand(_ => OnCreateJob());
         DeselectAllCommand = new RelayCommand(_ => OnDeselectAll());
         RunSelectedCommand = new RelayCommand(_ => OnRunSelected());
 
-        // Charge les jobs depuis le Core
+        // Loads jobs from Core
         LoadJobs();
 
-        // S'abonne aux événements du Core
+        // Subscribes to Core events
         _jobManager.JobStateChanged += OnJobStateChanged;
         _jobManager.JobCreated += OnJobCreated;
         _jobManager.JobRemoved += OnJobRemoved;
         LocalizationManager.LanguageChanged += OnLanguageChanged;
     }
 
-    // Collection observable des jobs pour la liaison aux contrôles
+    // Observable collection of jobs for control binding
     public ObservableCollection<JobViewModel> Jobs { get; }
 
-    // True si la barre de sélection (déselect all, run selected) est visible
+    // True if the selection bar (deselect all, run selected) is visible
     public bool IsSelectionBarVisible
     {
         get => _isSelectionBarVisible;
         set => SetProperty(ref _isSelectionBarVisible, value);
     }
 
-    // Texte indiquant le nombre de jobs sélectionnés (ex: "2 jobs selected")
+    // Text indicating the number of selected jobs (e.g., "2 jobs selected")
     public string SelectionCountText
     {
         get => _selectionCountText;
         set => SetProperty(ref _selectionCountText, value);
     }
 
-    // Titres et labels traduits
+    // Translated titles and labels
     public string HeaderTitle => LocalizationManager.Get("JobsPage_Header_Title") ?? "Jobs";
     public string HeaderSubtitle => LocalizationManager.Get("JobsPage_Header_Subtitle") ?? "";
     public string CreateJobLabel => LocalizationManager.Get("JobsPage_Button_NewJob") ?? "New Job";
     public string DeselectAllLabel => LocalizationManager.Get("JobsPage_DeselectAll") ?? "Deselect All";
-    // Label avec nombre de jobs sélectionnés
+    // Label with number of selected jobs
     public string RunSelectedLabel
     {
         get
@@ -78,13 +78,13 @@ public class JobsPageViewModel : ViewModelBase
     }
 
 
-    // Commande pour créer un nouveau job
+    // Command to create a new job
     public ICommand CreateJobCommand { get; }
 
-    // Commande pour désélectionner tous les jobs
+    // Command to deselect all jobs
     public ICommand DeselectAllCommand { get; }
 
-    // Commande pour exécuter tous les jobs sélectionnés
+    // Command to run all selected jobs
     public ICommand RunSelectedCommand { get; }
 
 
@@ -94,8 +94,8 @@ public class JobsPageViewModel : ViewModelBase
     public event EventHandler<string>? ErrorOccurred;
 
 
-    // Charge les jobs depuis le JobManager et les ajoute à la collection observable
-    // S'abonne également aux événements de chaque JobViewModel pour les actions (play, pause, delete, etc.)
+    // Loads jobs from JobManager and adds them to the observable collection
+    // Also subscribes to each JobViewModel's events for actions (play, pause, delete, etc.)
     private void LoadJobs()
     {
         var jobs = _jobManager.GetJobs();
@@ -107,8 +107,8 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Abonne les événements d'un JobViewModel pour gérer les actions demandées par l'utilisateur (play, pause, delete, etc.)
-    // @param vm - le JobViewModel à abonner
+    // Subscribes to a JobViewModel's events to handle user-requested actions (play, pause, delete, etc.)
+    // @param vm - the JobViewModel to subscribe to
     private void SubscribeToJobVM(JobViewModel vm)
     {
         vm.PlayRequested += OnJobPlayRequested;
@@ -119,13 +119,13 @@ public class JobsPageViewModel : ViewModelBase
         vm.SelectionChanged += (s, e) => UpdateSelectionBar();
     }
 
-    // Déclenche l'événement CreateJobRequested pour signaler que l'utilisateur souhaite créer un nouveau job
+    // Raises CreateJobRequested event to signal that user wants to create a new job
     private void OnCreateJob()
     {
         CreateJobRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    // Appelé lorsque le formulaire de création de job est soumis. Tente de créer un nouveau job via le JobManager et gère les erreurs éventuelles.
+    // Called when the job creation form is submitted. Attempts to create a new job via JobManager and handles potential errors.
     public void OnJobCreated(string name, JobType type, string sourcePath, string destinationPath)
     {
         try
@@ -138,7 +138,7 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Désélectionne tous les jobs et met à jour la barre de sélection
+    // Deselects all jobs and updates the selection bar
     private void OnDeselectAll()
     {
         foreach (var job in Jobs)
@@ -148,15 +148,15 @@ public class JobsPageViewModel : ViewModelBase
         UpdateSelectionBar();
     }
 
-    // Déclenche l'événement RunSelectedRequested pour signaler que l'utilisateur souhaite exécuter les jobs sélectionnés
+    // Raises RunSelectedRequested event to signal that user wants to run selected jobs
     private void OnRunSelected()
     {
         RunSelectedRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    // Exécute un job donné en arrière-plan et gère les erreurs éventuelles. Deselect le job après lancement pour une meilleure UX.
-    // @param vm - le JobViewModel du job à exécuter
-    // @param password - mot de passe à utiliser pour le job (si nécessaire)
+    // Runs a given job in the background and handles potential errors. Deselects the job after launch for better UX.
+    // @param vm - JobViewModel of the job to execute
+    // @param password - password to use for the job (if needed)
     public async Task ExecutePlayJob(JobViewModel vm, string password)
     {
         try
@@ -176,9 +176,9 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Exécute tous les jobs sélectionnés en arrière-plan et gère les erreurs éventuelles. Deselect tous les jobs après lancement
-    // @param selected - liste des JobViewModel sélectionnés à exécuter
-    // @param password - mot de passe à utiliser pour les jobs (si nécessaire)
+    // Runs all selected jobs in the background and handles potential errors. Deselects all jobs after launch
+    // @param selected - list of JobViewModels to execute
+    // @param password - password to use for the jobs (if needed)
     public async Task ExecuteRunSelected(List<JobViewModel> selected, string password)
     {
         try
@@ -194,21 +194,21 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Vérifie que les applications métier sont lancé
+    // Checks if business applications are running
     public string? CheckBusinessApp()
     {
         return _jobManager.CheckBusinessApplications();
     }
 
-    // Récupère la liste des jobs sélectionnés
-    // @returns liste des JobViewModel actuellement sélectionnés
+    // Gets the list of selected jobs
+    // @returns list of currently selected JobViewModels
     public List<JobViewModel> GetSelectedJobs()
     {
         return Jobs.Where(j => j.IsSelected).ToList();
     }
 
-    // Met à jour la visibilité de la barre de sélection et le texte indiquant le nombre de jobs sélectionnés
-    // Appelé lorsque la sélection d'un job change pour refléter l'état actuel de la sélection
+    // Updates the selection bar visibility and text indicating the number of selected jobs
+    // Called when a job's selection changes to reflect the current selection state
     private void UpdateSelectionBar()
     {
         var selectedCount = Jobs.Count(j => j.IsSelected);
@@ -217,17 +217,17 @@ public class JobsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(RunSelectedLabel));
     }
 
-    // Gère la demande de lancement d'un job en déclenchant l'événement PlayJobRequested avec le JobViewModel concerné
-    // @param sender - l'objet qui a déclenché l'événement (généralement un bouton dans le JobViewModel)
-    // @param vm - le JobViewModel du job à lancer
+    // Handles job play request by raising PlayJobRequested event with the concerned JobViewModel
+    // @param sender - object that triggered the event (usually a button in JobViewModel)
+    // @param vm - JobViewModel of the job to run
     private void OnJobPlayRequested(object? sender, JobViewModel vm)
     {
         PlayJobRequested?.Invoke(this, vm);
     }
 
-    // Gère la demande de pause d'un job en appelant la méthode PauseJob du JobManager et en gérant les erreurs éventuelles
-    // @param sender - l'objet qui a déclenché l'événement (généralement un bouton dans le JobViewModel)
-    // @param vm - le JobViewModel du job à mettre en pause
+    // Handles job pause request by calling JobManager's PauseJob method and handling potential errors
+    // @param sender - object that triggered the event (usually a button in JobViewModel)
+    // @param vm - JobViewModel of the job to pause
     private void OnJobPauseRequested(object? sender, JobViewModel vm)
     {
         try
@@ -240,9 +240,9 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Gère la demande de reprise d'un job en appelant la méthode ResumeJob du JobManager et en gérant les erreurs éventuelles
-    // @param sender - l'objet qui a déclenché l'événement (généralement un bouton dans le JobViewModel)
-    // @param vm - le JobViewModel du job à reprendre
+    // Handles job resume request by calling JobManager's ResumeJob method and handling potential errors
+    // @param sender - object that triggered the event (usually a button in JobViewModel)
+    // @param vm - JobViewModel of the job to resume
     private void OnJobResumeRequested(object? sender, JobViewModel vm)
     {
         try
@@ -255,9 +255,9 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Gère la demande d'arrêt d'un job en appelant la méthode StopJob du JobManager et en gérant les erreurs éventuelles
-    // @param sender - l'objet qui a déclenché l'événement (généralement un bouton dans le JobViewModel)
-    // @param vm - le JobViewModel du job à arrêter
+    // Handles job stop request by calling JobManager's StopJob method and handling potential errors
+    // @param sender - object that triggered the event (usually a button in JobViewModel)
+    // @param vm - JobViewModel of the job to stop
     private void OnJobStopRequested(object? sender, JobViewModel vm)
     {
         try
@@ -270,9 +270,9 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Gère la demande de suppression d'un job en appelant la méthode removeJob du JobManager et en gérant les erreurs éventuelles
-    // @param sender - l'objet qui a déclenché l'événement (généralement un bouton dans le JobViewModel)
-    // @param vm - le JobViewModel du job à supprimer
+    // Handles job deletion request by calling JobManager's removeJob method and handling potential errors
+    // @param sender - object that triggered the event (usually a button in JobViewModel)
+    // @param vm - JobViewModel of the job to delete
     private void OnJobDeleteRequested(object? sender, JobViewModel vm)
     {
         var index = Jobs.IndexOf(vm);
@@ -289,10 +289,10 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Gère les changements d'état d'un job en appliquant les nouvelles informations au JobViewModel correspondant
-    // Utilise Dispatcher.Invoke pour s'assurer que les mises à jour de l'interface utilisateur sont effectuées
-    // @param sender - l'objet qui a déclenché l'événement (généralement le JobManager)
-    // @param entry - l'objet StateEntry contenant les informations sur le changement d'état du job
+    // Handles job state changes by applying new information to the corresponding JobViewModel
+    // Uses Dispatcher.Invoke to ensure UI updates are performed on the UI thread
+    // @param sender - object that triggered the event (usually JobManager)
+    // @param entry - StateEntry object containing job state change information
 
     private void OnJobStateChanged(object? sender, StateEntry entry)
     {
@@ -307,10 +307,10 @@ public class JobsPageViewModel : ViewModelBase
         }
     }
 
-    // Gère la création d'un nouveau job en ajoutant un nouveau JobViewModel à la collection observable et en s'abonnant à ses événements
-    // Utilise Dispatcher.Invoke pour s'assurer que les mises à jour de l'interface utilisateur sont effectuées
-    // @param sender - l'objet qui a déclenché l'événement (généralement le JobManager)
-    // @param job - le Job nouvellement créé à ajouter à la liste
+    // Handles new job creation by adding a new JobViewModel to the observable collection and subscribing to its events
+    // Uses Dispatcher.Invoke to ensure UI updates are performed on the UI thread
+    // @param sender - object that triggered the event (usually JobManager)
+    // @param job - newly created Job to add to the list
     private void OnJobCreated(object? sender, Job job)
     {
         Dispatcher.UIThread.Post(() =>
@@ -321,9 +321,9 @@ public class JobsPageViewModel : ViewModelBase
         });
     }
 
-    // Gère la suppression d'un job en retirant le JobViewModel correspondant de la collection observable
-    // @param sender - l'objet qui a déclenché l'événement (généralement le JobManager)
-    // @param index - l'index du job supprimé dans la collection
+    // Handles job deletion by removing the corresponding JobViewModel from the observable collection
+    // @param sender - object that triggered the event (usually JobManager)
+    // @param index - index of the deleted job in the collection
     private void OnJobRemoved(object? sender, int index)
     {
         Dispatcher.UIThread.Post(() =>
@@ -336,9 +336,9 @@ public class JobsPageViewModel : ViewModelBase
         });
     }
 
-    // Gère les changements de langue en déclenchant les notifications de changement de propriété pour tous les éléments
-    // @param sender - l'objet qui a déclenché l'événement (généralement le LocalizationManager)
-    // @param e - les arguments de l'événement contenant les informations sur la langue sélectionnée
+    // Handles language changes by raising property change notifications for all elements
+    // @param sender - object that triggered the event (usually LocalizationManager)
+    // @param e - event arguments containing selected language information
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HeaderTitle));
@@ -349,7 +349,7 @@ public class JobsPageViewModel : ViewModelBase
     }
 
 
-    // Se désabonne de tous les événements pour éviter les fuites de mémoire lorsque la page est détruite
+    // Unsubscribes from all events to prevent memory leaks when the page is destroyed
     public void Dispose()
     {
         _jobManager.JobStateChanged -= OnJobStateChanged;

@@ -5,21 +5,21 @@ using Avalonia.Media;
 
 namespace EasySave.Gui.Converters;
 
-// Convertit un booléen en icône chevron
-// Affiche une flèche bas si true (expandu), flèche droite si false (collapsé)
+// Converts a boolean to a chevron icon
+// Displays a down arrow if true (expanded), right arrow if false (collapsed)
 public class BoolToGeometryConverter : IValueConverter
 {
-    // Convertit une valeur booléenne en géométrie d'icône
-    // @param value - booléen indiquant si expandu
-    // @param targetType - type cible (Geometry)
-    // @param parameter - paramètre optionnel
-    // @param culture - culture de conversion
-    // @returns géométrie du chevron (bas ou droite)
+    // Converts a boolean value to icon geometry
+    // @param value - boolean indicating if expanded
+    // @param targetType - target type (Geometry)
+    // @param parameter - optional parameter
+    // @param culture - conversion culture
+    // @returns chevron geometry (down or right)
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
         if (value is bool isExpanded)
         {
-            // Chevron vers le bas si expandu, flèche droite sinon
+            // Chevron down if expanded, right arrow otherwise
             if (isExpanded)
                 return Geometry.Parse("M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"); // ChevronDown
             else
@@ -28,7 +28,7 @@ public class BoolToGeometryConverter : IValueConverter
         return null;
     }
 
-    // Conversion inverse non implémentée (lecture seule)
+    // Reverse conversion not implemented (read-only)
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo? culture)
     {
         return null;

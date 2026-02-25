@@ -4,19 +4,19 @@ using EasySave.Gui.Commands;
 
 namespace EasySave.Gui.ViewModels;
 
-// ViewModel pour un élément d'extension dans les listes
-// Représente une extension de fichier (ex: .docx, .xlsx)
+// ViewModel for an extension item in the lists
+// Represents a file extension (e.g., .docx, .xlsx)
 public class ExtensionItemViewModel : ViewModelBase
 {
-    // Texte à afficher pour l'extension (ex: ".docx")
+    // Text to display for the extension (e.g., ".docx")
     public string DisplayText { get; }
 
-    // Commande pour supprimer cette extension de la liste
+    // Command to remove this extension from the list
     public ICommand RemoveCommand { get; }
 
-    // Crée un ViewModel pour une extension
-    // @param ext - extension à afficher
-    // @param removeCallback - callback appelée quand l'utilisateur supprime l'extension
+    // Creates a ViewModel for an extension
+    // @param ext - extension to display
+    // @param removeCallback - callback called when user removes the extension
     public ExtensionItemViewModel(string ext, Action<ExtensionItemViewModel> removeCallback)
     {
         DisplayText = ext;

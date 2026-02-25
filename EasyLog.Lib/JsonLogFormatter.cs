@@ -2,15 +2,15 @@ using System.Text.Json;
 
 namespace EasyLog.Lib;
 
-// Formateur pour les logs en JSON
-// Sérialise les entrées de log au format JSON
+// Formatter for JSON logs
+// Serializes log entries to JSON format
 public class JsonLogFormatter : ILogFormatter
 {
-    // Formate une entrée de log en JSON
-    // @param timestamp - date/heure de l'entrée
-    // @param name - nom du backup
-    // @param content - contenu de l'entrée
-    // @returns chaîne JSON minifiée contenant l'entrée
+    // Formats a log entry to JSON
+    // @param timestamp - date/time of the entry
+    // @param name - name of the backup
+    // @param content - entry content
+    // @returns minified JSON string containing the entry
     public string Format(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (content == null)
@@ -26,8 +26,8 @@ public class JsonLogFormatter : ILogFormatter
         return JsonSerializer.Serialize(logEntry, new JsonSerializerOptions { WriteIndented = false });
     }
 
-    // Ferme le fichier JSON en ajoutant les marqueurs de fin
-    // @param filePath - chemin du fichier JSON à fermer
+    // Closes the JSON file by adding end markers
+    // @param filePath - path to the JSON file to close
     public void Close(string filePath)
     {
         try
@@ -35,7 +35,7 @@ public class JsonLogFormatter : ILogFormatter
             if (File.Exists(filePath))
             {
                 var content = File.ReadAllText(filePath);
-                // Ajoute les marqueurs de fin du tableau JSON si absent
+                // Adds the JSON array end markers if not present
                 if (!content.EndsWith("]}"))
                 {
                     File.AppendAllText(filePath, "]}");
@@ -45,7 +45,7 @@ public class JsonLogFormatter : ILogFormatter
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Error while closing the JSON log file : {filePath}",
+                $"Error while closing the JSON log file: {filePath}",
                 ex);
         }
     }

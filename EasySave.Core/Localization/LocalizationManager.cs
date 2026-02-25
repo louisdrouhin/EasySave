@@ -4,14 +4,14 @@ using System.Reflection;
 
 namespace EasySave.Core.Localization
 {
-    // Arguments d'événement levé quand la langue change
+    // Event arguments raised when language changes
     public class LanguageChangedEventArgs : EventArgs
     {
         public string LanguageCode { get; set; }
         public CultureInfo Culture { get; set; }
 
-        // @param languageCode - code de la nouvelle langue (fr, en)
-        // @param culture - objet CultureInfo associé
+        // @param languageCode - code of new language (fr, en)
+        // @param culture - associated CultureInfo object
         public LanguageChangedEventArgs(string languageCode, CultureInfo culture)
         {
             LanguageCode = languageCode;
@@ -46,9 +46,9 @@ namespace EasySave.Core.Localization
             }
         }
 
-        // Récupère la traduction d'une clé dans la langue actuelle
-        // @param key - clé de traduction
-        // @returns texte traduit ou [clé] si absent
+        // Gets translation of a key in current language
+        // @param key - translation key
+        // @returns translated text or [key] if missing
         public static string Get(string key)
         {
             if (_resourceManager == null)
@@ -67,10 +67,10 @@ namespace EasySave.Core.Localization
             }
         }
 
-        // Récupère une traduction formatée avec des paramètres
-        // @param key - clé de traduction
-        // @param args - paramètres pour le formatage (ex: {0}, {1})
-        // @returns texte traduit et formaté
+        // Gets formatted translation with parameters
+        // @param key - translation key
+        // @param args - parameters for formatting (e.g. {0}, {1})
+        // @returns translated and formatted text
         public static string GetFormatted(string key, params object[] args)
         {
             var template = Get(key);
@@ -84,8 +84,8 @@ namespace EasySave.Core.Localization
             }
         }
 
-        // Change la langue active de l'application
-        // @param cultureCode - code de la langue (fr, en)
+        // Changes active application language
+        // @param cultureCode - language code (fr, en)
         public static void SetLanguage(string cultureCode)
         {
             try
@@ -99,32 +99,32 @@ namespace EasySave.Core.Localization
             }
         }
 
-        // Change la langue active avec un objet CultureInfo
-        // @param culture - objet CultureInfo de la nouvelle langue
+        // Changes active language with CultureInfo object
+        // @param culture - CultureInfo object of new language
         public static void SetLanguage(CultureInfo culture)
         {
             _currentCulture = culture ?? new CultureInfo("fr");
             OnLanguageChanged(_currentCulture.TwoLetterISOLanguageName, _currentCulture);
         }
 
-        // Déclenche l'événement LanguageChanged
-        // @param languageCode - code de la langue
-        // @param culture - objet CultureInfo
+        // Triggers LanguageChanged event
+        // @param languageCode - language code
+        // @param culture - CultureInfo object
         private static void OnLanguageChanged(string languageCode, CultureInfo culture)
         {
             LanguageChanged?.Invoke(null, new LanguageChangedEventArgs(languageCode, culture));
         }
 
-        // Récupère la liste des langues disponibles
-        // @returns array des codes de langues supportées
+        // Gets list of available languages
+        // @returns array of supported language codes
         public static string[] GetAvailableLanguages()
         {
             return new[] { "fr", "en" };
         }
 
-        // Vérifie si une langue est disponible
-        // @param cultureCode - code de la langue à vérifier
-        // @returns true si disponible, false sinon
+        // Checks if language is available
+        // @param cultureCode - language code to check
+        // @returns true if available, false otherwise
         public static bool IsLanguageAvailable(string cultureCode)
         {
             return cultureCode == "fr" || cultureCode == "en";

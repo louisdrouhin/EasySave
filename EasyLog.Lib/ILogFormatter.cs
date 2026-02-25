@@ -1,17 +1,17 @@
 namespace EasyLog.Lib;
 
-// Interface pour les formateurs de logs
-// Implémentée par JsonLogFormatter et XmlLogFormatter
+// Interface for log formatters
+// Implemented by JsonLogFormatter and XmlLogFormatter
 public interface ILogFormatter
 {
-    // Formate une entrée de log
-    // @param timestamp - date/heure de l'entrée
-    // @param name - nom du backup
-    // @param content - contenu de l'entrée (dictionnaire de propriétés)
-    // @returns chaîne formatée (JSON ou XML)
+    // Formats a log entry
+    // @param timestamp - date/time of the entry
+    // @param name - name of the backup
+    // @param content - entry content (dictionary of properties)
+    // @returns formatted string (JSON or XML)
     string Format(DateTime timestamp, string name, Dictionary<string, object> content);
 
-    // Ferme le fichier de log (ajoute les marqueurs de fin si nécessaire)
-    // @param filePath - chemin du fichier à fermer
+    // Closes the log file (adds end markers if necessary)
+    // @param filePath - path to the file to close
     void Close(string filePath) { }
 }

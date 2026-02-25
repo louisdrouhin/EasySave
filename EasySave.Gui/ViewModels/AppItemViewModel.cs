@@ -4,19 +4,19 @@ using EasySave.Gui.Commands;
 
 namespace EasySave.Gui.ViewModels;
 
-// ViewModel pour une application métier dans la liste
-// Représente une application à surveiller (ex: CryptoSoft)
+// ViewModel for a business application in the list
+// Represents an application to monitor (e.g., CryptoSoft)
 public class AppItemViewModel : ViewModelBase
 {
-    // Texte à afficher pour l'application (ex: "CryptoSoft")
+    // Text to display for the application (e.g., "CryptoSoft")
     public string DisplayText { get; }
 
-    // Commande pour supprimer cette application de la liste
+    // Command to remove this application from the list
     public ICommand RemoveCommand { get; }
 
-    // Crée un ViewModel pour une application métier
-    // @param appName - nom de l'application à afficher
-    // @param removeCallback - callback appelée quand l'utilisateur supprime l'application
+    // Creates a ViewModel for a business application
+    // @param appName - name of the application to display
+    // @param removeCallback - callback called when user removes the application
     public AppItemViewModel(string appName, Action<AppItemViewModel> removeCallback)
     {
         DisplayText = appName;

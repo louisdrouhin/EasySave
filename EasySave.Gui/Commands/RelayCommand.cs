@@ -3,16 +3,16 @@ using System.Windows.Input;
 
 namespace EasySave.Gui.Commands;
 
-// Implémentation simple d'une commande ICommand pour les bindings MVVM
-// Encapsule une action et une condition d'exécution optionnelle
+// Simple implementation of an ICommand for MVVM bindings
+// Encapsulates an action and an optional execution condition
 public class RelayCommand : ICommand
 {
     private readonly Action<object?> _execute;
     private readonly Func<object?, bool>? _canExecute;
 
-    // Crée une RelayCommand
-    // @param execute - action à exécuter quand la commande est appelée
-    // @param canExecute - prédicat optionnel pour déterminer si la commande peut s'exécuter
+    // Creates a RelayCommand
+    // @param execute - action to execute when the command is called
+    // @param canExecute - optional predicate to determine if the command can execute
     public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
     {
         _execute = execute ?? throw new ArgumentNullException(nameof(execute));
@@ -21,15 +21,15 @@ public class RelayCommand : ICommand
 
     public event EventHandler? CanExecuteChanged;
 
-    // Vérifie si la commande peut s'exécuter
-    // @param parameter - paramètre passé à la commande
-    // @returns true si la commande peut s'exécuter
+    // Checks if the command can execute
+    // @param parameter - parameter passed to the command
+    // @returns true if the command can execute
     public bool CanExecute(object? parameter) => _canExecute == null || _canExecute(parameter);
 
-    // Exécute la commande
-    // @param parameter - paramètre passé à la commande
+    // Executes the command
+    // @param parameter - parameter passed to the command
     public void Execute(object? parameter) => _execute(parameter);
 
-    // Déclenche l'événement CanExecuteChanged pour actualiser l'état des boutons
+    // Raises CanExecuteChanged event to refresh button state
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }

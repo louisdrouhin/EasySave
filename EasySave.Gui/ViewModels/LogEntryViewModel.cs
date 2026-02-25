@@ -2,16 +2,16 @@ using System.Text.Json;
 
 namespace EasySave.Gui.ViewModels;
 
-// ViewModel pour une entrée de log individuelle
-// Formate et affiche l'entrée de log (JSON ou texte brut)
+// ViewModel for an individual log entry
+// Formats and displays the log entry (JSON or plain text)
 public class LogEntryViewModel : ViewModelBase
 {
-    // Texte de l'entrée formatée pour l'affichage
+    // Formatted text of the entry for display
     public string LogText { get; }
 
-    // Crée un ViewModel pour une entrée de log
-    // Parse le JSON pour le formater de manière lisible
-    // @param text - texte JSON brut de l'entrée de log
+    // Creates a ViewModel for a log entry
+    // Parses JSON to format it in a readable way
+    // @param text - raw JSON text of the log entry
     public LogEntryViewModel(string text)
     {
         try
