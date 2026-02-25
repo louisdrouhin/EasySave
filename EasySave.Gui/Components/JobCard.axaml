@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:models="clr-namespace:EasySave.Models;assembly=EasySave.Models"
+             xmlns:vm="using:EasySave.Gui.ViewModels"
              xmlns:comp="clr-namespace:EasySave.GUI.Components"
              x:Class="EasySave.GUI.Components.JobCard"
-             x:DataType="models:Job">
+             x:DataType="vm:JobViewModel">
     <UserControl.Resources>
         <Geometry x:Key="ChevronRightIcon">M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z</Geometry>
         <Geometry x:Key="ChevronDownIcon">M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z</Geometry>
@@ -25,6 +25,12 @@
         <Style Selector="Button#ToggleButton:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
+        <Style Selector="Button.button-play-green:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#16A34A" />
+        </Style>
+        <Style Selector="Button.button-play-green:pointerover">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
     </UserControl.Styles>
 
     <Border BorderBrush="#E0E0E0"
@@ -37,6 +43,7 @@
             <Border Padding="10,15" Background="Transparent">
                 <Grid ColumnDefinitions="30,45,*,Auto,38,38" VerticalAlignment="Center">
                     <Button x:Name="ToggleButton"
+                            Command="{Binding ToggleExpandCommand}"
                             Grid.Column="0"
                             Background="Transparent"
                             BorderThickness="0"
@@ -45,15 +52,14 @@
                             VerticalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center">
-                        <PathIcon x:Name="ToggleIcon" 
-                                  Data="{StaticResource ChevronRightIcon}" 
-                                  Width="12" 
-                                  Height="12" 
+                        <PathIcon Data="{Binding IsExpanded, Converter={StaticResource BoolToGeometryConverter}}"
+                                  Width="12"
+                                  Height="12"
                                   Foreground="#6B7280"/>
                     </Button>
 
-                                    <comp:CustomCheckBox x:Name="SelectCheckBox"
-                                         Grid.Column="1"
+                    <comp:CustomCheckBox Grid.Column="1"
+                                         IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                          VerticalAlignment="Center"
                                          HorizontalAlignment="Center"
                                          Margin="4,0" />
@@ -67,54 +73,62 @@
                         
                         <Border CornerRadius="6"
                                 Padding="8,4"
-                                Background="{Binding Type, Converter={StaticResource JobTypeColorConverter}}"
+                                Background="{Binding Job.Type, Converter={StaticResource JobTypeColorConverter}}"
                                 VerticalAlignment="Center">
-                            <TextBlock x:Name="JobTypeBadgeText"
+                            <TextBlock Text="{Binding TypeLabel}"
                                        Foreground="White"
                                        FontSize="11"
                                        FontWeight="Bold" />
                         </Border>
                     </StackPanel>
 
-                    <Border x:Name="StatusBadge"
-                            Grid.Column="3"
+                    <Border Grid.Column="3"
                             CornerRadius="6"
                             Padding="8,4"
-                            Background="#E5E7EB"
+                            Background="{Binding StatusBadgeColor}"
                             VerticalAlignment="Center"
                             Margin="0,0,10,0">
-                        <TextBlock x:Name="StatusText"
-                                   Foreground="#374151"
+                        <TextBlock Text="{Binding StatusLabel}"
+                                   Foreground="White"
                                    FontSize="11"
                                    FontWeight="Bold" />
                     </Border>
 
+                    <!-- Play/Pause Button (hidden when confirming delete) -->
                     <Button Grid.Column="4"
-                            x:Name="PlayButton"
+                            Command="{Binding PlayPauseResumeCommand}"
+                            IsVisible="{Binding !IsDeleteConfirming}"
                             Width="30"
                             Height="30"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
-                            Classes="button-green"
+                            Background="{Binding PlayButtonBackground}"
+                            Foreground="White"
+                            BorderThickness="0"
+                            CornerRadius="6"
                             Padding="0"
-                            Margin="0,0,5,0">
-                        <PathIcon x:Name="PlayPauseIcon" Data="{StaticResource PlayIcon}" Width="10" Height="10" Foreground="White" Margin="2,0,0,0"/>
+                            Margin="0,0,5,0"
+                            Classes="button-play-green">
+                        <PathIcon Data="{Binding PlayPauseIconData}" Width="10" Height="10" Foreground="White" Margin="{Binding PlayPauseIconMargin}"/>
                     </Button>
 
+                    <!-- Delete Button (hidden when confirming delete) -->
                     <Button Grid.Column="5"
-                            x:Name="DeleteButton"
+                            Command="{Binding DeleteCommand}"
+                            IsVisible="{Binding !IsDeleteConfirming}"
                             Width="30"
                             Height="30"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
                             Classes="button-red"
                             Padding="0">
-                        <PathIcon x:Name="DeleteStopIcon" Data="{StaticResource TrashIcon}" Width="14" Height="14" Foreground="White"/>
+                        <PathIcon Data="{Binding DeleteIconData}" Width="14" Height="14" Foreground="White"/>
                     </Button>
 
+                    <!-- Cancel Delete Button (visible when confirming delete) -->
                     <Button Grid.Column="4"
-                            x:Name="CancelDeleteButton"
-                            IsVisible="False"
+                            Command="{Binding CancelDeleteCommand}"
+                            IsVisible="{Binding IsDeleteConfirming}"
                             Width="30"
                             Height="30"
                             HorizontalContentAlignment="Center"
@@ -125,9 +139,10 @@
                         <PathIcon Data="{StaticResource CancelIcon}" Width="12" Height="12" Foreground="#6B7280"/>
                     </Button>
 
+                    <!-- Confirm Delete Button (visible when confirming delete) -->
                     <Button Grid.Column="5"
-                            x:Name="ConfirmDeleteButton"
-                            IsVisible="False"
+                            Command="{Binding ConfirmDeleteCommand}"
+                            IsVisible="{Binding IsDeleteConfirming}"
                             Width="30"
                             Height="30"
                             HorizontalContentAlignment="Center"
@@ -139,8 +154,7 @@
                 </Grid>
             </Border>
 
-            <Border x:Name="ProgressPanel"
-                    IsVisible="False"
+            <Border IsVisible="{Binding IsProgressVisible}"
                     BorderBrush="#E0E0E0"
                     BorderThickness="0,1,0,0"
                     Padding="15,15,15,15"
@@ -148,38 +162,38 @@
                  <StackPanel Spacing="8">
                      <Grid ColumnDefinitions="*,Auto">
                          <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock x:Name="InProgressText" FontWeight="Bold" FontSize="10" Foreground="#22C55E" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="StateText" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
+                            <TextBlock Text="In Progress" FontWeight="Bold" FontSize="10" Foreground="#22C55E" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding StatusLabel}" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center"/>
                          </StackPanel>
-                         <TextBlock x:Name="PercentageText" FontWeight="Bold" FontSize="12" Foreground="#15171D" Grid.Column="1"/>
+                         <TextBlock Text="{Binding ProgressText}" FontWeight="Bold" FontSize="12" Foreground="#15171D" Grid.Column="1"/>
                      </Grid>
-                     
-                     <ProgressBar x:Name="JobProgressBar" Minimum="0" Maximum="100" Height="6" Foreground="#22C55E" Background="#E5E7EB"/>
-                     
+
+                     <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" Height="6" Foreground="#22C55E" Background="#E5E7EB"/>
+
                      <Grid ColumnDefinitions="*,*">
                          <StackPanel Spacing="2" HorizontalAlignment="Right" Margin="0,0,20,0">
-                            <TextBlock x:Name="FilesLabel" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
-                            <TextBlock x:Name="FilesText" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
+                            <TextBlock Text="Files" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                            <TextBlock Text="{Binding RemainingFilesText}" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
                          </StackPanel>
-                         
+
                          <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
-                            <TextBlock x:Name="SizeLabel" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
-                            <TextBlock x:Name="SizeText" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
+                            <TextBlock Text="Remaining" FontSize="10" FontWeight="Bold" Foreground="#9CA3AF" TextAlignment="Right"/>
+                            <TextBlock Text="{Binding RemainingSizeText}" FontSize="11" Foreground="#1F2937" TextAlignment="Right"/>
                          </StackPanel>
                      </Grid>
                  </StackPanel>
             </Border>
 
             <Border x:Name="DetailsPanel"
-                    IsVisible="False"
+                    IsVisible="{Binding IsExpanded}"
                     BorderBrush="#E0E0E0"
                     BorderThickness="0,1,0,0"
                     Padding="15"
                     Background="#FAFAFA">
-                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="100,*">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
                     <TextBlock Grid.Row="0"
                                Grid.Column="0"
-                               x:Name="SourceLabel"
+                               Text="Source:"
                                Foreground="#666666"
                                FontSize="12"
                                FontWeight="Bold" />
@@ -194,7 +208,7 @@
 
                     <TextBlock Grid.Row="1"
                                Grid.Column="0"
-                               x:Name="DestinationLabel"
+                               Text="Destination:"
                                Foreground="#666666"
                                FontSize="12"
                                FontWeight="Bold"

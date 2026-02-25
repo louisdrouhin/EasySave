@@ -7,7 +7,7 @@ WORKDIR /app
 RUN apk add --no-cache libstdc++ libintl libc6-compat icu-libs
 
 # Copy self-contained .NET 10 application
-COPY ./EasyLog.Server/bin/Release/net10.0/publish .
+COPY ./EasyLog.Server/bin/Release/publish .
 
 # Create logs directory
 RUN mkdir -p /logs

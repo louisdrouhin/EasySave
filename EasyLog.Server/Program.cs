@@ -12,7 +12,6 @@ try
 {
     var server = new SocketServer(port, logDirectory);
 
-    // Graceful shutdown on Ctrl+C
     Console.CancelKeyPress += (sender, e) =>
     {
         e.Cancel = true;

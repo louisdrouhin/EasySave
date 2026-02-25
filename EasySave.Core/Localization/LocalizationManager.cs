@@ -4,11 +4,14 @@ using System.Reflection;
 
 namespace EasySave.Core.Localization
 {
+    // Event arguments raised when language changes
     public class LanguageChangedEventArgs : EventArgs
     {
         public string LanguageCode { get; set; }
         public CultureInfo Culture { get; set; }
 
+        // @param languageCode - code of new language (fr, en)
+        // @param culture - associated CultureInfo object
         public LanguageChangedEventArgs(string languageCode, CultureInfo culture)
         {
             LanguageCode = languageCode;
@@ -16,14 +19,13 @@ namespace EasySave.Core.Localization
         }
     }
 
-
+    // Gère la localisation de l'application
+    // Fournit les traductions et gère les changements de langue
     public static class LocalizationManager
     {
         private static ResourceManager? _resourceManager;
         private static CultureInfo _currentCulture;
-
         public static CultureInfo CurrentCulture => _currentCulture;
-
         public static event EventHandler<LanguageChangedEventArgs>? LanguageChanged;
 
         static LocalizationManager()
@@ -44,6 +46,9 @@ namespace EasySave.Core.Localization
             }
         }
 
+        // Gets translation of a key in current language
+        // @param key - translation key
+        // @returns translated text or [key] if missing
         public static string Get(string key)
         {
             if (_resourceManager == null)
@@ -62,6 +67,10 @@ namespace EasySave.Core.Localization
             }
         }
 
+        // Gets formatted translation with parameters
+        // @param key - translation key
+        // @param args - parameters for formatting (e.g. {0}, {1})
+        // @returns translated and formatted text
         public static string GetFormatted(string key, params object[] args)
         {
             var template = Get(key);
@@ -75,6 +84,8 @@ namespace EasySave.Core.Localization
             }
         }
 
+        // Changes active application language
+        // @param cultureCode - language code (fr, en)
         public static void SetLanguage(string cultureCode)
         {
             try
@@ -88,22 +99,32 @@ namespace EasySave.Core.Localization
             }
         }
 
+        // Changes active language with CultureInfo object
+        // @param culture - CultureInfo object of new language
         public static void SetLanguage(CultureInfo culture)
         {
             _currentCulture = culture ?? new CultureInfo("fr");
             OnLanguageChanged(_currentCulture.TwoLetterISOLanguageName, _currentCulture);
         }
 
+        // Triggers LanguageChanged event
+        // @param languageCode - language code
+        // @param culture - CultureInfo object
         private static void OnLanguageChanged(string languageCode, CultureInfo culture)
         {
             LanguageChanged?.Invoke(null, new LanguageChangedEventArgs(languageCode, culture));
         }
 
+        // Gets list of available languages
+        // @returns array of supported language codes
         public static string[] GetAvailableLanguages()
         {
             return new[] { "fr", "en" };
         }
 
+        // Checks if language is available
+        // @param cultureCode - language code to check
+        // @returns true if available, false otherwise
         public static bool IsLanguageAvailable(string cultureCode)
         {
             return cultureCode == "fr" || cultureCode == "en";

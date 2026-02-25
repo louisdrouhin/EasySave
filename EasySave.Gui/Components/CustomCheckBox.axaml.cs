@@ -1,5 +1,7 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Data;
 using Avalonia.Media;
 using System;
 
@@ -7,15 +9,17 @@ namespace EasySave.GUI.Components;
 
 public partial class CustomCheckBox : UserControl
 {
-    private bool _isChecked = false;
-
-    public event EventHandler<bool>? CheckedChanged;
+    // Register IsChecked as a StyledProperty for binding support
+    public static readonly StyledProperty<bool> IsCheckedProperty =
+        AvaloniaProperty.Register<CustomCheckBox, bool>(nameof(IsChecked), false, defaultBindingMode: BindingMode.TwoWay);
 
     public bool IsChecked
     {
-        get => _isChecked;
-        set => SetChecked(value);
+        get => GetValue(IsCheckedProperty);
+        set => SetValue(IsCheckedProperty, value);
     }
+
+    public event EventHandler<bool>? CheckedChanged;
 
     public CustomCheckBox()
     {
@@ -28,16 +32,20 @@ public partial class CustomCheckBox : UserControl
         }
     }
 
-    public void Toggle()
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
-        SetChecked(!_isChecked);
+        base.OnPropertyChanged(change);
+
+        if (change.Property == IsCheckedProperty)
+        {
+            UpdateVisuals();
+            CheckedChanged?.Invoke(this, (bool)change.NewValue!);
+        }
     }
 
-    public void SetChecked(bool value)
+    public void Toggle()
     {
-        _isChecked = value;
-        UpdateVisuals();
-        CheckedChanged?.Invoke(this, value);
+        IsChecked = !IsChecked;
     }
 
     private void UpdateVisuals()
@@ -47,7 +55,7 @@ public partial class CustomCheckBox : UserControl
 
         if (checkBoxBorder != null)
         {
-            if (_isChecked)
+            if (IsChecked)
             {
                 checkBoxBorder.Background = new SolidColorBrush(Color.Parse("#F97316"));
                 checkBoxBorder.BorderBrush = new SolidColorBrush(Color.Parse("#F97316"));
@@ -61,7 +69,7 @@ public partial class CustomCheckBox : UserControl
 
         if (checkMark != null)
         {
-            checkMark.IsVisible = _isChecked;
+            checkMark.IsVisible = IsChecked;
         }
     }
 }

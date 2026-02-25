@@ -484,6 +484,22 @@ Stack:
           xml:space="preserve">
         <value>Log format</value>
     </data>
+    <data name="SettingsPage_Section_Logs_ServerEnabled"
+          xml:space="preserve">
+        <value>Server status</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_ServerMode"
+          xml:space="preserve">
+        <value>Server mode</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_ServerHost"
+          xml:space="preserve">
+        <value>Server host</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_ServerPort"
+          xml:space="preserve">
+        <value>Server port</value>
+    </data>
     <data name="SettingsPage_Section_State"
           xml:space="preserve">
         <value>State</value>
@@ -536,6 +552,18 @@ Stack:
           xml:space="preserve">
         <value>No priority extension configured</value>
     </data>
+    <data name="SettingsPage_Section_Performance"
+          xml:space="preserve">
+        <value>Performance</value>
+    </data>
+    <data name="SettingsPage_Section_Performance_MaxConcurrentJobs"
+          xml:space="preserve">
+        <value>Max concurrent jobs</value>
+    </data>
+    <data name="SettingsPage_Section_Performance_LargeFileSize"
+          xml:space="preserve">
+        <value>Large file size limit</value>
+    </data>
     <data name="SettingsPage_Section_About"
           xml:space="preserve">
         <value>About</value>
@@ -575,6 +603,7 @@ Stack:
     <data name="JobCard_Label_Size" xml:space="preserve"><value>SIZE (PROCESSED / TOTAL)</value></data>
     <data name="JobCard_Status_Inactive" xml:space="preserve"><value>Inactive</value></data>
     <data name="JobCard_Status_Active" xml:space="preserve"><value>Active</value></data>
+    <data name="JobCard_Status_Paused" xml:space="preserve"><value>Paused</value></data>
     <data name="JobCard_Progress_InProgress" xml:space="preserve"><value>IN PROGRESS</value></data>
     <data name="JobCard_Progress_Processing" xml:space="preserve"><value>Processing...</value></data>
 

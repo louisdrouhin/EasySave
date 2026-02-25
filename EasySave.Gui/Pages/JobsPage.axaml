@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EasySave.Gui.ViewModels"
              xmlns:comp="clr-namespace:EasySave.GUI.Components"
-             x:Class="EasySave.GUI.Pages.JobsPage">
+             x:Class="EasySave.GUI.Pages.JobsPage"
+             x:DataType="vm:JobsPageViewModel">
     <UserControl.Styles>
     </UserControl.Styles>
     <Border Padding="20"
@@ -11,25 +13,25 @@
             
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
                 <StackPanel Grid.Column="0" Spacing="8">
-                    <TextBlock x:Name="HeaderTitleText"
+                    <TextBlock Text="{Binding HeaderTitle}"
                                FontSize="22"
                                FontWeight="Bold"
                                Foreground="#15171D"/>
-                    <TextBlock x:Name="HeaderSubtitleText"
+                    <TextBlock Text="{Binding HeaderSubtitle}"
                                FontSize="14"
                                Foreground="#666666" />
                 </StackPanel>
                 <Button Grid.Column="1"
-                        x:Name="CreateJobButton"
+                        Command="{Binding CreateJobCommand}"
+                        Content="{Binding CreateJobLabel}"
                         Classes="button-primary-orange"
                         Padding="16,10"
                         VerticalAlignment="Top" />
             </Grid>
 
-            <!-- Row 1 : Barre de sélection multiple (visible si >= 1 job coché) -->
+            <!-- Row 1 : Selection Bar (visible when >= 1 job selected) -->
             <Border Grid.Row="1"
-                    x:Name="SelectionBar"
-                    IsVisible="False"
+                    IsVisible="{Binding IsSelectionBarVisible}"
                     Background="#FFFFFF"
                     BorderBrush="#E0E0E0"
                     BorderThickness="1"
@@ -37,27 +39,39 @@
                     Padding="15,10"
                     Margin="0,0,0,15">
                 <Grid ColumnDefinitions="*,Auto,Auto">
-                    <TextBlock x:Name="SelectionCountText"
+                    <TextBlock Text="{Binding SelectionCountText}"
                                Grid.Column="0"
                                VerticalAlignment="Center"
                                FontSize="14"
                                Foreground="#374151" />
                     <Button Grid.Column="1"
-                            x:Name="DeselectAllButton"
+                            Command="{Binding DeselectAllCommand}"
+                            Content="{Binding DeselectAllLabel}"
                             Classes="button-gray-cancel"
                             Padding="12,8"
                             Margin="0,0,10,0" />
                     <Button Grid.Column="2"
-                            x:Name="RunSelectedButton"
+                            Command="{Binding RunSelectedCommand}"
+                            Content="{Binding RunSelectedLabel}"
                             Classes="button-green"
                             Padding="12,8" />
                 </Grid>
             </Border>
 
             <ScrollViewer Grid.Row="2">
-                                    <StackPanel x:Name="JobsStackPanel"
-                                                Orientation="Vertical" 
-                                                Spacing="15"
-                                                Margin="10"/>                </ScrollViewer>        </Grid>
+                <ItemsControl ItemsSource="{Binding Jobs}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" Spacing="15" Margin="10" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:JobViewModel">
+                            <comp:JobCard />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
     </Border>
 </UserControl>

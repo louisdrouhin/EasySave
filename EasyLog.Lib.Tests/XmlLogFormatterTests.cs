@@ -62,7 +62,7 @@ public class XmlLogFormatterTests
         Assert.NotNull(result);
         Assert.Contains("TestLog", result);
         Assert.Contains("2025-02-04 10:30:45", result);
-        Assert.Matches("<content\\s*/>", result); // Accepte <content /> ou <content/>
+        Assert.Matches("<content\\s*/>", result); // Accepts <content /> or <content/>
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class XmlLogFormatterTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Matches("<name\\s*/>", result); // Accepte <name /> ou <name/>
+        Assert.Matches("<name\\s*/>", result); // Accepts <name /> or <name/>
     }
 
     [Fact]
@@ -105,10 +105,10 @@ public class XmlLogFormatterTests
         Assert.NotNull(result);
         Assert.Contains("<string>test</string>", result);
         Assert.Contains("<integer>123</integer>", result);
-        Assert.Contains("<double>", result); // Vérifie que l'élément double existe
+        Assert.Contains("<double>", result); // Verifies that the double element exists
         Assert.Contains("</double>", result);
         Assert.Contains("<boolean>True</boolean>", result);
-        Assert.Contains("<nullValue>", result); // Vérifie que l'élément nullValue existe
+        Assert.Contains("<nullValue>", result); // Verifies that the nullValue element exists
     }
 
     [Theory]
@@ -170,7 +170,7 @@ public class XmlLogFormatterTests
 
         // Assert
         Assert.NotNull(result);
-        // Le XmlWriter échappe automatiquement les caractères spéciaux
+        // The XmlWriter automatically escapes special characters
         Assert.Contains("&lt;", result);
         Assert.Contains("&gt;", result);
     }
@@ -215,7 +215,7 @@ public class XmlLogFormatterTests
 
             // Assert
             var content = File.ReadAllText(tempFile);
-            // Ne devrait pas avoir de double fermeture
+            // Should not have double closing
             Assert.Equal(1, content.Split("</logs>").Length - 1);
         }
         finally
@@ -233,7 +233,7 @@ public class XmlLogFormatterTests
         var formatter = new XmlLogFormatter();
         var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".xml");
 
-        // Act & Assert - ne devrait pas lancer d'exception
+        // Act & Assert - should not throw an exception
         var exception = Record.Exception(() => formatter.Close(nonExistentFile));
         Assert.Null(exception);
     }

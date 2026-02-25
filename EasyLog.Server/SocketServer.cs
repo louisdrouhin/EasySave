@@ -6,6 +6,8 @@ using EasyLogLib = EasyLog.Lib.EasyLog;
 
 namespace EasyLog.Server;
 
+// Log server using TCP sockets
+// Listens for incoming connections, receives JSON messages, and writes them to log files
 public class SocketServer
 {
     private Socket? _listenerSocket;
@@ -13,6 +15,9 @@ public class SocketServer
     private readonly EasyLogLib _logger;
     private bool _isRunning;
 
+    // Initializes the server with the listening port and log directory
+    // @param port - port on which the server listens (typically 5000)
+    // @param logDirectory - directory where log files will be stored
     public SocketServer(int port, string logDirectory)
     {
         if (port <= 0 || port > 65535)
@@ -26,6 +31,9 @@ public class SocketServer
         _isRunning = false;
     }
 
+    // Starts the server and begins listening for incoming connections
+    // Creates a socket, binds it to the IP address and port, and accepts clients in a loop
+    // Each client is handled asynchronously to allow simultaneous connections
     public void Start()
     {
         try
@@ -64,9 +72,11 @@ public class SocketServer
         }
     }
 
+    // Handles communication with a connected client
+    // Reads JSON messages sent by the client, deserializes them, and writes them to log files
+    // @param clientSocket - socket of the connected client
     private async Task HandleClientAsync(Socket clientSocket)
     {
-        // Get client IP:Port for logging server events
         var clientEndpoint = clientSocket.RemoteEndPoint?.ToString() ?? "Unknown";
 
         try
@@ -83,12 +93,12 @@ public class SocketServer
                     {
                         var logData = JsonSerializer.Deserialize<JsonElement>(line);
 
-                        var timestamp = logData.GetProperty("timestamp").GetDateTime();
+                        var timestampStr = logData.GetProperty("timestamp").GetString() ?? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        var timestamp = DateTime.ParseExact(timestampStr, "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                         var name = logData.GetProperty("name").GetString() ?? "Unknown";
                         var contentJson = logData.GetProperty("content").GetRawText();
                         var content = JsonSerializer.Deserialize<Dictionary<string, object>>(contentJson) ?? new Dictionary<string, object>();
 
-                        // Add client IP to the log content (clientId already sent by client)
                         content["clientIp"] = clientEndpoint;
 
                         _logger.Write(timestamp, name, content);
@@ -109,7 +119,7 @@ public class SocketServer
         }
         catch (IOException ex) when (ex.InnerException is System.Net.Sockets.SocketException)
         {
-            // Client disconnected abruptly - this is normal, don't log as error
+            Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Client {clientEndpoint} disconnected unexpectedly: {ex.Message}");
         }
         catch (Exception ex)
         {
@@ -126,6 +136,8 @@ public class SocketServer
         }
     }
 
+    // Stops the server by closing the listening socket and releasing resources
+    // Closes the socket, stops accepting clients, and closes the logger
     public void Stop()
     {
         _isRunning = false;

@@ -3,6 +3,8 @@ using System.Text.Json;
 
 namespace EasyLog.Lib;
 
+// Network client for sending logs to an EasyLog server
+// Uses TCP to connect to the server and send messages formatted as JSON
 public class EasyLogNetworkClient
 {
     private Socket? _socket;
@@ -11,6 +13,9 @@ public class EasyLogNetworkClient
     private readonly string _host;
     private readonly int _port;
 
+    // Initializes the client with the server address and port
+    // @param host - IP address or domain name of the EasyLog server
+    // @param port - port on which the EasyLog server listens (typically 5000)
     public EasyLogNetworkClient(string host, int port)
     {
         if (string.IsNullOrWhiteSpace(host))
@@ -22,6 +27,8 @@ public class EasyLogNetworkClient
         _port = port;
     }
 
+    // Establishes a TCP connection with the EasyLog server
+    // Creates a socket, connects to the server, and prepares a stream for writing
     public void Connect()
     {
         try
@@ -39,6 +46,10 @@ public class EasyLogNetworkClient
         }
     }
 
+    // Sends a log message to the EasyLog server
+    // @param timestamp - date and time of the log
+    // @param name - name of the log (e.g., "UserLogin", "Error", etc.)
+    // @param content - dictionary of data associated with the log
     public void Send(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (_writer == null || _socket == null || !_socket.Connected)
@@ -51,7 +62,7 @@ public class EasyLogNetworkClient
         {
             var logData = new
             {
-                timestamp,
+                timestamp = timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
                 name,
                 content
             };
@@ -67,6 +78,7 @@ public class EasyLogNetworkClient
         }
     }
 
+    // Closes the connection with the EasyLog server and releases resources
     public void Disconnect()
     {
         try
@@ -84,5 +96,6 @@ public class EasyLogNetworkClient
         }
     }
 
+    // Indicates whether the client is currently connected to the EasyLog server
     public bool IsConnected => _socket?.Connected ?? false;
 }

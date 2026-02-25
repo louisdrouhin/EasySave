@@ -2,22 +2,29 @@ using EasySave.Core;
 using EasySave.Core.Localization;
 using EasySave.Models;
 
+// Command-line interface for EasySave
+// Allows users to create, execute, delete, and display backup jobs
 namespace EasySave.Cli
 {
     public class CLI
     {
         private JobManager _jobManager;
 
+        // Initializes the CLI and JobManager
         public CLI()
         {
             _jobManager = new JobManager();
         }
 
+        // Displays a message in the console
+        // @param message - text to display
         public void WriteLine(string message)
         {
             Console.WriteLine(message);
         }
 
+        // Starts the main CLI menu and handles user interactions
+        // Displays menu options, allows navigation with arrow keys, and executes corresponding actions
         public void start()
         {
             int selectedIndex = 0;
@@ -103,6 +110,8 @@ namespace EasySave.Cli
             }
         }
 
+        // Allows users to create a new backup job
+        // Displays existing jobs, then prompts the user to enter details for the new job (name, source, destination, type)
         private void CreateJob()
         {
             Console.WriteLine(LocalizationManager.Get("CreateJob_Title"));
@@ -150,6 +159,8 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("CreateJob_Type", typeDisplay));
         }
 
+        // Allows users to delete an existing backup job
+        // Displays existing jobs, then prompts the user to select the one to delete
         private void DeleteJob()
         {
             Console.WriteLine(LocalizationManager.Get("DeleteJob_Title"));
@@ -181,6 +192,9 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("DeleteJob_Success", index));
         }
 
+        // Displays the list of existing backup jobs
+        // If no jobs exist, displays a message indicating there are no jobs and instructions to create one
+        // Otherwise, displays each job with its index number
         private void ShowJobs()
         {
             Console.WriteLine(LocalizationManager.Get("ShowJobs_Title"));
@@ -203,6 +217,8 @@ namespace EasySave.Cli
             }
         }
 
+        // Allows users to change the interface language
+        // Displays available languages, then prompts the user to select a language
         private void ChangeLanguage()
         {
             Console.WriteLine(LocalizationManager.Get("Language_Title"));
@@ -223,6 +239,8 @@ namespace EasySave.Cli
             Console.WriteLine(LocalizationManager.GetFormatted("Language_Changed", newLanguage));
         }
 
+        // Allows users to change the log format for backups
+        // Displays the current format, then offers the user to choose between JSON and XML
         private void ChangeLogFormat()
         {
             Console.WriteLine(LocalizationManager.Get("LogFormat_Title"));
@@ -255,6 +273,8 @@ namespace EasySave.Cli
             }
         }
 
+        // Allows users to execute one or more backup jobs
+        // Displays available jobs, then prompts the user to select which ones to execute (by entering numbers or "all")
         private async Task ExecuteJobsAsync()
         {
             Console.WriteLine(LocalizationManager.Get("ExecuteJobs_Title"));
