@@ -88,7 +88,6 @@ public class SocketServer
                         var contentJson = logData.GetProperty("content").GetRawText();
                         var content = JsonSerializer.Deserialize<Dictionary<string, object>>(contentJson) ?? new Dictionary<string, object>();
 
-                        // Add client IP to the log content (clientId already sent by client)
                         content["clientIp"] = clientEndpoint;
 
                         _logger.Write(timestamp, name, content);
@@ -109,7 +108,7 @@ public class SocketServer
         }
         catch (IOException ex) when (ex.InnerException is System.Net.Sockets.SocketException)
         {
-            // Client disconnected abruptly - this is normal, don't log as error
+            Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Client {clientEndpoint} disconnected unexpectedly: {ex.Message}");
         }
         catch (Exception ex)
         {

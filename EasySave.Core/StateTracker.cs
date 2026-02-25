@@ -42,7 +42,6 @@ public class StateTracker
       File.WriteAllText(_stateFilePath, json);
     }
 
-    // Raise event for in-memory subscribers (GUI) - outside lock
     JobStateChanged?.Invoke(this, stateEntry);
   }
 

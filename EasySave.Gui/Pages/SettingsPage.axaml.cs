@@ -20,7 +20,6 @@ public partial class SettingsPage : UserControl
 
     private void ApplyStyles()
     {
-        // Style the custom numeric TextBox
         if (this.FindControl<TextBox>("LargeFileSizeTextBox") is TextBox textBox)
         {
             textBox.Background = Brushes.White;
@@ -29,7 +28,6 @@ public partial class SettingsPage : UserControl
             textBox.BorderThickness = new Thickness(0);
         }
 
-        // Style the custom numeric buttons
         if (this.FindControl<Button>("IncrementBtn") is Button incrementBtn)
         {
             incrementBtn.Background = Brushes.White;
@@ -44,7 +42,6 @@ public partial class SettingsPage : UserControl
             decrementBtn.BorderThickness = new Thickness(0);
         }
 
-        // Find all NumericUpDown controls with input-field class (for any remaining)
         FindAndStyleNumericUpDowns(this);
     }
 
@@ -81,7 +78,6 @@ public partial class SettingsPage : UserControl
     {
         numericUpDown.ApplyTemplate();
 
-        // Style the TextBox inside
         var textBox = numericUpDown.FindControl<TextBox>("PART_TextBox");
         if (textBox != null)
         {
@@ -91,7 +87,6 @@ public partial class SettingsPage : UserControl
             textBox.BorderThickness = new Thickness(0);
         }
 
-        // Style the RepeatButtons
         var incrementBtn = numericUpDown.FindControl<RepeatButton>("PART_IncrementButton");
         if (incrementBtn != null)
         {
@@ -165,7 +160,6 @@ public partial class SettingsPage : UserControl
     {
         if (e.Key == Key.Escape)
         {
-            // Blur the current focused control
             if (sender is Control control)
             {
                 var focusedControl = TopLevel.GetTopLevel(control)?.FocusManager?.GetFocusedElement();
@@ -174,7 +168,6 @@ public partial class SettingsPage : UserControl
                     fc.Focus(NavigationMethod.Pointer);
                 }
             }
-            // Focus on the page to blur any text input
             this.Focus(NavigationMethod.Pointer);
             e.Handled = true;
         }
@@ -183,8 +176,5 @@ public partial class SettingsPage : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-
-        // DataContext is set by the MainWindowViewModel or parent
-        // No additional setup needed - all bindings work automatically
     }
 }

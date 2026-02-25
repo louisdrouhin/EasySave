@@ -27,7 +27,6 @@ public class EasyLog
         System.Diagnostics.Debug.WriteLine($"[EasyLog] Log directory: {_logDirectory}");
         System.Diagnostics.Debug.WriteLine($"[EasyLog] Log directory is rooted: {Path.IsPathRooted(_logDirectory)}");
 
-        // Détecte le format basé sur le type de formatter
         bool isXmlFormat = formatter is XmlLogFormatter;
         _fileExtension = isXmlFormat ? "xml" : "json";
         _entrySeparator = isXmlFormat ? "" : ",";
@@ -53,15 +52,11 @@ public class EasyLog
         var fileName = $"{dateStr}_logs.{_fileExtension}";
         var dailyLogPath = Path.Combine(_logDirectory, fileName);
 
-        // Vérifie si un fichier de l'autre format existe
         string otherExtension = _fileExtension == "xml" ? "json" : "xml";
         var otherFormatPath = Path.Combine(_logDirectory, $"{dateStr}_logs.{otherExtension}");
 
-        // Si le fichier du format actuel n'existe pas mais que l'autre format existe,
-        // on crée un nouveau fichier dans le format actuel
         if (!File.Exists(dailyLogPath) && File.Exists(otherFormatPath))
         {
-            // Le fichier sera créé par InitializeLogStructure
             return dailyLogPath;
         }
 
@@ -81,16 +76,13 @@ public class EasyLog
             }
             else
             {
-                // Vérifions si le fichier contient déjà des entrées
                 var content = File.ReadAllText(_logPath);
                 bool isXml = _fileExtension == "xml";
 
                 if (isXml)
                 {
-                    // Vérifie si le fichier XML contient des entrées (cherche <logEntry>)
                     _isFirstEntry = !content.Contains("<logEntry>");
 
-                    // Si le fichier est fermé, on le rouvre
                     if (content.EndsWith("</logs>"))
                     {
                         var reopenedContent = content.Substring(0, content.Length - 7);
@@ -99,41 +91,33 @@ public class EasyLog
                 }
                 else
                 {
-                    // Vérifie si le fichier JSON contient des entrées (cherche "timestamp")
                     _isFirstEntry = !content.Contains("\"timestamp\"");
 
                     content = content.Trim();
 
-                    // Fix malformed JSON: starts with comma (,{...})
                     if (content.StartsWith(","))
                     {
                         content = content.TrimStart(' ', '\t', '\n', '\r', ',');
-                        // Wrap in proper format: {"logs":[{...}]}
                         if (!content.StartsWith("{\"logs\":["))
                         {
                             content = "{\"logs\":[" + content;
                         }
                         File.WriteAllText(_logPath, content);
                     }
-                    // Fix malformed JSON that starts with [ instead of {"logs":[
                     else if (content.StartsWith("["))
                     {
-                        // Convert old format from [...]  to {"logs":[...]}
                         if (content.EndsWith("]"))
                         {
                             content = "{\"logs\":" + content;
                         }
                         File.WriteAllText(_logPath, content);
                     }
-                    // Fix if it starts with { but not with {"logs":[
                     else if (content.StartsWith("{") && !content.StartsWith("{\"logs\":["))
                     {
-                        // Check if it's actually individual objects
                         content = "{\"logs\":[" + content;
                         File.WriteAllText(_logPath, content);
                     }
 
-                    // Si le fichier est fermé, on le rouvre
                     if (content.EndsWith("]}"))
                     {
                         var reopenedContent = content.Substring(0, content.Length - 2);
@@ -159,10 +143,8 @@ public class EasyLog
 
                 if (isXml)
                 {
-                    // Vérifie si le fichier contient des entrées
                     _isFirstEntry = !content.Contains("<logEntry>");
 
-                    // Si le fichier est fermé, on le rouvre
                     if (content.EndsWith("</logs>"))
                     {
                         var reopenedContent = content.Substring(0, content.Length - 7);
@@ -171,41 +153,33 @@ public class EasyLog
                 }
                 else
                 {
-                    // Vérifie si le fichier contient des entrées
                     _isFirstEntry = !content.Contains("\"timestamp\"");
 
                     content = content.Trim();
 
-                    // Fix malformed JSON: starts with comma (,{...})
                     if (content.StartsWith(","))
                     {
                         content = content.TrimStart(' ', '\t', '\n', '\r', ',');
-                        // Wrap in proper format: {"logs":[{...}]}
                         if (!content.StartsWith("{\"logs\":["))
                         {
                             content = "{\"logs\":[" + content;
                         }
                         File.WriteAllText(_logPath, content);
                     }
-                    // Fix malformed JSON that starts with [ instead of {"logs":[
                     else if (content.StartsWith("["))
                     {
-                        // Convert old format from [...]  to {"logs":[...]}
                         if (content.EndsWith("]"))
                         {
                             content = "{\"logs\":" + content;
                         }
                         File.WriteAllText(_logPath, content);
                     }
-                    // Fix if it starts with { but not with {"logs":[
                     else if (content.StartsWith("{") && !content.StartsWith("{\"logs\":["))
                     {
-                        // Check if it's actually individual objects
                         content = "{\"logs\":[" + content;
                         File.WriteAllText(_logPath, content);
                     }
 
-                    // Si le fichier est fermé, on le rouvre
                     if (content.EndsWith("]}"))
                     {
                         var reopenedContent = content.Substring(0, content.Length - 2);
@@ -242,14 +216,11 @@ public class EasyLog
 
         try
         {
-            // Si c'est déjà un chemin UNC, ne rien faire
             if (path.StartsWith("\\\\", StringComparison.OrdinalIgnoreCase))
                 return path;
 
-            // Résoudre le chemin complet (relatif ou absolu)
             var fullPath = Path.GetFullPath(path);
 
-            // Convertir en format UNC si c'est un chemin local avec lettre de lecteur
             if (fullPath.Length >= 2 && fullPath[1] == ':')
             {
                 var drive = fullPath[0];
@@ -300,14 +271,12 @@ public class EasyLog
             }
             catch (IOException ex)
             {
-                // Log l'erreur mais ne bloque pas l'exécution du job
                 var errorMsg = $"[EasyLog] IO Error writing log: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine(errorMsg);
                 Console.WriteLine(errorMsg);
             }
             catch (Exception ex)
             {
-                // Toute autre erreur ne doit pas crasher l'application
                 var errorMsg = $"[EasyLog] Unexpected error: {ex.Message}";
                 var stackMsg = $"[EasyLog] Stack trace: {ex.StackTrace}";
                 System.Diagnostics.Debug.WriteLine(errorMsg);
