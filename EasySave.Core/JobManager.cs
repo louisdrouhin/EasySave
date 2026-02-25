@@ -790,7 +790,7 @@ public class JobManager
             _stateTracker.UpdateJobState(new StateEntry(
                 job.Name,
                 DateTime.Now,
-                JobState.Active,
+                pauseEvent.IsSet ? JobState.Active : JobState.Paused,
                 totalFilesToTransfer,
                 totalSizeToTransfer,
                 (double)filesProcessed / totalFilesToTransfer * 100,
@@ -927,7 +927,7 @@ public class JobManager
             _stateTracker.UpdateJobState(new StateEntry(
                 job.Name,
                 DateTime.Now,
-                JobState.Active,
+                pauseEvent.IsSet ? JobState.Active : JobState.Paused,
                 totalFiles,
                 totalSize,
                 (double)filesProcessed / totalFiles * 100,
