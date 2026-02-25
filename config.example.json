@@ -2,11 +2,21 @@
   "config": {
     "logsPath": "./logs/",
     "stateFilePath": "./state.json",
+    "cryptosoftPath": "./Cryptosoft.exe",
     "logFormat": "json",
+    "maxConcurrentJobs": 3,
     "encryption": {
       "extensions": [".pdf", ".docx", ".xlsx", ".pptx", ".jpg", ".png", ".txt"]
     },
-    "businessApplications": ["notepad"]
+    "priorityExtensions": [".pdf", ".docx"],
+    "businessApplications": ["notepad"],
+    "largeFileSizeLimitKb": 10240
+  },
+  "easyLogServer": {
+    "enabled": false,
+    "mode": "local_only",
+    "host": "localhost",
+    "port": 5000
   },
   "jobs": [
     {

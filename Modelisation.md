@@ -2,6 +2,24 @@
 
 This document contains the UML diagrams of the **EasySave** project, created with [Mermaid](https://mermaid.js.org/).
 
+## Architecture Overview
+
+The **EasySave** project follows a multi-tier architecture with MVVM pattern for the GUI:
+
+### GUI Layer (MVVM Pattern)
+- **ViewModels**: Manage UI logic and state using `INotifyPropertyChanged` for data binding
+- **Commands**: Encapsulate user actions via `RelayCommand` implementing `ICommand`
+- **Data Binding**: Eliminates code-behind by binding directly to ViewModel properties
+- **Event-Driven**: Core components (JobManager, StateTracker) emit events that ViewModels subscribe to
+- **Localization**: All labels are computed properties that update on language changes
+
+### Core & Logging Layers
+- **JobManager**: Central orchestrator coordinating backup jobs, state tracking, and logging
+- **StateTracker**: Manages job state persistence and change notifications
+- **EasyLog**: Local logging client that writes logs to files (JSON/XML formats)
+- **SocketServer**: Remote TCP logging server that receives and persists logs from clients
+- **ILogFormatter**: Interface supporting multiple log format implementations
+
 ## 1. Use Case Diagram
 
 ![EasySave Use Case Diagram](./ressources/easysave-use_case_v2.0.0.png)
@@ -17,7 +35,21 @@ Overview of the main classes of the project and their relationships.
 classDiagram
   CLI --> JobManager
   App --> MainWindow
-  MainWindow --> JobManager
+  SocketServer --> EasyLog
+
+  MainWindow --> MainWindowViewModel
+
+  MainWindowViewModel o-- JobsPageViewModel
+  MainWindowViewModel o-- LogsPageViewModel
+  MainWindowViewModel o-- SettingsPageViewModel
+
+  JobsPageViewModel --> JobManager
+  JobsPageViewModel *-- "0..5" JobViewModel
+  LogsPageViewModel --> JobManager
+  SettingsPageViewModel --> JobManager
+
+  JobViewModel --> Job
+  JobViewModel --> RelayCommand
 
   JobManager *-- "0..5" Job
   JobManager o-- EasyLog
@@ -37,6 +69,12 @@ classDiagram
   JobManager ..> LogEntry
   JobManager ..> StateEntry
   StateTracker ..> StateEntry
+
+  ViewModelBase <|-- MainWindowViewModel
+  ViewModelBase <|-- JobsPageViewModel
+  ViewModelBase <|-- LogsPageViewModel
+  ViewModelBase <|-- SettingsPageViewModel
+  ViewModelBase <|-- JobViewModel
 
   namespace EasySave.CLI {
     class CLI {
@@ -58,12 +96,7 @@ classDiagram
     }
 
     class MainWindow {
-      -JobManager _jobManager
       +MainWindow()
-      -OnJobsClick(sender: object, e: RoutedEventArgs) void
-      -OnLogsClick(sender: object, e: RoutedEventArgs) void
-      -OnStateClick(sender: object, e: RoutedEventArgs) void
-      -OnSettingsClick(sender: object, e: RoutedEventArgs) void
     }
   }
 
@@ -79,6 +112,10 @@ classDiagram
       +GetJobs() List~Job~
       +Close() void
       +LaunchJob(job: Job, password: string) void
+      +LaunchMultipleJobsAsync(jobs: List~Job~, password: string) Task
+      +PauseJob(job: Job) void
+      +ResumeJob(job: Job) void
+      +StopJob(job: Job) void
       +CheckBusinessApplications() string?
       -CreateLogFormatter() ILogFormatter
       -LoadJobsFromConfig() void
@@ -147,6 +184,7 @@ classDiagram
     class JobState {
       <<enumeration>>
       Active
+      Paused
       Inactive
     }
   }
@@ -195,33 +233,52 @@ classDiagram
 
 ### 2.2. Detailed version
 
-This version details all components of the GUI module with all its associated namespaces (Pages, Components, Dialogs, Converters). It shows the complete internal structure of the graphical interface.
+This version details all components of the GUI module with all its associated namespaces (Pages, Components, Dialogs, Converters, ViewModels, Commands). It shows the complete internal structure of the graphical interface with the MVVM architecture.
 
 ```mermaid
 classDiagram
   CLI --> JobManager
   App --> MainWindow
-  MainWindow --> JobManager
+  SocketServer --> EasyLog
+
+  MainWindow --> MainWindowViewModel
   MainWindow *-- JobsPage
   MainWindow *-- LogsPage
-  MainWindow *-- StatePage
   MainWindow *-- SettingsPage
 
-  JobsPage --> JobManager
+  MainWindowViewModel o-- JobsPageViewModel
+  MainWindowViewModel o-- LogsPageViewModel
+  MainWindowViewModel o-- SettingsPageViewModel
+  MainWindowViewModel --> RelayCommand
+
+  JobsPage --> JobsPageViewModel
   JobsPage *-- "0..5" JobCard
   JobsPage --> CreateJobDialog
   JobsPage --> ErrorDialog
   JobsPage --> PasswordDialog
 
-  LogsPage --> ConfigParser
-  LogsPage --> JobManager
-  LogsPage *-- "0..*" SimpleLogEntry
+  JobsPageViewModel --> JobManager
+  JobsPageViewModel *-- "0..5" JobViewModel
+  JobsPageViewModel --> RelayCommand
 
-  SettingsPage --> ConfigParser
-  SettingsPage --> JobManager
+  JobViewModel --> Job
+  JobViewModel --> RelayCommand
 
-  JobCard --> Job
+  LogsPage --> LogsPageViewModel
+  LogsPage *-- "0..*" LogEntryViewModel
+
+  LogsPageViewModel --> ConfigParser
+  LogsPageViewModel --> JobManager
+  LogsPageViewModel --> RelayCommand
+
+  SettingsPage --> SettingsPageViewModel
+  SettingsPageViewModel --> ConfigParser
+  SettingsPageViewModel --> JobManager
+  SettingsPageViewModel --> RelayCommand
+
+  JobCard --> JobViewModel
   JobCard --> JobTypeColorConverter
+  JobCard *-- CustomCheckBox
 
   CreateJobDialog --> JobResult
   CreateJobDialog --> JobType
@@ -265,93 +322,54 @@ classDiagram
     }
 
     class MainWindow {
-      -JobManager _jobManager
-      -JobsPage _jobsPage
-      -LogsPage _logsPage
-      -StatePage _statePage
-      -SettingsPage _settingsPage
       +MainWindow()
-      -OnJobsClick(sender: object, e: RoutedEventArgs) void
-      -OnLogsClick(sender: object, e: RoutedEventArgs) void
-      -OnStateClick(sender: object, e: RoutedEventArgs) void
-      -OnSettingsClick(sender: object, e: RoutedEventArgs) void
     }
   }
 
   namespace EasySave.GUI.Pages {
-    class SimpleLogEntry {
-      +string LogText
-    }
-
     class JobsPage {
-      -JobManager _jobManager
+      -JobsPageViewModel? _viewModel
       +JobsPage()
-      +JobsPage(jobManager: JobManager)
-      -LoadJobs() void
-      -CreateJobButton_Click(sender: object, e: RoutedEventArgs) void
-      -OnJobPlay(sender: object, job: Job) void
-      -OnJobDelete(sender: object, data: (int, Job)) void
+      -OnLoaded(sender: object, e: RoutedEventArgs) void
+      -OnCreateJobClicked(sender: object?, e: RoutedEventArgs) void
+      -ShowCreateJobDialog() void
+      -ShowPasswordDialog(vm: JobViewModel) void
+      -ShowRunSelectedDialog() void
+      -ShowErrorDialog(message: string) void
     }
 
     class LogsPage {
-      -ObservableCollection~SimpleLogEntry~ _logs
-      -ConfigParser _configParser
-      -JobManager? _jobManager
-      -FileSystemWatcher? _fileWatcher
-      -string _currentLogFilePath
-      -Timer? _reloadTimer
-      -object _reloadLock
+      -LogsPageViewModel? _viewModel
       +LogsPage()
-      +LogsPage(configParser: ConfigParser, jobManager: JobManager)
-      -LoadLogs() void
-      -LoadJsonLogs(filePath: string) void
-      -LoadXmlLogs(filePath: string) void
-      -StartFileWatcher() void
-      -OnLogFileChanged(sender: object, e: FileSystemEventArgs) void
-      -UpdateLogsCount() void
-      -ScrollToBottom() void
-      -OnLanguageChanged(sender: object?, e: LanguageChangedEventArgs) void
-      -OnLogFormatChangedEvent(sender: object?, e: LogFormatChangedEventArgs) void
-      -OnOpenFolderClick(sender: object?, e: RoutedEventArgs) void
-    }
-
-    class StatePage {
-      +StatePage()
+      -OnLoaded(sender: object, e: RoutedEventArgs) void
     }
 
     class SettingsPage {
-      -ConfigParser _configParser
-      -JobManager? _jobManager
+      -SettingsPageViewModel? _viewModel
       +SettingsPage()
-      +SettingsPage(configParser: ConfigParser, jobManager: JobManager)
-      -OnFrenchClick(sender: object?, e: RoutedEventArgs) void
-      -OnEnglishClick(sender: object?, e: RoutedEventArgs) void
-      -OnJsonFormatClick(sender: object?, e: RoutedEventArgs) void
-      -OnXmlFormatClick(sender: object?, e: RoutedEventArgs) void
-      -ChangeLanguage(languageCode: string) void
-      -ChangeLogFormat(format: string) void
-      -OnLanguageChangedEvent(sender: object?, e: LanguageChangedEventArgs) void
-      -OnLogFormatChangedEvent(sender: object?, e: LogFormatChangedEventArgs) void
-      -RefreshUI() void
-      -UpdateCurrentLanguageDisplay() void
-      -PopulateData() void
-      -CreateBadge(text: string) Border
-      -GetApplicationVersion() string
+      -OnLoaded(sender: object, e: RoutedEventArgs) void
+    }
+
+    class SimpleLogEntry {
+      +string LogText
     }
   }
 
   namespace EasySave.GUI.Components {
+    class CustomCheckBox {
+      -bool _isChecked
+      +event EventHandler~bool~? CheckedChanged
+      +bool IsChecked
+      +CustomCheckBox()
+      +Toggle() void
+      +SetChecked(value: bool) void
+      -UpdateVisuals() void
+    }
+
     class JobCard {
-      -Job _job
-      -int _index
-      -bool _isExpanded
-      +PlayClicked EventHandler
-      +DeleteClicked EventHandler
+      -JobViewModel? _viewModel
       +JobCard()
-      +JobCard(job: Job, index: int)
-      -OnToggleExpanded() void
-      -OnPlayClicked() void
-      -OnDeleteClicked() void
+      -OnLoaded(sender: object, e: RoutedEventArgs) void
     }
   }
 
@@ -389,6 +407,216 @@ classDiagram
     }
   }
 
+  namespace EasySave.GUI.Commands {
+    class RelayCommand {
+      <<implementation>>
+      -Action~object?~ _execute
+      -Func~object?, bool~? _canExecute
+      +RelayCommand(execute: Action~object?~, canExecute: Func~object?, bool~?)
+      +event EventHandler? CanExecuteChanged
+      +CanExecute(parameter: object?) bool
+      +Execute(parameter: object?) void
+      +RaiseCanExecuteChanged() void
+    }
+  }
+
+  namespace EasySave.GUI.ViewModels {
+    class ViewModelBase {
+      <<abstract>>
+      +event PropertyChangedEventHandler? PropertyChanged
+      #SetProperty~T~(ref field: T, value: T, propertyName: string) void
+      #OnPropertyChanged(propertyName: string) void
+    }
+
+    class MainWindowViewModel {
+      -JobManager _jobManager
+      -ViewModelBase _currentPage
+      +MainWindowViewModel()
+      +JobsPageViewModel JobsPageVm
+      +LogsPageViewModel LogsPageVm
+      +SettingsPageViewModel SettingsPageVm
+      +ViewModelBase CurrentPage
+      +bool IsJobsActive
+      +bool IsLogsActive
+      +bool IsSettingsActive
+      +string WindowTitle
+      +string JobsButtonLabel
+      +string LogsButtonLabel
+      +string SettingsButtonLabel
+      +ICommand NavigateToJobsCommand
+      +ICommand NavigateToLogsCommand
+      +ICommand NavigateToSettingsCommand
+      -NavigateTo(page: ViewModelBase) void
+      -OnLanguageChanged(sender: object?, e: LanguageChangedEventArgs) void
+      +Dispose() void
+    }
+
+    class JobsPageViewModel {
+      -JobManager _jobManager
+      -bool _isSelectionBarVisible
+      -string _selectionCountText
+      +JobsPageViewModel(jobManager: JobManager)
+      +ObservableCollection~JobViewModel~ Jobs
+      +bool IsSelectionBarVisible
+      +string SelectionCountText
+      +string HeaderTitle
+      +string HeaderSubtitle
+      +string CreateJobLabel
+      +string DeselectAllLabel
+      +string RunSelectedLabel
+      +ICommand CreateJobCommand
+      +ICommand DeselectAllCommand
+      +ICommand RunSelectedCommand
+      +event EventHandler? CreateJobRequested
+      +event EventHandler~JobViewModel~? PlayJobRequested
+      +event EventHandler? RunSelectedRequested
+      +event EventHandler~string~? ErrorOccurred
+      -LoadJobs() void
+      -SubscribeToJobVM(vm: JobViewModel) void
+      +OnJobCreated(name: string, type: JobType, sourcePath: string, destinationPath: string) void
+      +ExecutePlayJob(vm: JobViewModel, password: string) Task
+      +ExecuteRunSelected(selected: List~JobViewModel~, password: string) Task
+      +CheckBusinessApp() string?
+      +GetSelectedJobs() List~JobViewModel~
+      -UpdateSelectionBar() void
+      +Dispose() void
+    }
+
+    class JobViewModel {
+      -Job _job
+      -JobState _state
+      -double _progress
+      -int? _totalFiles
+      -int? _remainingFiles
+      -long? _totalSize
+      -long? _remainingSize
+      -bool _isSelected
+      -bool _isExpanded
+      -bool _isDeleteConfirming
+      +JobViewModel(job: Job)
+      +Job Job
+      +string Name
+      +string SourcePath
+      +string DestinationPath
+      +string TypeLabel
+      +JobState State
+      +double Progress
+      +int? TotalFiles
+      +int? RemainingFiles
+      +long? TotalSize
+      +long? RemainingSize
+      +bool IsSelected
+      +bool IsExpanded
+      +bool IsDeleteConfirming
+      +string StatusLabel
+      +ICommand PlayPauseResumeCommand
+      +ICommand StopCommand
+      +ICommand DeleteCommand
+      +ICommand ToggleExpandCommand
+      +ICommand ConfirmDeleteCommand
+      +ICommand CancelDeleteCommand
+      +event EventHandler~JobViewModel~? PlayRequested
+      +event EventHandler~JobViewModel~? PauseRequested
+      +event EventHandler~JobViewModel~? ResumeRequested
+      +event EventHandler~JobViewModel~? StopRequested
+      +event EventHandler~JobViewModel~? DeleteRequested
+      +event EventHandler? SelectionChanged
+      +ApplyState(entry: StateEntry) void
+      -OnPlayPauseResume() void
+      -OnStop() void
+      -OnDelete() void
+      -OnToggleExpand() void
+      -OnConfirmDelete() void
+      -OnCancelDelete() void
+    }
+
+    class LogsPageViewModel {
+      -JobManager _jobManager
+      -ConfigParser _configParser
+      -ObservableCollection~LogEntryViewModel~ _logs
+      -int _logsCount
+      -string _currentLogFilePath
+      -int _lastLoadedLogCount
+      +LogsPageViewModel(jobManager: JobManager)
+      +ObservableCollection~LogEntryViewModel~ Logs
+      +int LogCount
+      +string HeaderTitle
+      +string OpenFolderLabel
+      +string TotalLogsLabel
+      +ICommand OpenFolderCommand
+      +event EventHandler? LogAdded
+      -LoadLogs() void
+      -LoadJsonLogs(filePath: string) void
+      -LoadXmlLogs(filePath: string) void
+      -OnLogEntryWritten(sender: object?, e: LogEntryEventArgs) void
+      -OnLanguageChanged(sender: object?, e: LanguageChangedEventArgs) void
+      -OnLogFormatChanged(sender: object?, e: LogFormatChangedEventArgs) void
+      -OpenFolder() void
+      +Dispose() void
+    }
+
+    class LogEntryViewModel {
+      -string _logText
+      +LogEntryViewModel(logText: string)
+      +string LogText
+    }
+
+    class SettingsPageViewModel {
+      -ConfigParser _configParser
+      -JobManager _jobManager
+      -string _newPriorityExtensionText
+      -string _newEncryptionExtensionText
+      -string _newBusinessAppText
+      -string _maxConcurrentJobs
+      -long _largeFileSizeLimitKb
+      +SettingsPageViewModel(jobManager: JobManager)
+      +string HeaderTitle
+      +string LogsSectionTitle
+      +string EncryptionSectionTitle
+      +string BusinessAppsSectionTitle
+      +string PrioritySectionTitle
+      +string PerformanceSectionTitle
+      +string LanguageSectionTitle
+      +string CurrentLanguageValue
+      +string LogsFormatValue
+      +string StatePathValue
+      +string VersionValue
+      +string NewPriorityExtensionText
+      +string NewEncryptionExtensionText
+      +string NewBusinessAppText
+      +string MaxConcurrentJobs
+      +long LargeFileSizeLimitKb
+      +ObservableCollection~ExtensionItemViewModel~ EncryptionExtensions
+      +ObservableCollection~AppItemViewModel~ BusinessApps
+      +ObservableCollection~ExtensionItemViewModel~ PriorityExtensions
+      +ICommand SetJsonFormatCommand
+      +ICommand SetXmlFormatCommand
+      +ICommand SetFrenchLanguageCommand
+      +ICommand SetEnglishLanguageCommand
+      +ICommand AddPriorityExtensionCommand
+      +ICommand AddEncryptionExtensionCommand
+      +ICommand AddBusinessAppCommand
+      -SetLogFormat(format: string) void
+      -AddPriorityExtension() void
+      -AddEncryptionExtension() void
+      -OnLanguageChanged(sender: object?, e: LanguageChangedEventArgs) void
+      -OnLogFormatChanged(sender: object?, e: LogFormatChangedEventArgs) void
+      +Dispose() void
+    }
+
+    class ExtensionItemViewModel {
+      +string DisplayText
+      +ICommand RemoveCommand
+      +ExtensionItemViewModel(ext: string, removeCallback: Action~ExtensionItemViewModel~)
+    }
+
+    class AppItemViewModel {
+      +string DisplayText
+      +ICommand RemoveCommand
+      +AppItemViewModel(name: string, removeCallback: Action~AppItemViewModel~)
+    }
+  }
+
   namespace EasySave.Core {
     class JobManager {
       -List~Job~ _jobs
@@ -401,6 +629,10 @@ classDiagram
       +GetJobs() List~Job~
       +Close() void
       +LaunchJob(job: Job, password: string) void
+      +LaunchMultipleJobsAsync(jobs: List~Job~, password: string) Task
+      +PauseJob(job: Job) void
+      +ResumeJob(job: Job) void
+      +StopJob(job: Job) void
       +CheckBusinessApplications() string?
       -CreateLogFormatter() ILogFormatter
       -LoadJobsFromConfig() void
@@ -469,6 +701,7 @@ classDiagram
     class JobState {
       <<enumeration>>
       Active
+      Paused
       Inactive
     }
   }
@@ -511,6 +744,19 @@ classDiagram
       +Format(timestamp: DateTime, name: string, content: Dictionary~string, object~) string
       +Close(filePath: string) void
       -SanitizeXmlElementName(name: string) string
+    }
+  }
+
+  namespace EasyLog.Server {
+    class SocketServer {
+      -Socket? _listenerSocket
+      -int _port
+      -EasyLog _logger
+      -bool _isRunning
+      +SocketServer(port: int, logDirectory: string)
+      +Start() void
+      +Stop() void
+      -HandleClientAsync(clientSocket: Socket) Task
     }
   }
 ```
@@ -654,7 +900,7 @@ sequenceDiagram
     deactivate CLI
 ```
 
-### 3.4 JSON Logger
+### 3.4 JSON local Logger
 
 ```mermaid
 sequenceDiagram

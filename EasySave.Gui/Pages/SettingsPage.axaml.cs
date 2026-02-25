@@ -1,376 +1,180 @@
-using Avalonia.Controls;
-using EasySave.Core;
-using EasySave.Core.Localization;
-using EasySave.Models;
 using System;
-using System.IO;
-using System.Linq;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using EasySave.Core;
+using EasySave.Gui.ViewModels;
 
 namespace EasySave.GUI.Pages;
 
 public partial class SettingsPage : UserControl
 {
-    private readonly ConfigParser _configParser;
-    private readonly JobManager? _jobManager;
-
-    public SettingsPage() : this(null, null)
+    public SettingsPage()
     {
-    }
-
-    public SettingsPage(ConfigParser? configParser, JobManager? jobManager = null)
-    {
-        _configParser = configParser ?? new ConfigParser("config.json");
-        _jobManager = jobManager;
         InitializeComponent();
+        AddHandler(KeyDownEvent, OnKeyDown, handledEventsToo: true);
+        this.Loaded += (s, e) => ApplyStyles();
+    }
 
-        LocalizationManager.LanguageChanged += OnLanguageChangedEvent;
-
-        // Subscribe to log format change events
-        if (_jobManager != null)
+    private void ApplyStyles()
+    {
+        if (this.FindControl<TextBox>("LargeFileSizeTextBox") is TextBox textBox)
         {
-            _jobManager.LogFormatChanged += OnLogFormatChangedEvent;
+            textBox.Background = Brushes.White;
+            textBox.Foreground = new SolidColorBrush(Color.Parse("#000000"));
+            textBox.CaretBrush = Brushes.Transparent;
+            textBox.BorderThickness = new Thickness(0);
         }
 
-        var headerTitleText = this.FindControl<TextBlock>("HeaderTitleText");
-        if (headerTitleText != null) headerTitleText.Text = LocalizationManager.Get("SettingsPage_Header_Title");
-
-        var headerSubtitleText = this.FindControl<TextBlock>("HeaderSubtitleText");
-        if (headerSubtitleText != null) headerSubtitleText.Text = LocalizationManager.Get("SettingsPage_Header_Subtitle");
-
-        var logsSectionTitle = this.FindControl<TextBlock>("LogsSectionTitle");
-        if (logsSectionTitle != null) logsSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Logs");
-
-        var stateSectionTitle = this.FindControl<TextBlock>("StateSectionTitle");
-        if (stateSectionTitle != null) stateSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_State");
-
-        var encryptionSectionTitle = this.FindControl<TextBlock>("EncryptionSectionTitle");
-        if (encryptionSectionTitle != null) encryptionSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Encryption");
-
-        var businessAppsSectionTitle = this.FindControl<TextBlock>("BusinessAppsSectionTitle");
-        if (businessAppsSectionTitle != null) businessAppsSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps");
-
-        var logsPathLabel = this.FindControl<TextBlock>("LogsPathLabel");
-        if (logsPathLabel != null) logsPathLabel.Text = LocalizationManager.Get("SettingsPage_Section_Logs_Path");
-
-        var logsFormatLabel = this.FindControl<TextBlock>("LogsFormatLabel");
-        if (logsFormatLabel != null) logsFormatLabel.Text = LocalizationManager.Get("SettingsPage_Section_Logs_Format");
-
-        var statePathLabel = this.FindControl<TextBlock>("StatePathLabel");
-        if (statePathLabel != null) statePathLabel.Text = LocalizationManager.Get("SettingsPage_Section_State_Path");
-
-        var extensionsLabel = this.FindControl<TextBlock>("ExtensionsLabel");
-        if (extensionsLabel != null) extensionsLabel.Text = LocalizationManager.Get("SettingsPage_Section_Encryption_Extensions");
-
-        var appsLabel = this.FindControl<TextBlock>("AppsLabel");
-        if (appsLabel != null) appsLabel.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps_List");
-
-        var languageSectionTitle = this.FindControl<TextBlock>("LanguageSectionTitle");
-        if (languageSectionTitle != null) languageSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Language");
-
-        var currentLanguageLabel = this.FindControl<TextBlock>("CurrentLanguageLabel");
-        if (currentLanguageLabel != null) currentLanguageLabel.Text = LocalizationManager.Get("SettingsPage_Section_Language_Current");
-
-        var frenchButton = this.FindControl<Button>("FrenchButton");
-        if (frenchButton != null) frenchButton.Click += OnFrenchClick;
-
-        var englishButton = this.FindControl<Button>("EnglishButton");
-        if (englishButton != null) englishButton.Click += OnEnglishClick;
-
-        var aboutSectionTitle = this.FindControl<TextBlock>("AboutSectionTitle");
-        if (aboutSectionTitle != null) aboutSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_About");
-
-        var versionLabel = this.FindControl<TextBlock>("VersionLabel");
-        if (versionLabel != null) versionLabel.Text = LocalizationManager.Get("SettingsPage_Section_About_Version");
-
-        // Setup log format buttons
-        var jsonButton = this.FindControl<Button>("JsonFormatButton");
-        if (jsonButton != null) jsonButton.Click += OnJsonFormatClick;
-
-        var xmlButton = this.FindControl<Button>("XmlFormatButton");
-        if (xmlButton != null) xmlButton.Click += OnXmlFormatClick;
-
-        PopulateData();
-    }
-
-    private void OnFrenchClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        ChangeLanguage("fr");
-    }
-
-    private void OnEnglishClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        ChangeLanguage("en");
-    }
-
-    private void OnJsonFormatClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        ChangeLogFormat("json");
-    }
-
-    private void OnXmlFormatClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        ChangeLogFormat("xml");
-    }
-
-    private void ChangeLogFormat(string format)
-    {
-        try
+        if (this.FindControl<Button>("IncrementBtn") is Button incrementBtn)
         {
-            if (_jobManager != null)
+            incrementBtn.Background = Brushes.White;
+            incrementBtn.Foreground = new SolidColorBrush(Color.Parse("#000000"));
+            incrementBtn.BorderThickness = new Thickness(0);
+        }
+
+        if (this.FindControl<Button>("DecrementBtn") is Button decrementBtn)
+        {
+            decrementBtn.Background = Brushes.White;
+            decrementBtn.Foreground = new SolidColorBrush(Color.Parse("#000000"));
+            decrementBtn.BorderThickness = new Thickness(0);
+        }
+
+        FindAndStyleNumericUpDowns(this);
+    }
+
+    private void FindAndStyleNumericUpDowns(Control parent)
+    {
+        if (parent is NumericUpDown numericUpDown && numericUpDown.Classes.Contains("input-field"))
+        {
+            StyleNumericUpDown(numericUpDown);
+        }
+
+        if (parent is Panel panel)
+        {
+            foreach (var child in panel.Children)
             {
-                _jobManager.SetLogFormat(format);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error changing log format: {ex.Message}");
-        }
-    }
-
-    private void OnLogFormatChangedEvent(object? sender, EasySave.Core.LogFormatChangedEventArgs e)
-    {
-        try
-        {
-            PopulateData();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error updating log format display: {ex.Message}");
-        }
-    }
-
-
-    private void ChangeLanguage(string languageCode)
-    {
-        try
-        {
-            LocalizationManager.SetLanguage(languageCode);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error changing language: {ex.Message}");
-        }
-    }
-
-    private void OnLanguageChangedEvent(object? sender, EasySave.Core.Localization.LanguageChangedEventArgs e)
-    {
-        try
-        {
-            RefreshUI();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error refreshing SettingsPage on language change: {ex.Message}");
-        }
-    }
-
-    private void RefreshUI()
-    {
-        var headerTitleText = this.FindControl<TextBlock>("HeaderTitleText");
-        if (headerTitleText != null) headerTitleText.Text = LocalizationManager.Get("SettingsPage_Header_Title");
-
-        var headerSubtitleText = this.FindControl<TextBlock>("HeaderSubtitleText");
-        if (headerSubtitleText != null) headerSubtitleText.Text = LocalizationManager.Get("SettingsPage_Header_Subtitle");
-
-        var logsSectionTitle = this.FindControl<TextBlock>("LogsSectionTitle");
-        if (logsSectionTitle != null) logsSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Logs");
-
-        var stateSectionTitle = this.FindControl<TextBlock>("StateSectionTitle");
-        if (stateSectionTitle != null) stateSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_State");
-
-        var encryptionSectionTitle = this.FindControl<TextBlock>("EncryptionSectionTitle");
-        if (encryptionSectionTitle != null) encryptionSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Encryption");
-
-        var businessAppsSectionTitle = this.FindControl<TextBlock>("BusinessAppsSectionTitle");
-        if (businessAppsSectionTitle != null) businessAppsSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps");
-
-        var languageSectionTitle = this.FindControl<TextBlock>("LanguageSectionTitle");
-        if (languageSectionTitle != null) languageSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_Language");
-
-        var logsPathLabel = this.FindControl<TextBlock>("LogsPathLabel");
-        if (logsPathLabel != null) logsPathLabel.Text = LocalizationManager.Get("SettingsPage_Section_Logs_Path");
-
-        var logsFormatLabel = this.FindControl<TextBlock>("LogsFormatLabel");
-        if (logsFormatLabel != null) logsFormatLabel.Text = LocalizationManager.Get("SettingsPage_Section_Logs_Format");
-
-        var statePathLabel = this.FindControl<TextBlock>("StatePathLabel");
-        if (statePathLabel != null) statePathLabel.Text = LocalizationManager.Get("SettingsPage_Section_State_Path");
-
-        var extensionsLabel = this.FindControl<TextBlock>("ExtensionsLabel");
-        if (extensionsLabel != null) extensionsLabel.Text = LocalizationManager.Get("SettingsPage_Section_Encryption_Extensions");
-
-        var appsLabel = this.FindControl<TextBlock>("AppsLabel");
-        if (appsLabel != null) appsLabel.Text = LocalizationManager.Get("SettingsPage_Section_BusinessApps_List");
-
-        var currentLanguageLabel = this.FindControl<TextBlock>("CurrentLanguageLabel");
-        if (currentLanguageLabel != null) currentLanguageLabel.Text = LocalizationManager.Get("SettingsPage_Section_Language_Current");
-
-        var aboutSectionTitle = this.FindControl<TextBlock>("AboutSectionTitle");
-        if (aboutSectionTitle != null) aboutSectionTitle.Text = LocalizationManager.Get("SettingsPage_Section_About");
-
-        var versionLabel = this.FindControl<TextBlock>("VersionLabel");
-        if (versionLabel != null) versionLabel.Text = LocalizationManager.Get("SettingsPage_Section_About_Version");
-
-        UpdateCurrentLanguageDisplay();
-
-        PopulateData();
-    }
-
-    private void UpdateCurrentLanguageDisplay()
-    {
-        var currentLanguageText = this.FindControl<TextBlock>("CurrentLanguageText");
-        if (currentLanguageText != null)
-        {
-            string languageName = LocalizationManager.CurrentCulture.TwoLetterISOLanguageName == "fr"
-                ? LocalizationManager.Get("Language_French")
-                : LocalizationManager.Get("Language_English");
-            currentLanguageText.Text = languageName;
-        }
-    }
-
-    private void PopulateData()
-    {
-        try
-        {
-            UpdateCurrentLanguageDisplay();
-
-            var logsPathText = this.FindControl<TextBlock>("LogsPathText");
-            if (logsPathText != null)
-            {
-                string logsPath = _configParser.GetLogsPath();
-                logsPathText.Text = Path.GetFullPath(logsPath);
-            }
-
-            var logsFormatText = this.FindControl<TextBlock>("LogsFormatText");
-            if (logsFormatText != null) logsFormatText.Text = _configParser.GetLogFormat().ToUpper();
-
-            var statePathText = this.FindControl<TextBlock>("StatePathText");
-            if (statePathText != null)
-            {
-                var stateFilePath = _configParser.Config?["config"]?["stateFilePath"]?.GetValue<string>();
-                if (!string.IsNullOrEmpty(stateFilePath))
+                if (child is Control control)
                 {
-                    statePathText.Text = Path.GetFullPath(stateFilePath);
-                }
-                else
-                {
-                    statePathText.Text = "N/A";
-                }
-            }
-
-            var versionText = this.FindControl<TextBlock>("VersionText");
-            if (versionText != null)
-            {
-                string version = GetApplicationVersion();
-                versionText.Text = version;
-            }
-
-            var extensionsPanel = this.FindControl<WrapPanel>("ExtensionsPanel");
-            if (extensionsPanel != null)
-            {
-                extensionsPanel.Children.Clear();
-                var extensions = _configParser.GetEncryptionExtensions();
-
-                if (extensions.Count == 0)
-                {
-                    var emptyText = new TextBlock
-                    {
-                        Text = LocalizationManager.Get("SettingsPage_NoExtensions"),
-                        Foreground = Avalonia.Media.Brushes.Gray,
-                        FontSize = 12
-                    };
-                    extensionsPanel.Children.Add(emptyText);
-                }
-                else
-                {
-                    foreach (var ext in extensions)
-                    {
-                        var badge = CreateBadge(ext);
-                        extensionsPanel.Children.Add(badge);
-                    }
-                }
-            }
-
-            var appsPanel = this.FindControl<WrapPanel>("AppsPanel");
-            if (appsPanel != null)
-            {
-                appsPanel.Children.Clear();
-                var apps = _configParser.GetBusinessApplications();
-
-                if (apps.Count == 0)
-                {
-                    var emptyText = new TextBlock
-                    {
-                        Text = LocalizationManager.Get("SettingsPage_NoApps"),
-                        Foreground = Avalonia.Media.Brushes.Gray,
-                        FontSize = 12
-                    };
-                    appsPanel.Children.Add(emptyText);
-                }
-                else
-                {
-                    foreach (var app in apps)
-                    {
-                        var badge = CreateBadge(app);
-                        appsPanel.Children.Add(badge);
-                    }
+                    FindAndStyleNumericUpDowns(control);
                 }
             }
         }
-        catch (Exception ex)
+        else if (parent is ItemsControl itemsControl)
         {
-            System.Diagnostics.Debug.WriteLine($"Error populating settings data: {ex.Message}");
-        }
-    }
-
-    private Border CreateBadge(string text)
-    {
-        return new Border
-        {
-            Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#F3F4F6")),
-            CornerRadius = new Avalonia.CornerRadius(6),
-            Padding = new Avalonia.Thickness(8, 3),
-            Margin = new Avalonia.Thickness(4, 4, 4, 4),
-            Child = new TextBlock
+            foreach (var child in itemsControl.ItemsSource as System.Collections.IEnumerable ?? new object[0])
             {
-                Text = text,
-                FontSize = 11,
-                FontWeight = Avalonia.Media.FontWeight.Bold,
-                Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#374151"))
-            }
-        };
-    }
-
-    private string GetApplicationVersion()
-    {
-        try
-        {
-            string projectRoot = AppDomain.CurrentDomain.BaseDirectory;
-
-            DirectoryInfo currentDir = new DirectoryInfo(projectRoot);
-            while (currentDir != null && currentDir.Parent != null)
-            {
-                string czTomlPath = Path.Combine(currentDir.FullName, ".cz.toml");
-                if (File.Exists(czTomlPath))
+                if (child is Control control)
                 {
-                    string content = File.ReadAllText(czTomlPath);
-
-                    var versionMatch = System.Text.RegularExpressions.Regex.Match(content, @"version\s*=\s*""([^""]+)""");
-                    if (versionMatch.Success)
-                    {
-                        return versionMatch.Groups[1].Value;
-                    }
-                    break;
+                    FindAndStyleNumericUpDowns(control);
                 }
-                currentDir = currentDir.Parent;
             }
+        }
+    }
 
-            return "Unknown";
-        }
-        catch (Exception ex)
+    private void StyleNumericUpDown(NumericUpDown numericUpDown)
+    {
+        numericUpDown.ApplyTemplate();
+
+        var textBox = numericUpDown.FindControl<TextBox>("PART_TextBox");
+        if (textBox != null)
         {
-            System.Diagnostics.Debug.WriteLine($"Error reading version: {ex.Message}");
-            return "Unknown";
+            textBox.Background = Brushes.White;
+            textBox.Foreground = new SolidColorBrush(Color.Parse("#000000"));
+            textBox.CaretBrush = Brushes.Transparent;
+            textBox.BorderThickness = new Thickness(0);
         }
+
+        var incrementBtn = numericUpDown.FindControl<RepeatButton>("PART_IncrementButton");
+        if (incrementBtn != null)
+        {
+            incrementBtn.Background = Brushes.White;
+            incrementBtn.Foreground = new SolidColorBrush(Color.Parse("#000000"));
+            incrementBtn.BorderThickness = new Thickness(0);
+        }
+
+        var decrementBtn = numericUpDown.FindControl<RepeatButton>("PART_DecrementButton");
+        if (decrementBtn != null)
+        {
+            decrementBtn.Background = Brushes.White;
+            decrementBtn.Foreground = new SolidColorBrush(Color.Parse("#000000"));
+            decrementBtn.BorderThickness = new Thickness(0);
+        }
+    }
+
+    private void OnIncrementLargeFileSize(object? sender, RoutedEventArgs e)
+    {
+        if (this.DataContext is SettingsPageViewModel vm && long.TryParse(vm.LargeFileSizeLimitKb.ToString(), out long value))
+        {
+            vm.LargeFileSizeLimitKb = value + 1;
+        }
+    }
+
+    private void OnDecrementLargeFileSize(object? sender, RoutedEventArgs e)
+    {
+        if (this.DataContext is SettingsPageViewModel vm && long.TryParse(vm.LargeFileSizeLimitKb.ToString(), out long value))
+        {
+            vm.LargeFileSizeLimitKb = value - 1;
+        }
+    }
+
+    private void OnLargeFileSizePointerEntered(object? sender, PointerEventArgs e)
+    {
+        if (this.FindControl<Border>("LargeFileSizeBorder") is Border border)
+        {
+            border.BorderBrush = new SolidColorBrush(Color.Parse("#F97316"));
+        }
+    }
+
+    private void OnLargeFileSizePointerExited(object? sender, PointerEventArgs e)
+    {
+        var textBox = sender as TextBox;
+        if (textBox?.IsFocused != true)
+        {
+            if (this.FindControl<Border>("LargeFileSizeBorder") is Border border)
+            {
+                border.BorderBrush = new SolidColorBrush(Color.Parse("#E0E0E0"));
+            }
+        }
+    }
+
+    private void OnLargeFileSizeGotFocus(object? sender, GotFocusEventArgs e)
+    {
+        if (this.FindControl<Border>("LargeFileSizeBorder") is Border border)
+        {
+            border.BorderBrush = new SolidColorBrush(Color.Parse("#EA580C"));
+        }
+    }
+
+    private void OnLargeFileSizeLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (this.FindControl<Border>("LargeFileSizeBorder") is Border border)
+        {
+            border.BorderBrush = new SolidColorBrush(Color.Parse("#E0E0E0"));
+        }
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            if (sender is Control control)
+            {
+                var focusedControl = TopLevel.GetTopLevel(control)?.FocusManager?.GetFocusedElement();
+                if (focusedControl is Control fc)
+                {
+                    fc.Focus(NavigationMethod.Pointer);
+                }
+            }
+            this.Focus(NavigationMethod.Pointer);
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
     }
 }

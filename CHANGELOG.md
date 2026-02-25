@@ -1,3 +1,111 @@
+## v2.6.0 (2026-02-25)
+
+### Feat
+
+- **core/gui**: Add EasyLog server configuration UI in Settings page
+- **gui**: Display EasyLog server config fields in settings
+- **core**: Add EasyLog server configuration getters
+- **gui**: Add Performance, Encryption, Priority and BusinessApps sections
+- **jobs**: Auto-deselect jobs after launch
+- **logs**: Format JSON with indentation for UI display
+- **logs**: Add ListBox name for auto-scroll
+
+### Fix
+
+- **easylog**: Fix EasyLog network protocol timestamp format compatibility
+- **EasySave.GUI**: fix pause button icon and keep precentage on pause
+- **EasySave.GUI**: fix bug on pause button
+- **core**: Add translations for new settings sections
+- **core**: Add AppItemViewModel for business applications
+- **core**: Add missing "Paused" status localization
+- **jobs**: Update StatusLabel when job state changes
+- **logs**: Send complete JSON objects via LogEntryWritten event
+- **logging**: Fix JSON format generation in EasyLog
+- **logs**: Improve JSON parsing for malformed files
+
+### Refactor
+
+- **global**: clear unused comments
+- **core**: Add encryption, priority, and performance properties into settings
+- **architecture**: refacto
+
+## v2.5.0 (2026-02-24)
+
+### Feat
+
+- **cryptosoft**: cryptosoft mono instance
+
+## v2.4.0 (2026-02-24)
+
+### Feat
+
+- **large-file-processing**: add large file processing base code
+
+## v2.3.0 (2026-02-23)
+
+### Feat
+
+- **multithreading**: file management
+
+### Fix
+
+- **cryptosoft**: add cryptosoft to the bluid project
+- **jobmanager**: cryptosoft
+- **cryptosoft.exe**: delete cryptosoft argument
+- cryptosoft.exe
+- **jobmanager**: cryptosoft
+- **jobmanager**: cryptosoft name
+
+### Refactor
+
+- **jobManager**: delete comments
+
+## v2.2.0 (2026-02-23)
+
+### Feat
+
+- **gui**: Implement multi-job selection and parallel execution
+- **gui**: Create CustomCheckBox component and integrate in JobCard
+- **core**: Add localization strings for multi-job selection
+
+## v2.1.1 (2026-02-23)
+
+### Fix
+
+- **EasyLog.Lib.Test**: remove obsolete unit test
+
+## v2.1.0 (2026-02-23)
+
+### Feat
+
+- **app**: add icon app
+- **jobmanager**: add software tracking
+- **core**: send machine hostname as clientId from client
+- **easylog**: support 3 logging modes
+- **easylog**: create centralized log server
+- **easylog**: add network client for remote log sending
+- **job-status**: add play pause and stop job
+- **multithreding**: add multithreding features
+
+### Fix
+
+- play pause stop
+- **easylog**: add client id into logs
+- **easylog**: improve network error handling and graceful shutdown
+- **config**: add easyLogServer configuration section
+- play pause stop
+- **state**: add job status
+
+### Refactor
+
+- **easylog**: simplify client identification strategy
+
+## v2.0.1 (2026-02-18)
+
+### Fix
+
+- **EasySave.Core**: move Cryptosoft path to config.json
+
 ## v2.0.0 (2026-02-13)
 
 ## v1.5.0 (2026-02-13)

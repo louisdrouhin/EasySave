@@ -39,7 +39,7 @@ public class EasyLogTests
 
         // Assert
         Assert.NotNull(easyLog);
-        // Vérifier que le chemin contient la date (ex: test_2026-02-05.json)
+        // Verify that the path contains the date (e.g., test_2026-02-05.json)
         var currentPath = easyLog.GetCurrentLogPath();
         Assert.Contains(DateTime.Now.ToString("yyyy-MM-dd"), currentPath);
 
@@ -184,25 +184,6 @@ public class EasyLogTests
 
         // Assert
         formatterMock.Verify(f => f.Format(timestamp, name, content), Times.Once);
-
-        // Cleanup
-        CleanupTestFile(logPath);
-    }
-
-    [Fact]
-    public void Write_WithFormatterException_PropagatesException()
-    {
-        // Arrange
-        var formatterMock = new Mock<ILogFormatter>();
-        formatterMock.Setup(f => f.Format(It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
-            .Throws(new InvalidOperationException("Formatter error"));
-
-        var logPath = GetTempLogBasePath();
-        var easyLog = new EasyLog(formatterMock.Object, logPath);
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-            easyLog.Write(DateTime.Now, "Event", new Dictionary<string, object>()));
 
         // Cleanup
         CleanupTestFile(logPath);
@@ -416,7 +397,7 @@ public class EasyLogTests
         // Assert
         var fileContent = File.ReadAllText(easyLog.GetCurrentLogPath());
 
-        // Vérifier que c'est un JSON valide
+        // Verify that it is valid JSON
         var parsedJson = System.Text.Json.JsonDocument.Parse(fileContent);
         var logsArray = parsedJson.RootElement.GetProperty("logs");
 

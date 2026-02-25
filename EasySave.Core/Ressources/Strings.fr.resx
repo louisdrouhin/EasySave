@@ -348,6 +348,22 @@ Pile :
         xml:space="preserve">
       <value>Format des logs</value>
   </data>
+  <data name="SettingsPage_Section_Logs_ServerEnabled"
+        xml:space="preserve">
+      <value>État du serveur</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_ServerMode"
+        xml:space="preserve">
+      <value>Mode du serveur</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_ServerHost"
+        xml:space="preserve">
+      <value>Hôte du serveur</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_ServerPort"
+        xml:space="preserve">
+      <value>Port du serveur</value>
+  </data>
   <data name="SettingsPage_Section_State"
         xml:space="preserve">
       <value>État</value>
@@ -388,7 +404,32 @@ Pile :
         xml:space="preserve">
       <value>Langue actuelle</value>
   </data>
-  <data name="SettingsPage_Section_About"
+      <data name="SettingsPage_Section_Priority"
+            xml:space="preserve">
+          <value>Gestion des Priorités</value>
+      </data>
+      <data name="SettingsPage_Section_Priority_Extensions"
+            xml:space="preserve">
+          <value>Extensions prioritaires (Les sauvegardes d'autres fichiers attendront celles-ci)</value>
+      </data>
+      <data name="SettingsPage_NoPriorityExtensions"
+            xml:space="preserve">
+          <value>Aucune extension prioritaire configurée</value>
+      </data>
+      <data name="SettingsPage_Section_Performance"
+            xml:space="preserve">
+          <value>Performance</value>
+      </data>
+      <data name="SettingsPage_Section_Performance_MaxConcurrentJobs"
+            xml:space="preserve">
+          <value>Nombre max de jobs parallèles</value>
+      </data>
+      <data name="SettingsPage_Section_Performance_LargeFileSize"
+            xml:space="preserve">
+          <value>Taille limite de fichier volumineux</value>
+      </data>
+      <data name="SettingsPage_Section_About"
+
         xml:space="preserve">
       <value>À propos</value>
   </data>
@@ -427,6 +468,13 @@ Pile :
   <data name="JobCard_Label_Size" xml:space="preserve"><value>TAILLE (TRAITÉE / TOTAL)</value></data>
   <data name="JobCard_Status_Inactive" xml:space="preserve"><value>Inactif</value></data>
   <data name="JobCard_Status_Active" xml:space="preserve"><value>Actif</value></data>
+  <data name="JobCard_Status_Paused" xml:space="preserve"><value>En pause</value></data>
   <data name="JobCard_Progress_InProgress" xml:space="preserve"><value>EN COURS</value></data>
   <data name="JobCard_Progress_Processing" xml:space="preserve"><value>Traitement...</value></data>
+
+  <!-- JobsPage - Multi-selection -->
+  <data name="JobsPage_SelectAll" xml:space="preserve"><value>Tout sélectionner</value></data>
+  <data name="JobsPage_DeselectAll" xml:space="preserve"><value>Tout désélectionner</value></data>
+  <data name="JobsPage_RunSelected" xml:space="preserve"><value>Lancer la sélection ({0})</value></data>
+  <data name="JobsPage_SelectedCount" xml:space="preserve"><value>{0} job(s) sélectionné(s)</value></data>
 </root>

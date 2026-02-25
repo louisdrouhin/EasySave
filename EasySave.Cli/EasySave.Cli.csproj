@@ -7,9 +7,8 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="..\config.example.json"
-              CopyToOutputDirectory="PreserveNewest" />
-        <None Include="..\config.json"
-              CopyToOutputDirectory="Always" />
+              CopyToOutputDirectory="PreserveNewest"
+              Link="config.json" />
         <None Include="..\Cryptosoft.exe"
               CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>

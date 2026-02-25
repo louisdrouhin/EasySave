@@ -1,17 +1,292 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="EasySave.GUI.Pages.SettingsPage">
+             xmlns:vm="using:EasySave.Gui.ViewModels"
+             x:Class="EasySave.GUI.Pages.SettingsPage"
+             x:DataType="vm:SettingsPageViewModel">
+    <UserControl.Resources>
+        <!-- ComboBox Item Template -->
+        <DataTemplate x:Key="ComboBoxItemTemplate">
+            <Border Background="{Binding $parent[ListBoxItem].Background}"
+                    Padding="8,6"
+                    Name="itemBorder">
+                <TextBlock Text="{Binding}"
+                           Foreground="{Binding $parent[ListBoxItem].Foreground}"
+                           VerticalAlignment="Center" />
+            </Border>
+        </DataTemplate>
+
+        <!-- Custom ListBoxItem Template for ComboBox -->
+        <ControlTemplate x:Key="CustomListBoxItemTemplate" TargetType="ListBoxItem">
+            <Border Name="border"
+                    Background="White"
+                    Padding="0"
+                    CornerRadius="0">
+                <ContentPresenter Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  Margin="8,6"
+                                  Foreground="#000000"
+                                  VerticalAlignment="Center" />
+            </Border>
+        </ControlTemplate>
+
+        <!-- Custom CheckBox Template -->
+        <ControlTemplate x:Key="CustomCheckBoxTemplate" TargetType="CheckBox">
+            <Border Name="border"
+                    Background="White"
+                    BorderBrush="#E0E0E0"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="4,2"
+                    Width="20"
+                    Height="20">
+                <TextBlock Name="checkmark"
+                           Text="✓"
+                           Foreground="White"
+                           FontSize="14"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsVisible="False" />
+            </Border>
+        </ControlTemplate>
+
+
+        <!-- Custom NumericUpDown Template -->
+        <ControlTemplate x:Key="CustomNumericUpDownTemplate" TargetType="NumericUpDown">
+            <Border Name="root"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0"
+                             Name="PART_TextBox"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Foreground="#000000"
+                             CaretBrush="Transparent"
+                             Padding="8,6,4,6"
+                             FontSize="{TemplateBinding FontSize}"
+                             VerticalContentAlignment="Center" />
+                    <StackPanel Grid.Column="1"
+                                Orientation="Vertical"
+                                Spacing="0">
+                        <RepeatButton Name="PART_IncrementButton"
+                                      Background="White"
+                                      Foreground="#000000"
+                                      BorderThickness="0"
+                                      Padding="4,2"
+                                      FontSize="12"
+                                      FontWeight="Bold"
+                                      Content="+" />
+                        <RepeatButton Name="PART_DecrementButton"
+                                      Background="White"
+                                      Foreground="#000000"
+                                      BorderThickness="0"
+                                      Padding="4,2"
+                                      FontSize="12"
+                                      FontWeight="Bold"
+                                      Content="−" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </ControlTemplate>
+
+        <!-- Custom ComboBox Template -->
+        <ControlTemplate x:Key="CustomComboBoxTemplate" TargetType="ComboBox">
+            <Grid>
+                <Border Name="PART_Border"
+                        Background="White"
+                        BorderBrush="#E0E0E0"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ContentPresenter Grid.Column="0"
+                                          Name="ContentPresenter"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          Margin="8,6,4,6"
+                                          VerticalAlignment="Center"
+                                          Foreground="#000000"
+                                          FontSize="12" />
+                        <TextBlock Grid.Column="1"
+                                   Text="▼"
+                                   Margin="0,0,8,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="#000000"
+                                   FontSize="10" />
+                    </Grid>
+                </Border>
+                <Popup Name="PART_Popup"
+                       IsOpen="{TemplateBinding IsDropDownOpen, Mode=TwoWay}"
+                       PlacementTarget="{TemplateBinding}"
+                       Placement="BottomEdgeAlignedLeft"
+                       IsLightDismissEnabled="True">
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="0">
+                        <ListBox Name="PART_ListBox"
+                                 ItemsSource="{TemplateBinding ItemsSource}"
+                                 SelectedItem="{TemplateBinding SelectedItem, Mode=TwoWay}"
+                                 Background="White"
+                                 Foreground="#000000"
+                                 Padding="0"
+                                 MinWidth="200"
+                                 MaxHeight="200">
+                            <ListBox.ItemContainerTheme>
+                                <ControlTheme TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="Template" Value="{StaticResource CustomListBoxItemTemplate}" />
+                                    <Setter Property="Background" Value="White" />
+                                    <Setter Property="Foreground" Value="#000000" />
+                                </ControlTheme>
+                            </ListBox.ItemContainerTheme>
+                        </ListBox>
+                    </Border>
+                </Popup>
+            </Grid>
+        </ControlTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- TextBox styling with transparent cursor -->
+        <Style Selector="TextBox.input-field">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="BorderBrush" Value="#E0E0E0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CaretBrush" Value="Transparent" />
+        </Style>
+
+        <!-- TextBox hover state -->
+        <Style Selector="TextBox.input-field:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="#F97316" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <!-- TextBox focus state -->
+        <Style Selector="TextBox.input-field:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <!-- TextBox selection colors -->
+        <Style Selector="TextBox.input-field /template/ TextBlock">
+            <Setter Property="Foreground" Value="#000000" />
+        </Style>
+
+        <!-- NumericUpDown styling with custom template -->
+        <Style Selector="NumericUpDown.input-field">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="BorderBrush" Value="#E0E0E0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template" Value="{StaticResource CustomNumericUpDownTemplate}" />
+        </Style>
+
+        <!-- NumericUpDown hover state -->
+        <Style Selector="NumericUpDown.input-field:pointerover">
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- NumericUpDown focus state -->
+        <Style Selector="NumericUpDown.input-field:focus">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- RepeatButton hover inside NumericUpDown -->
+        <Style Selector="NumericUpDown.input-field /template/ RepeatButton:pointerover">
+            <Setter Property="Background" Value="#F97316" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- RepeatButton pressed inside NumericUpDown -->
+        <Style Selector="NumericUpDown.input-field /template/ RepeatButton:pressed">
+            <Setter Property="Background" Value="#EA580C" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- CheckBox styling -->
+        <Style Selector="CheckBox.input-field">
+            <Setter Property="Template" Value="{StaticResource CustomCheckBoxTemplate}" />
+        </Style>
+
+        <!-- CheckBox checked state -->
+        <Style Selector="CheckBox.input-field:checked /template/ Border#border">
+            <Setter Property="Background" Value="#EA580C" />
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- CheckBox checked checkmark visibility -->
+        <Style Selector="CheckBox.input-field:checked /template/ TextBlock#checkmark">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+
+        <!-- CheckBox checked hover state -->
+        <Style Selector="CheckBox.input-field:checked:pointerover /template/ Border#border">
+            <Setter Property="Background" Value="#F97316" />
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- CheckBox unchecked hover state -->
+        <Style Selector="CheckBox.input-field:pointerover /template/ Border#border">
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- CheckBox focus state -->
+        <Style Selector="CheckBox.input-field:focus /template/ Border#border">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- ComboBox styling -->
+        <Style Selector="ComboBox.input-field">
+            <Setter Property="Template" Value="{StaticResource CustomComboBoxTemplate}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <!-- ComboBox border hover state -->
+        <Style Selector="ComboBox.input-field:pointerover /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#F97316" />
+        </Style>
+
+        <!-- ComboBox border focus state -->
+        <Style Selector="ComboBox.input-field:focus /template/ Border#PART_Border">
+            <Setter Property="BorderBrush" Value="#EA580C" />
+        </Style>
+
+        <!-- ComboBox ListBoxItem custom styling -->
+        <Style Selector="ComboBox.input-field /template/ ListBox ListBoxItem /template/ Border#border">
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <!-- ComboBox ListBoxItem hover state -->
+        <Style Selector="ComboBox.input-field /template/ ListBox ListBoxItem:pointerover /template/ Border#border">
+            <Setter Property="Background" Value="#F97316" />
+        </Style>
+
+        <!-- ComboBox ListBoxItem selected state -->
+        <Style Selector="ComboBox.input-field /template/ ListBox ListBoxItem:selected /template/ Border#border">
+            <Setter Property="Background" Value="#EA580C" />
+        </Style>
+    </UserControl.Styles>
     <Border Padding="20" Background="#FFE6D5">
         <Grid RowDefinitions="Auto,*">
             <!-- Header Section -->
             <Grid Grid.Row="0" ColumnDefinitions="*" Margin="0,0,0,20">
                 <StackPanel Spacing="8">
-                    <TextBlock x:Name="HeaderTitleText"
+                    <TextBlock Text="{Binding HeaderTitle}"
                                FontSize="22"
                                FontWeight="Bold"
                                Foreground="#15171D"/>
-                    <TextBlock x:Name="HeaderSubtitleText"
+                    <TextBlock Text="{Binding HeaderSubtitle}"
                                FontSize="14"
                                Foreground="#666666" />
                 </StackPanel>
@@ -27,7 +302,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="LogsSectionTitle"
+                            <TextBlock Text="{Binding LogsSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -36,41 +311,100 @@
                             <!-- Logs Path -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding LogsPathLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="LogsPathLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding LogsPathValue}"
                                            FontSize="12"
                                            Foreground="#15171D"
-                                           x:Name="LogsPathText"
                                            TextWrapping="Wrap"/>
                             </Grid>
 
                             <!-- Logs Format -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding LogsFormatLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="LogsFormatLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding LogsFormatValue}"
                                            FontSize="12"
-                                           Foreground="#15171D"
-                                           x:Name="LogsFormatText"/>
+                                           Foreground="#15171D"/>
                             </Grid>
 
                             <!-- Format Buttons -->
-                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-                                <Button x:Name="JsonFormatButton"
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                                <Button Command="{Binding SetJsonFormatCommand}"
                                         Content="JSON"
                                         Padding="12,8"
                                         FontSize="12"/>
-                                <Button x:Name="XmlFormatButton"
+                                <Button Command="{Binding SetXmlFormatCommand}"
                                         Content="XML"
                                         Padding="12,8"
                                         FontSize="12"/>
                             </StackPanel>
+
+                            <!-- Server Logs Configuration Section -->
+                            <TextBlock Text="Server Logs Configuration"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="#15171D"
+                                       Margin="0,15,0,8"/>
+
+                            <!-- Server Enabled -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsEnabledLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <CheckBox Grid.Column="1"
+                                          IsChecked="{Binding ServerLogsEnabledValue}"
+                                          VerticalAlignment="Center"
+                                          Classes="input-field"/>
+                            </Grid>
+
+                            <!-- Server Mode -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsModeLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding ServerLogsModes}"
+                                          SelectedItem="{Binding ServerLogsModeValue}"
+                                          IsDropDownOpen="{Binding ServerLogsModeDropDownOpen}"
+                                          Classes="input-field"
+                                          VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- Server Host -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsHostLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding ServerLogsHostValue}"
+                                         Classes="input-field"/>
+                            </Grid>
+
+                            <!-- Server Port -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsPortLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding ServerLogsPortValue}"
+                                         Classes="input-field"/>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -81,7 +415,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="StateSectionTitle"
+                            <TextBlock Text="{Binding StateSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -90,14 +424,14 @@
                             <!-- State Path -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding StatePathLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="StatePathLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding StatePathValue}"
                                            FontSize="12"
                                            Foreground="#15171D"
-                                           x:Name="StatePathText"
                                            TextWrapping="Wrap"/>
                             </Grid>
                         </StackPanel>
@@ -110,21 +444,120 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="EncryptionSectionTitle"
+                            <TextBlock Text="{Binding EncryptionSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
                             <Border Height="1" Background="#E0E0E0" />
 
                             <!-- Extensions Label -->
-                            <TextBlock FontSize="12"
+                            <TextBlock Text="{Binding ExtensionsLabel}"
+                                       FontSize="12"
                                        FontWeight="Bold"
-                                       Foreground="#666666"
-                                       x:Name="ExtensionsLabel"/>
+                                       Foreground="#666666"/>
 
-                            <!-- Extensions Panel -->
-                            <WrapPanel x:Name="ExtensionsPanel"
-                                       Orientation="Horizontal" />
+                            <!-- Extensions Panel with remove capability -->
+                            <WrapPanel Orientation="Horizontal">
+                                <ItemsControl ItemsSource="{Binding EncryptionExtensions}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:ExtensionItemViewModel">
+                                            <Button Background="#F3F4F6"
+                                                    CornerRadius="6"
+                                                    Padding="8,3"
+                                                    Margin="4"
+                                                    Command="{Binding RemoveCommand}"
+                                                    BorderThickness="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayText}"
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="#374151"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </WrapPanel>
+
+                            <!-- Add Encryption Extension -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                <TextBox Text="{Binding NewEncryptionExtensionText}"
+                                         Grid.Column="0"
+                                         Watermark=".ext"
+                                         Margin="0,0,10,0"
+                                         Classes="input-field"/>
+                                <Button Command="{Binding AddEncryptionExtensionCommand}"
+                                        Grid.Column="1"
+                                        Content="Add"
+                                        Padding="12,5"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Priority Extensions Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{Binding PrioritySectionTitle}"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Priority Extensions Label -->
+                            <TextBlock Text="{Binding PriorityExtensionsLabel}"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="#666666"/>
+
+                            <!-- Priority Extensions Panel with remove capability -->
+                            <WrapPanel Orientation="Horizontal">
+                                <ItemsControl ItemsSource="{Binding PriorityExtensions}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:ExtensionItemViewModel">
+                                            <Button Background="#F3F4F6"
+                                                    CornerRadius="6"
+                                                    Padding="8,3"
+                                                    Margin="4"
+                                                    Command="{Binding RemoveCommand}"
+                                                    BorderThickness="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayText}"
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="#374151"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </WrapPanel>
+
+                            <!-- Add Priority Extension -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                <TextBox Text="{Binding NewPriorityExtensionText}"
+                                         Grid.Column="0"
+                                         Watermark=".ext"
+                                         Margin="0,0,10,0"
+                                         Classes="input-field"/>
+                                <Button Command="{Binding AddPriorityExtensionCommand}"
+                                        Grid.Column="1"
+                                        Content="Add"
+                                        Padding="12,5"/>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -135,21 +568,149 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="BusinessAppsSectionTitle"
+                            <TextBlock Text="{Binding BusinessAppsSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
                             <Border Height="1" Background="#E0E0E0" />
 
                             <!-- Apps Label -->
-                            <TextBlock FontSize="12"
+                            <TextBlock Text="{Binding AppsLabel}"
+                                       FontSize="12"
                                        FontWeight="Bold"
-                                       Foreground="#666666"
-                                       x:Name="AppsLabel"/>
+                                       Foreground="#666666"/>
 
-                            <!-- Apps Panel -->
-                            <WrapPanel x:Name="AppsPanel"
-                                       Orientation="Horizontal" />
+                            <!-- Apps Panel with remove capability -->
+                            <WrapPanel Orientation="Horizontal">
+                                <ItemsControl ItemsSource="{Binding BusinessApps}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:AppItemViewModel">
+                                            <Button Background="#F3F4F6"
+                                                    CornerRadius="6"
+                                                    Padding="8,3"
+                                                    Margin="4"
+                                                    Command="{Binding RemoveCommand}"
+                                                    BorderThickness="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center">
+                                                <TextBlock Text="{Binding DisplayText}"
+                                                           FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Foreground="#374151"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </WrapPanel>
+
+                            <!-- Add Business App -->
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                <TextBox Text="{Binding NewBusinessAppText}"
+                                         Grid.Column="0"
+                                         Watermark="App name"
+                                         Margin="0,0,10,0"
+                                         Classes="input-field"/>
+                                <Button Command="{Binding AddBusinessAppCommand}"
+                                        Grid.Column="1"
+                                        Content="Add"
+                                        Padding="12,5"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Performance Section -->
+                    <Border Background="White"
+                            BorderBrush="#E0E0E0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{Binding PerformanceSectionTitle}"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#15171D"/>
+                            <Border Height="1" Background="#E0E0E0" />
+
+                            <!-- Max Concurrent Jobs -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding MaxConcurrentJobsLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding MaxConcurrentJobs}"
+                                         Watermark="Leave empty for default"
+                                         Classes="input-field"/>
+                            </Grid>
+
+                            <!-- Large File Size Limit -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding LargeFileSizeLimitLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                    <Border Name="LargeFileSizeBorder"
+                                            Background="White"
+                                            BorderBrush="#E0E0E0"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Width="200">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBox Grid.Column="0"
+                                                     Name="LargeFileSizeTextBox"
+                                                     Text="{Binding LargeFileSizeLimitKb}"
+                                                     Background="White"
+                                                     BorderThickness="0"
+                                                     Foreground="#000000"
+                                                     CaretBrush="Transparent"
+                                                     Padding="8,6,4,6"
+                                                     FontSize="12"
+                                                     Classes="input-field"
+                                                     PointerEntered="OnLargeFileSizePointerEntered"
+                                                     PointerExited="OnLargeFileSizePointerExited"
+                                                     GotFocus="OnLargeFileSizeGotFocus"
+                                                     LostFocus="OnLargeFileSizeLostFocus"
+                                                     VerticalContentAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Vertical" Spacing="0">
+                                                <Button Name="IncrementBtn"
+                                                        Background="White"
+                                                        Foreground="#000000"
+                                                        BorderThickness="0"
+                                                        Padding="6,4"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Content="+"
+                                                        Width="28"
+                                                        Height="18"
+                                                        Click="OnIncrementLargeFileSize" />
+                                                <Button Name="DecrementBtn"
+                                                        Background="White"
+                                                        Foreground="#000000"
+                                                        BorderThickness="0"
+                                                        Padding="6,4"
+                                                        FontSize="12"
+                                                        FontWeight="Bold"
+                                                        Content="−"
+                                                        Width="28"
+                                                        Height="18"
+                                                        Click="OnDecrementLargeFileSize" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Text="KB"
+                                               VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="#666666"/>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
@@ -160,7 +721,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="LanguageSectionTitle"
+                            <TextBlock Text="{Binding LanguageSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -169,24 +730,24 @@
                             <!-- Current Language Display -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding CurrentLanguageLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="CurrentLanguageLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding CurrentLanguageValue}"
                                            FontSize="12"
-                                           Foreground="#15171D"
-                                           x:Name="CurrentLanguageText"/>
+                                           Foreground="#15171D"/>
                             </Grid>
 
                             <!-- Language Buttons -->
                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
-                                <Button x:Name="FrenchButton"
+                                <Button Command="{Binding SetFrenchLanguageCommand}"
                                         Content="Français"
                                         Classes="language-button"
                                         Padding="12,8"
                                         FontSize="12"/>
-                                <Button x:Name="EnglishButton"
+                                <Button Command="{Binding SetEnglishLanguageCommand}"
                                         Content="English"
                                         Classes="language-button"
                                         Padding="12,8"
@@ -202,7 +763,7 @@
                             CornerRadius="10"
                             Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock x:Name="AboutSectionTitle"
+                            <TextBlock Text="{Binding AboutSectionTitle}"
                                        FontSize="15"
                                        FontWeight="Bold"
                                        Foreground="#15171D"/>
@@ -211,14 +772,14 @@
                             <!-- Version Display -->
                             <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
                                 <TextBlock Grid.Column="0"
+                                           Text="{Binding VersionLabel}"
                                            FontSize="12"
                                            FontWeight="Bold"
-                                           Foreground="#666666"
-                                           x:Name="VersionLabel"/>
+                                           Foreground="#666666"/>
                                 <TextBlock Grid.Column="1"
+                                           Text="{Binding VersionValue}"
                                            FontSize="12"
-                                           Foreground="#15171D"
-                                           x:Name="VersionText"/>
+                                           Foreground="#15171D"/>
                             </Grid>
                         </StackPanel>
                     </Border>

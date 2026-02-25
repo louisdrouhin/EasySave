@@ -3,8 +3,16 @@ using System.Xml;
 
 namespace EasyLog.Lib;
 
+// Formatter for XML logs
+// Serializes log entries to XML format
 public class XmlLogFormatter : ILogFormatter
 {
+    // Formats a log entry to XML
+    // Creates a logEntry element with timestamp, name, and content
+    // @param timestamp - date/time of the entry
+    // @param name - name of the backup
+    // @param content - entry content (converted to XML elements)
+    // @returns minified XML string containing the entry
     public string Format(DateTime timestamp, string name, Dictionary<string, object> content)
     {
         if (content == null)
@@ -24,6 +32,7 @@ public class XmlLogFormatter : ILogFormatter
             writer.WriteElementString("name", name);
 
             writer.WriteStartElement("content");
+            // Converts each property to an XML element
             foreach (var kvp in content)
             {
                 writer.WriteStartElement(SanitizeXmlElementName(kvp.Key));
@@ -38,6 +47,8 @@ public class XmlLogFormatter : ILogFormatter
         return sb.ToString();
     }
 
+    // Closes the XML file by adding the end marker
+    // @param filePath - path to the XML file to close
     public void Close(string filePath)
     {
         try
@@ -45,6 +56,7 @@ public class XmlLogFormatter : ILogFormatter
             if (File.Exists(filePath))
             {
                 var content = File.ReadAllText(filePath);
+                // Adds the logs element end marker if not present
                 if (!content.EndsWith("</logs>"))
                 {
                     File.AppendAllText(filePath, "</logs>");
@@ -54,11 +66,14 @@ public class XmlLogFormatter : ILogFormatter
         catch (IOException ex)
         {
             throw new InvalidOperationException(
-                $"Error while closing the XML log file : {filePath}",
+                $"Error while closing the XML log file: {filePath}",
                 ex);
         }
     }
 
+    // Converts a string to a valid XML element name
+    // @param name - name to convert
+    // @returns valid XML element name
     private string SanitizeXmlElementName(string name)
     {
         if (string.IsNullOrEmpty(name))
