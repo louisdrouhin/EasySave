@@ -69,6 +69,10 @@ public class SettingsPageViewModel : ViewModelBase
     // Specific setting labels
     public string LogsPathLabel => LocalizationManager.Get("SettingsPage_Section_Logs_Path");
     public string LogsFormatLabel => LocalizationManager.Get("SettingsPage_Section_Logs_Format");
+    public string ServerLogsEnabledLabel => LocalizationManager.Get("SettingsPage_Section_Logs_ServerEnabled");
+    public string ServerLogsModeLabel => LocalizationManager.Get("SettingsPage_Section_Logs_ServerMode");
+    public string ServerLogsHostLabel => LocalizationManager.Get("SettingsPage_Section_Logs_ServerHost");
+    public string ServerLogsPortLabel => LocalizationManager.Get("SettingsPage_Section_Logs_ServerPort");
     public string StatePathLabel => LocalizationManager.Get("SettingsPage_Section_State_Path");
     public string ExtensionsLabel => LocalizationManager.Get("SettingsPage_Section_Encryption_Extensions");
     public string PriorityExtensionsLabel => LocalizationManager.Get("SettingsPage_Section_Priority_Extensions");
@@ -89,6 +93,18 @@ public class SettingsPageViewModel : ViewModelBase
 
     // Shows current log format in uppercase (JSON or XML)
     public string LogsFormatValue => _configParser.GetLogFormat().ToUpper();
+
+    // EasyLog server configuration values
+    public string ServerLogsEnabledValue => _configParser.GetEasyLogServerEnabled() ? "Enabled" : "Disabled";
+
+    // Shows EasyLog server mode
+    public string ServerLogsModeValue => _configParser.GetEasyLogServerMode();
+
+    // Shows EasyLog server host address
+    public string ServerLogsHostValue => _configParser.GetEasyLogServerHost();
+
+    // Shows EasyLog server port number
+    public string ServerLogsPortValue => _configParser.GetEasyLogServerPort().ToString();
 
     // Shows the state file path or "N/A" if not configured
     public string StatePathValue
@@ -443,6 +459,10 @@ public class SettingsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(PerformanceSectionTitle));
         OnPropertyChanged(nameof(LogsPathLabel));
         OnPropertyChanged(nameof(LogsFormatLabel));
+        OnPropertyChanged(nameof(ServerLogsEnabledLabel));
+        OnPropertyChanged(nameof(ServerLogsModeLabel));
+        OnPropertyChanged(nameof(ServerLogsHostLabel));
+        OnPropertyChanged(nameof(ServerLogsPortLabel));
         OnPropertyChanged(nameof(StatePathLabel));
         OnPropertyChanged(nameof(ExtensionsLabel));
         OnPropertyChanged(nameof(PriorityExtensionsLabel));

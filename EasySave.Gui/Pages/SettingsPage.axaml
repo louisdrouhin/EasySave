@@ -169,7 +169,7 @@
                             </Grid>
 
                             <!-- Format Buttons -->
-                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
                                 <Button Command="{Binding SetJsonFormatCommand}"
                                         Content="JSON"
                                         Padding="12,8"
@@ -179,6 +179,65 @@
                                         Padding="12,8"
                                         FontSize="12"/>
                             </StackPanel>
+
+                            <!-- Server Logs Configuration Section -->
+                            <TextBlock Text="Server Logs Configuration"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="#15171D"
+                                       Margin="0,15,0,8"/>
+
+                            <!-- Server Enabled -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsEnabledLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ServerLogsEnabledValue}"
+                                           FontSize="12"
+                                           Foreground="#15171D"/>
+                            </Grid>
+
+                            <!-- Server Mode -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsModeLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ServerLogsModeValue}"
+                                           FontSize="12"
+                                           Foreground="#15171D"/>
+                            </Grid>
+
+                            <!-- Server Host -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsHostLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ServerLogsHostValue}"
+                                           FontSize="12"
+                                           Foreground="#15171D"/>
+                            </Grid>
+
+                            <!-- Server Port -->
+                            <Grid ColumnDefinitions="140,*" RowDefinitions="Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding ServerLogsPortLabel}"
+                                           FontSize="12"
+                                           FontWeight="Bold"
+                                           Foreground="#666666"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ServerLogsPortValue}"
+                                           FontSize="12"
+                                           Foreground="#15171D"/>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
