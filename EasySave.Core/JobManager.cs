@@ -515,18 +515,28 @@ public class JobManager
     // @param job - the Job object to pause
     public void PauseJob(Job job)
     {
-        _stateTracker.UpdateJobState(
-            new StateEntry(
-                job.Name,
-                DateTime.Now,
-                JobState.Paused
-            )
-        );
-
+        // Reset the pause event FIRST so ProcessFile sees IsSet=false before we write Paused state
         if (_jobPauseEvents.TryGetValue(job.Name, out var pauseEvent))
         {
             pauseEvent.Reset();
         }
+
+        // Preserve current progress data when pausing
+        var current = _stateTracker.GetJobState(job.Name);
+        _stateTracker.UpdateJobState(
+            new StateEntry(
+                job.Name,
+                DateTime.Now,
+                JobState.Paused,
+                current?.TotalFiles ?? 0,
+                current?.TotalSizeToTransfer ?? 0,
+                current?.Progress ?? 0,
+                current?.RemainingFiles ?? 0,
+                current?.RemainingSizeToTransfer ?? 0,
+                current?.CurrentSourcePath ?? "",
+                current?.CurrentDestinationPath ?? ""
+            )
+        );
 
         LogEvent(
             DateTime.Now,

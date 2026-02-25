@@ -161,7 +161,8 @@ public class JobViewModel : ViewModelBase
         {
             if (RemainingFiles == null || TotalFiles == null)
                 return "";
-            return $"{RemainingFiles}/{TotalFiles} files";
+            var processed = TotalFiles.Value - RemainingFiles.Value;
+            return $"{processed}/{TotalFiles}";
         }
     }
 
@@ -177,12 +178,25 @@ public class JobViewModel : ViewModelBase
         get
         {
             if (RemainingSize == null)
-                return "0.00 MB";
-            return $"{RemainingSize:F2} MB";
+                return "0 B";
+            return FormatSize(RemainingSize.Value);
         }
     }
 
     // True if progress should be displayed (Active or Paused)
+    private static string FormatSize(long bytes)
+    {
+        string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+        int i = 0;
+        double size = bytes;
+        while (size >= 1024 && i < suffixes.Length - 1)
+        {
+            size /= 1024;
+            i++;
+        }
+        return $"{size:0.##} {suffixes[i]}";
+    }
+
     public bool IsProgressVisible => IsActive || IsPaused;
 
 
@@ -222,10 +236,8 @@ public class JobViewModel : ViewModelBase
         {
             if (IsActive)
                 return Geometry.Parse("M14,19H18V5H14M6,19H10V5H6V19Z"); // Pause
-            else if (IsPaused)
-                return Geometry.Parse("M8,5.14V19.14L19,12.14L8,5.14Z"); // Arrow right (Resume)
             else
-                return Geometry.Parse("M8,5.14V19.14L19,12.14L8,5.14Z"); // Play
+                return Geometry.Parse("M8,5.14V19.14L19,12.14L8,5.14Z"); // Play (start or resume)
         }
     }
 
@@ -257,6 +269,8 @@ public class JobViewModel : ViewModelBase
     // Color of the Play button
     public IBrush PlayButtonColor => IsInactive ? Brushes.Green : Brushes.Orange;
 
+    public Avalonia.Thickness PlayPauseIconMargin =>
+        IsActive ? new Avalonia.Thickness(0) : new Avalonia.Thickness(2, 0, 0, 0);
 
 
     // Play/Pause/Resume command based on state
@@ -325,6 +339,7 @@ public class JobViewModel : ViewModelBase
         OnPropertyChanged(nameof(ProgressText));
         OnPropertyChanged(nameof(RemainingSizeText));
         OnPropertyChanged(nameof(PlayPauseIconData));
+        OnPropertyChanged(nameof(PlayPauseIconMargin));
         OnPropertyChanged(nameof(DeleteIconData));
         OnPropertyChanged(nameof(PlayButtonColor));
         OnPropertyChanged(nameof(PlayButtonBackground));
