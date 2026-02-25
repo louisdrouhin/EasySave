@@ -484,6 +484,22 @@ Stack:
           xml:space="preserve">
         <value>Log format</value>
     </data>
+    <data name="SettingsPage_Section_Logs_ServerEnabled"
+          xml:space="preserve">
+        <value>Server status</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_ServerMode"
+          xml:space="preserve">
+        <value>Server mode</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_ServerHost"
+          xml:space="preserve">
+        <value>Server host</value>
+    </data>
+    <data name="SettingsPage_Section_Logs_ServerPort"
+          xml:space="preserve">
+        <value>Server port</value>
+    </data>
     <data name="SettingsPage_Section_State"
           xml:space="preserve">
         <value>State</value>

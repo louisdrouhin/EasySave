@@ -348,6 +348,22 @@ Pile :
         xml:space="preserve">
       <value>Format des logs</value>
   </data>
+  <data name="SettingsPage_Section_Logs_ServerEnabled"
+        xml:space="preserve">
+      <value>État du serveur</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_ServerMode"
+        xml:space="preserve">
+      <value>Mode du serveur</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_ServerHost"
+        xml:space="preserve">
+      <value>Hôte du serveur</value>
+  </data>
+  <data name="SettingsPage_Section_Logs_ServerPort"
+        xml:space="preserve">
+      <value>Port du serveur</value>
+  </data>
   <data name="SettingsPage_Section_State"
         xml:space="preserve">
       <value>État</value>

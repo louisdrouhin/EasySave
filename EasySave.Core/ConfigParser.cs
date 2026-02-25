@@ -225,4 +225,32 @@ public class ConfigParser
         }
         return -1; // -1 means no limit
     }
+
+    // Gets EasyLog server enabled status
+    // @returns true if server is enabled, false otherwise
+    public bool GetEasyLogServerEnabled()
+    {
+        return Config?["easyLogServer"]?["enabled"]?.GetValue<bool>() ?? false;
+    }
+
+    // Gets EasyLog server mode
+    // @returns server mode (e.g., local_only, network)
+    public string GetEasyLogServerMode()
+    {
+        return Config?["easyLogServer"]?["mode"]?.GetValue<string>() ?? "N/A";
+    }
+
+    // Gets EasyLog server host address
+    // @returns host address or IP
+    public string GetEasyLogServerHost()
+    {
+        return Config?["easyLogServer"]?["host"]?.GetValue<string>() ?? "N/A";
+    }
+
+    // Gets EasyLog server port number
+    // @returns port number
+    public int GetEasyLogServerPort()
+    {
+        return Config?["easyLogServer"]?["port"]?.GetValue<int>() ?? 0;
+    }
 }
