@@ -22,6 +22,12 @@ public class StateTracker
 
   // Updates job state and persists to JSON file
   // @param stateEntry - state entry containing job name and state
+  public StateEntry? GetJobState(string jobName)
+  {
+    _jobStates.TryGetValue(jobName, out var state);
+    return state;
+  }
+
   public void UpdateJobState(StateEntry stateEntry)
   {
     if (stateEntry == null || string.IsNullOrEmpty(stateEntry.JobName))
