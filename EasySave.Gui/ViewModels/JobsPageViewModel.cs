@@ -159,39 +159,30 @@ public class JobsPageViewModel : ViewModelBase
     // @param password - password to use for the job (if needed)
     public async Task ExecutePlayJob(JobViewModel vm, string password)
     {
-        try
+        vm.IsSelected = false;
+
+        // Launch job on background thread without blocking UI
+        await Task.Run(() =>
         {
-            _ = Task.Run(() =>
+            try
             {
                 _jobManager.LaunchJob(vm.Job, password);
-            });
-
-            vm.IsSelected = false;
-
-            await Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            ErrorOccurred?.Invoke(this, ex.Message);
-        }
+            }
+            catch (Exception ex)
+            {
+                // Silently catch exceptions - they are already logged in LaunchJob
+                System.Diagnostics.Debug.WriteLine($"[ExecutePlayJob] Job execution error for {vm.Name}: {ex.Message}");
+            }
+        });
     }
 
-    // Runs all selected jobs in the background and handles potential errors. Deselects all jobs after launch
+    // Runs all selected jobs in parallel in the background. Deselects all jobs after launch
     // @param selected - list of JobViewModels to execute
     // @param password - password to use for the jobs (if needed)
     public async Task ExecuteRunSelected(List<JobViewModel> selected, string password)
     {
-        try
-        {
-            foreach (var vm in selected)
-            {
-                await ExecutePlayJob(vm, password);
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorOccurred?.Invoke(this, ex.Message);
-        }
+        var tasks = selected.Select(vm => ExecutePlayJob(vm, password)).ToList();
+        await Task.WhenAll(tasks);
     }
 
     // Checks if business applications are running
