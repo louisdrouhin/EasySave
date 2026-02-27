@@ -1,3 +1,9 @@
+## v3.0.1 (2026-02-27)
+
+### Fix
+
+- **gui**: blocking job when business app is launched
+
 ## v3.0.0 (2026-02-25)
 
 ## v2.6.0 (2026-02-25)
